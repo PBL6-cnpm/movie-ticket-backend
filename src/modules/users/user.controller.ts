@@ -13,6 +13,17 @@ export class UserController extends BaseController {
     super();
   }
 
+  // @Post()
+  // @HttpCode(HttpStatus.CREATED)
+  // @ApiOperation({ summary: 'Create a new user' })
+  // async createUser(
+  //   @Body() createUserDto: CreateUserDto
+  // ): Promise<SuccessResponse<UserResponseDto>> {
+  //   const newUser = await this.userService.createUser(createUserDto);
+  //   const response = new UserResponseDto(newUser);
+  //   return this.created(response);
+  // }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new user' })
