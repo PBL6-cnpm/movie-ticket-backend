@@ -1,4 +1,4 @@
-import { User } from '@modules/users/entities/user.entity';
+import { User } from 'shared/db/entities/user.entity';
 
 export interface RegisterResponse {
   verificationToken: string;
