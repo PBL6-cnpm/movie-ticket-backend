@@ -8,7 +8,7 @@ import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
 import { User } from '../../shared/db/entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UserStatus } from './enums/user.enum';
+import { UserStatus } from '@common/enums';
 
 @Injectable()
 export class UserService extends BaseService<User> {

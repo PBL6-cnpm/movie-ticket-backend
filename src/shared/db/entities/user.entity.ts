@@ -1,6 +1,5 @@
-import { ENTITIES } from '@common/enums';
+import { ENTITIES, UserStatus } from '@common/enums';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
-import { UserStatus } from '../../../modules/users/enums/user.enum';
 import { BaseEntityTime } from '../base-entities/base.entity';
 
 @Entity(ENTITIES.USER)
