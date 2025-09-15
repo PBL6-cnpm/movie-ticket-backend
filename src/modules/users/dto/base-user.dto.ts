@@ -9,7 +9,7 @@ import {
   MaxLength,
   Matches
 } from 'class-validator';
-import { UserStatus } from '../enums/user.enum';
+import { UserStatus } from '@common/enums';
 import { RESPONSE_MESSAGES } from 'common/constants/response-message.constant';
 
 export class BaseUserDto {
