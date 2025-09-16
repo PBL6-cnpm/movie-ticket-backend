@@ -1,0 +1,56 @@
+import { ENTITIES } from "@common/enums";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
+import { BaseEntityTime } from "../base-entities/base.entity";
+import { Min } from "class-validator";
+import { Booking } from "./booking.entity";
+import { Seat } from "./seat.entity";
+import { TypeDay } from "./type-day.entity";
+import { SpecialDay } from "./special-day.entity";
+
+@Entity(ENTITIES.BOOK_SEAT)
+export class BookSeat extends BaseEntityTime {
+    @PrimaryColumn({ name: 'booking_id' })
+    bookingId: string;
+
+    @PrimaryColumn({ name: 'seat_id' })
+    seatId: string;
+
+    @Column({ name: 'type_day_id' })
+    typeDayId: string;
+
+    @Column({ name: 'special_day_id' })
+    specialDayId: string;
+
+    @Column({
+        name: 'status',
+        type: 'boolean',
+        default: false,
+        nullable: false
+    })
+    status: boolean;
+
+    @Column({
+        name: 'total_seat_price',
+        type: 'int',
+        default: 0,
+        nullable: false
+    })
+    @Min(0)
+    totalSeatPrice: number;
+
+    @ManyToOne(() => Booking, (booking) => booking.bookSeats, { nullable: false, onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'booking_id' })
+    booking: Booking;
+
+    @ManyToOne(() => Seat, (seat) => seat.bookSeats, { nullable: false, onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'seat_id' })
+    seat: Seat;
+
+    @ManyToOne(() => TypeDay, (typeDay) => typeDay.bookSeats)
+    @JoinColumn({ name: 'type_day_id' })
+    typeDay: TypeDay;
+
+    @ManyToOne(() => SpecialDay, (specialDay) => specialDay.bookSeats)
+    @JoinColumn({ name: 'special_day_id' })
+    specialDay: SpecialDay;
+}

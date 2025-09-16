@@ -16,10 +16,10 @@ export class BaseEntityTime {
   deletedAt?: Date;
 }
 
-export class BaseAuditedEntity {
-  @Column({ name: 'created_by_id' })
+export class BaseAuditedEntity extends BaseEntityTime {
+  @Column({ name: 'created_by_id', nullable: true })
   createdById: string;
 
-  @Column({ name: 'updated_by_id' })
+  @Column({ name: 'updated_by_id', nullable: true })
   updatedById: string;
 }
