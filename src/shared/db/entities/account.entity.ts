@@ -10,8 +10,7 @@ import { Booking } from './booking.entity';
 
 @Entity(ENTITIES.ACCOUNT)
 export class Account extends BaseEntityTime {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'account_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'account_id' })
     id: string;
 
     @Column({ name: 'role_id', nullable: false })

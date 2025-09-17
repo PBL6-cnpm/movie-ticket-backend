@@ -9,10 +9,9 @@ import { BookRefreshments } from "./book-refreshments.entity";
 import { Voucher } from "./voucher.enity";
 
 @Entity(ENTITIES.BOOKING)
-@Unique(['account_id', 'voucher_id'])
+@Unique(['accountId', 'voucherId'])
 export class Booking extends BaseEntityTime {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'booking_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'booking_id' })
     id: string;
 
     @Column({ name: 'account_id' })

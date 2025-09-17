@@ -7,8 +7,7 @@ import { Room } from "./room.entity";
 @Entity(ENTITIES.BRANCH)
 @Unique(['name', 'address'])
 export class Branch extends BaseEntityTime {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'branch_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'branch_id' })
     id: string;
 
     @Column({ name: 'name', nullable: false })

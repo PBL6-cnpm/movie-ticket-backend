@@ -6,10 +6,9 @@ import { Seat } from "./seat.entity";
 import { ShowTime } from "./show-time.entity";
 
 @Entity(ENTITIES.ROOM)
-@Unique(['branch_id', 'name'])
+@Unique(['branchId', 'name'])
 export class Room extends BaseEntityTime {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'room_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'room_id' })
     id: string;
 
     @Column({ name: 'branch_id', nullable: false })

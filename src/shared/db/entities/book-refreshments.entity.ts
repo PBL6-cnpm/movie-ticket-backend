@@ -7,8 +7,7 @@ import { Min } from "class-validator";
 
 @Entity(ENTITIES.BOOK_REFRESHMENTS)
 export class BookRefreshments extends BaseEntityTime {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'book_refreshments_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'book_refreshments_id' })
     id: string;
 
     @Column({ name: 'booking_id' })

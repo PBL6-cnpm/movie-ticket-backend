@@ -6,8 +6,7 @@ import { BookSeat } from "./book-seat.entity";
 
 @Entity(ENTITIES.SPECIAL_DAY)
 export class SpecialDay extends BaseAuditedEntity {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'special_day_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'special_day_id' })
     id: string;
 
     @Column({

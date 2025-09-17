@@ -6,8 +6,7 @@ import { Booking } from "./booking.entity";
 
 @Entity(ENTITIES.VOUCHER)
 export class Voucher extends BaseEntityTime {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'voucher_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'voucher_id' })
     id: string;
 
     @Column({ name: 'name', nullable: false })

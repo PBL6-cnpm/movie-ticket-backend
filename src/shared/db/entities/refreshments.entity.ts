@@ -6,8 +6,7 @@ import { BookRefreshments } from "./book-refreshments.entity";
 
 @Entity(ENTITIES.REFRESHMENTS)
 export class Refreshments extends BaseAuditedEntity {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'refreshments_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'refreshments_id' })
     refreshmentsId: string;
 
     @Column({

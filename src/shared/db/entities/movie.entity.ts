@@ -7,8 +7,7 @@ import { ShowTime } from './show-time.entity';
 
 @Entity(ENTITIES.MOVIE)
 export class Movie extends BaseEntityTime {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'movie_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'movie_id' })
     id: string;
 
     @Column({ name: 'name', nullable: false })

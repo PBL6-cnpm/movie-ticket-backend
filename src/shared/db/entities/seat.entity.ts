@@ -6,10 +6,9 @@ import { TypeSeat } from "./type-seat.entity";
 import { BookSeat } from "./book-seat.entity";
 
 @Entity(ENTITIES.SEAT)
-@Unique(['room_id', 'name'])
+@Unique(['roomId', 'name'])
 export class Seat extends BaseEntityTime {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'seat_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'seat_id' })
     id: string;
 
     @Column({ name: 'room_id', nullable: false })

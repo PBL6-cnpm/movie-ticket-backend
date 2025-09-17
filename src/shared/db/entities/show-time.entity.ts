@@ -6,10 +6,9 @@ import { Movie } from "./movie.entity";
 import { Room } from "./room.entity";
 
 @Entity(ENTITIES.SHOW_TIME)
-@Unique(['room_id', 'time_start', 'show_date'])
+@Unique(['roomId', 'timeStart', 'showDate'])
 export class ShowTime extends BaseEntityTime {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'show_time_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'show_time_id' })
     id: string;
 
     @Column({ name: 'movie_id', nullable: false })

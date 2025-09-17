@@ -5,8 +5,7 @@ import { MovieActor } from "./movie-actor.entity";
 
 @Entity(ENTITIES.ACTOR)
 export class Actor extends BaseEntityTime {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'actor_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'actor_id' })
     id: string;
 
     @Column({ name: 'name' })

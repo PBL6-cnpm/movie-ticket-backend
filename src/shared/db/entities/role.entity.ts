@@ -7,8 +7,7 @@ import { Account } from "./account.entity";
 
 @Entity(ENTITIES.ROLE)
 export class Role extends BaseEntityTime {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'role_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'role_id' })
     id: string;
 
     @Column({ 

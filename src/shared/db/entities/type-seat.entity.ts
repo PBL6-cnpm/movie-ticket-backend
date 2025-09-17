@@ -6,8 +6,7 @@ import { Seat } from "./seat.entity";
 
 @Entity(ENTITIES.TYPE_SEAT)
 export class TypeSeat extends BaseEntityTime {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'type_seat_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'type_seat_id' })
     id: string;
 
     @Column({ 

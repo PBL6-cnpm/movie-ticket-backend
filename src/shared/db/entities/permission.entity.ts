@@ -6,8 +6,7 @@ import { RolePermission } from "./role-permission.entity";
 
 @Entity(ENTITIES.PERMISSION)
 export class Permission extends BaseEntityTime {
-    @PrimaryGeneratedColumn('uuid')
-    @Column({ name: 'permission_id' })
+    @PrimaryGeneratedColumn('uuid', { name: 'permission_id' })
     id: string;
 
     @Column({ 
