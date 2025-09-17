@@ -14,7 +14,7 @@ import { ApiResponse } from '@common/interfaces/api-response.interface';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private logger: Logger = new Logger('AllExceptionsFilter');
+  private logger: Logger = new Logger(AllExceptionsFilter.name);
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();

@@ -2,11 +2,12 @@ export enum ENTITIES {
   USER = 'user',
 
   ACCOUNT = 'account',
-  REVIEWS = 'reviews',
+  REVIEW = 'review',
   VOUCHER = 'voucher',
 
   ACTOR = 'actor',
   MOVIE = 'movie',
+  GENRE = 'genre',
   MOVIE_ACTOR = 'movie_actor',
 
   BRANCH = 'branch',
@@ -25,5 +26,5 @@ export enum ENTITIES {
   REFRESHMENTS = 'refreshments',
 
   TYPE_DAY = 'type_day',
-  SPECIAL_DAY = 'special_day',
+  SPECIAL_DATE = 'special_day'
 }

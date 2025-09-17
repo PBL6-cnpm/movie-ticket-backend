@@ -1,15 +1,16 @@
+import { AuthModule } from '@modules/auth/auth.module';
+import { JwtGuard } from '@modules/auth/guards/jwt.guard';
+import { UserModule } from '@modules/users/user.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
-import { CustomLogger } from './common/modules/logger/custom-logger.service';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
+import { EventModule } from './common/modules/events/event.module';
+import { CustomLogger } from './common/modules/logger/custom-logger.service';
 import { MailModule } from './common/modules/mail/mail.module';
 import { DatabaseModule } from './databases/database.module';
-import { EventModule } from './common/modules/events/event.module';
-import { UserModule } from '@modules/users/user.module';
-import { AuthModule } from '@modules/auth/auth.module';
-import { APP_GUARD } from '@nestjs/core';
-import { JwtAuthGuard } from '@modules/auth/guards/jwtAuth.guard';
+// import { DataSource } from 'typeorm';
 
 @Module({
   imports: [
@@ -36,12 +37,31 @@ import { JwtAuthGuard } from '@modules/auth/guards/jwtAuth.guard';
     CustomLogger,
     {
       provide: APP_GUARD,
-      useClass: JwtAuthGuard
+      useClass: JwtGuard
     }
   ]
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer.apply(LoggerMiddleware).forRoutes('*');
+    // AppDataSource.initialize();
   }
 }
+
+// export const AppDataSource = new DataSource({
+//   type: 'mysql',
+//   host: 'localhost',
+//   port: 3306,
+//   username: 'root',
+//   password: 'phong123',
+//   database: 'book-ticket',
+//   entities: [
+//     Account, Actor, BookRefreshments, BookSeat,
+//     Booking, Branch, MovieActor, Movie, Permission,
+//     Permission, Refreshments, Reviews, RolePermission,
+//     Role, Room, Seat, ShowTime, SpecialDay,
+//     TypeDay, TypeSeat, Voucher
+//   ],
+//   synchronize: true,
+//   logging: true,
+// });

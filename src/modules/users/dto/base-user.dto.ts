@@ -11,6 +11,7 @@ import {
 } from 'class-validator';
 import { UserStatus } from '@common/enums';
 import { RESPONSE_MESSAGES } from 'common/constants/response-message.constant';
+import { AccountStatus } from '@common/enums/account.enum';
 
 export class BaseUserDto {
   @ApiProperty({ description: 'Email of the user' })
@@ -40,5 +41,5 @@ export class BaseUserDto {
   })
   @IsEnum(UserStatus)
   @IsOptional()
-  status?: UserStatus;
+  status?: AccountStatus;
 }

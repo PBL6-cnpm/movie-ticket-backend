@@ -1,8 +1,8 @@
-import { User } from 'shared/db/entities/user.entity';
+import { Account } from 'shared/db/entities/account.entity';
 
 export interface RegisterResponse {
   verificationToken: string;
-  user: User;
+  user: Account;
 }
 
 export interface LoginResponse {
