@@ -1,4 +1,4 @@
-import { User } from 'shared/db/entities/user.entity';
+import { Account } from 'shared/db/entities/account.entity';
 
 export class UserResponseDto {
   id: string;
@@ -6,7 +6,7 @@ export class UserResponseDto {
   status: string;
   createdAt: Date;
 
-  constructor(user: User) {
+  constructor(user: Account) {
     this.id = user.id;
     this.email = user.email;
     this.status = user.status;

@@ -1,22 +1,14 @@
-import {
-  Column,
-  CreateDateColumn,
-  DeleteDateColumn,
-  UpdateDateColumn
-} from 'typeorm';
+import { Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 export class BaseEntityTime {
-  @CreateDateColumn({ name: 'created_at' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at' })
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
-
-  @DeleteDateColumn({ name: 'deleted_at' })
-  deletedAt?: Date;
 }
 
-export class BaseAuditedEntity {
+export class BaseAuditedEntity extends BaseEntityTime {
   @Column({ name: 'created_by_id' })
   createdById: string;
 

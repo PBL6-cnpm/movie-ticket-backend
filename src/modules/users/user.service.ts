@@ -1,25 +1,25 @@
-import { BaseService } from '@bases/baseService';
+import { BaseService } from '@bases/base-service';
 import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
+import { AccountStatus } from '@common/enums/account.enum';
 import { BadRequest } from '@common/exceptions/bad-request.exception';
 import { NotFound } from '@common/exceptions/not-found.exception';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
+import { Account } from 'shared/db/entities/account.entity';
 import { Repository } from 'typeorm';
-import { User } from '../../shared/db/entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UserStatus } from '@common/enums';
 
 @Injectable()
-export class UserService extends BaseService<User> {
+export class UserService extends BaseService<Account> {
   constructor(
-    @InjectRepository(User)
-    private readonly userRepo: Repository<User>
+    @InjectRepository(Account)
+    private readonly userRepo: Repository<Account>
   ) {
     super(userRepo);
   }
 
-  async createUser(createUserDto: CreateUserDto): Promise<User> {
+  async createUser(createUserDto: CreateUserDto): Promise<Account> {
     const existingUser = await this.findOne({
       where: { email: createUserDto.email }
     });
@@ -34,13 +34,13 @@ export class UserService extends BaseService<User> {
     const newUser = await this.create({
       ...createUserDto,
       password: hashedPassword,
-      status: createUserDto.status || UserStatus.INACTIVE
+      status: createUserDto.status || AccountStatus.PENDING
     });
 
     return newUser;
   }
 
-  async getUserById(userId: string): Promise<User> {
+  async getUserById(userId: string): Promise<Account> {
     const user = await this.findOneById(userId);
 
     if (!user) {
