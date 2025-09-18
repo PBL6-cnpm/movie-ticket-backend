@@ -1,15 +1,14 @@
 import { BaseService } from '@bases/base-service';
 import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
+import { AccountStatus } from '@common/enums/account.enum';
 import { BadRequest } from '@common/exceptions/bad-request.exception';
 import { NotFound } from '@common/exceptions/not-found.exception';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
+import { Account } from 'shared/db/entities/account.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UserStatus } from '@common/enums';
-import { Account } from 'shared/db/entities/account.entity';
-import { AccountStatus } from '@common/enums/account.enum';
 
 @Injectable()
 export class UserService extends BaseService<Account> {

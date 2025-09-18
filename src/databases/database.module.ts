@@ -7,6 +7,7 @@ import { BookRefreshments } from 'shared/db/entities/book-refreshments.entity';
 import { BookSeat } from 'shared/db/entities/book-seat.entity';
 import { Booking } from 'shared/db/entities/booking.entity';
 import { Branch } from 'shared/db/entities/branch.entity';
+import { Genre } from 'shared/db/entities/genre.entity';
 import { MovieActor } from 'shared/db/entities/movie-actor.entity';
 import { Movie } from 'shared/db/entities/movie.entity';
 import { Permission } from 'shared/db/entities/permission.entity';
@@ -42,6 +43,7 @@ import { addTransactionalDataSource } from 'typeorm-transactional';
           BookSeat,
           Booking,
           Branch,
+          Genre,
           MovieActor,
           Movie,
           Permission,

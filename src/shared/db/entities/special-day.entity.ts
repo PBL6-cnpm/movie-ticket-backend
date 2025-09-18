@@ -26,6 +26,8 @@ export class SpecialDate extends BaseEntityTime {
   @Min(0)
   additionalPrice: number;
 
-  @OneToMany(() => BookSeat, (bookSeat) => bookSeat.specialDate)
+  @OneToMany(() => BookSeat, (bookSeat) => bookSeat.specialDate, {
+    nullable: true
+  })
   bookSeats: BookSeat[];
 }
