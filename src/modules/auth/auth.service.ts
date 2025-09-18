@@ -1,17 +1,17 @@
-import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcryptjs';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { UserService } from '@modules/users/user.service';
-import { LoginDto } from './dto/login.dto';
-import { LoginResponse } from './interfaces/authResponse.interface';
+import { COOKIE_NAMES } from '@common/constants/cookie.constant';
 import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
 import { BadRequest } from '@common/exceptions/bad-request.exception';
-import { JwtPayload } from './interfaces/jwtPayload.interface';
+import { UserService } from '@modules/users/user.service';
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcryptjs';
 import { Response } from 'express';
-import { COOKIE_NAMES } from '@common/constants/cookie.constant';
 import * as ms from 'ms';
+import { LoginDto } from './dto/login.dto';
+import { LoginResponse } from './interfaces/authResponse.interface';
+import { JwtPayload } from './interfaces/jwtPayload.interface';
 
 @Injectable()
 export class AuthService {

@@ -1,10 +1,10 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { UserService } from './user.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { BaseController } from '@bases/baseController';
-import { UserResponseDto } from './dto/user-response.dto';
+import { BaseController } from '@bases/base-controller';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
+import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UserResponseDto } from './dto/user-response.dto';
+import { UserService } from './user.service';
 
 @Controller('users')
 @ApiTags('Users')
