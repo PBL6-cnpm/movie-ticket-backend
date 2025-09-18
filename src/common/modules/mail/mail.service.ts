@@ -16,7 +16,7 @@ interface MailOptions {
 
 @Injectable()
 export class MailService {
-  private logger: Logger = new Logger('MailService');
+  private logger: Logger = new Logger(MailService.name);
 
   constructor(private mailerService: MailerService) {}
 
