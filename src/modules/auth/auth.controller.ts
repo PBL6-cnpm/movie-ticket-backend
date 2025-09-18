@@ -1,19 +1,19 @@
+import { BaseController } from '@bases/base-controller';
+import { Public } from '@common/decorators/public.decorator';
+import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import {
   Body,
   Controller,
-  Post,
-  Res,
   HttpCode,
-  HttpStatus
+  HttpStatus,
+  Post,
+  Res
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { BaseController } from '@bases/baseController';
-import { Public } from '@common/decorators/public.decorator';
-import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { LoginResponse } from './interfaces/authResponse.interface';
-import { Response } from 'express';
 
 @Controller('auth')
 @ApiTags('Authentication')

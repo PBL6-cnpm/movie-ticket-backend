@@ -102,13 +102,6 @@ export class BaseService<T> {
     return this.repository.update(id, data);
   }
 
-  async updateBy(
-    cond: FindOptionsWhere<T>,
-    data: QueryDeepPartialEntity<T>
-  ): Promise<UpdateResult> {
-    return this.repository.update(cond as any, data);
-  }
-
   async updateAndFindOneById(
     id: string,
     data: QueryDeepPartialEntity<T>,
