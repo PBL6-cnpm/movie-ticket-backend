@@ -4,6 +4,7 @@ import { UserModule } from '@modules/users/user.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { HealthController } from 'health.controller';
 import { AppController } from './app.controller';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
 import { DatabaseModule } from './databases/database.module';
@@ -31,7 +32,7 @@ import { MailModule } from './shared/module/mail/mail.module';
     UserModule,
     AuthModule
   ],
-  controllers: [AppController],
+  controllers: [AppController, HealthController],
   providers: [
     {
       provide: APP_GUARD,

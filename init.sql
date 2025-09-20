@@ -1,0 +1,5 @@
+CREATE DATABASE IF NOT EXISTS movie_ticket_db;
+
+CREATE USER IF NOT EXISTS 'pbl6'@'%' IDENTIFIED BY 'pbl6password';
+GRANT ALL PRIVILEGES ON movie_ticket_db.* TO 'pbl6'@'%';
+FLUSH PRIVILEGES;

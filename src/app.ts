@@ -1,16 +1,15 @@
-import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import * as express from 'express';
 import { SwaggerModule } from '@nestjs/swagger';
-import { join } from 'path';
-import { initializeTransactionalContext } from 'typeorm-transactional';
 import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import * as express from 'express';
+import { join } from 'path';
+import { initializeTransactionalContext } from 'typeorm-transactional';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exception.filter';
-import { CustomLogger } from './common/modules/logger/custom-logger.service';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { swaggerConfig } from './configs/swagger.config';
 
 export async function createApp(): Promise<NestExpressApplication> {
@@ -19,9 +18,6 @@ export async function createApp(): Promise<NestExpressApplication> {
 
   // Create Nest Application
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-
-  // Logger
-  app.useLogger(app.get(CustomLogger));
 
   // Enable CORS
   app.enableCors();

@@ -23,12 +23,20 @@ jobs:
       - name: Run lint
         run: yarn lint
 
+      # - name: Run tests
+      #   run: yarn test
+
   cd:
     needs: ci
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install rsync and SSH client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync openssh-client
 
       - name: Set up SSH
         run: |
@@ -37,24 +45,34 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
 
-      - name: Create .env file
+      - name: Ensure destination folder exists on VM
         run: |
-          echo "DATABASE_URL=mysql://root:${{ secrets.MYSQL_ROOT_PASSWORD }}@mysql:3306/movie_ticket_db" > .env
-          echo "REDIS_URL=redis://redis:6379" >> .env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-          echo "GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}" >> .env
-          echo "GCP_SA_KEY=${{ secrets.GCP_SA_KEY }}" >> .env
-          echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
+          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "
+            mkdir -p /tmp/movie-ticket-backend
+          "
 
       - name: Deploy to Compute Engine
         run: |
-          rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa" . ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:/tmp/movie-ticket-backend
+          # Ensure rsync exists on VM
+          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} "which rsync || (sudo apt-get update && sudo apt-get install -y rsync)"
+
+          # Copy project to VM, exclude .env
+          rsync -avz --delete --exclude '.env' -e "ssh -i ~/.ssh/id_rsa" . ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:/tmp/movie-ticket-backend
+
+          # Deploy inside VM
           ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} << 'EOF'
             if ! command -v docker compose &> /dev/null; then
               sudo apt-get update
               sudo apt-get install -y docker-compose-plugin
             fi
+
             cd /tmp/movie-ticket-backend
+
+            # Copy .env có sẵn từ /resource vào thư mục project
+            cp /resource/.env .env
+
             docker compose up -d --build
+
+            # Cleanup temp files
             rm -rf /tmp/movie-ticket-backend
           EOF
