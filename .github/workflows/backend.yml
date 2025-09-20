@@ -1,0 +1,60 @@
+name: CI/CD for Movie Ticket Backend with Docker Compose
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Run lint
+        run: yarn lint
+
+  cd:
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
+
+      - name: Create .env file
+        run: |
+          echo "DATABASE_URL=mysql://root:${{ secrets.MYSQL_ROOT_PASSWORD }}@mysql:3306/movie_ticket_db" > .env
+          echo "REDIS_URL=redis://redis:6379" >> .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}" >> .env
+          echo "GCP_SA_KEY=${{ secrets.GCP_SA_KEY }}" >> .env
+          echo "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" >> .env
+
+      - name: Deploy to Compute Engine
+        run: |
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa" . ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:/tmp/movie-ticket-backend
+          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} << 'EOF'
+            if ! command -v docker compose &> /dev/null; then
+              sudo apt-get update
+              sudo apt-get install -y docker-compose-plugin
+            fi
+            cd /tmp/movie-ticket-backend
+            docker compose up -d --build
+            rm -rf /tmp/movie-ticket-backend
+          EOF
