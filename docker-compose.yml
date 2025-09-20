@@ -1,51 +1,66 @@
-services:
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: movie-ticket-backend:latest
-    ports:
-      - "3000:3000"
-    environment:
-      - DATABASE_URL=mysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/pbl6
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=${JWT_SECRET}
-      - GCP_PROJECT_ID=${GCP_PROJECT_ID}
-      - GCP_SA_KEY=${GCP_SA_KEY}
-    depends_on:
-      - mysql
-      - redis
-    restart: unless-stopped
-    networks:
-      - movie-ticket-network
+name: Deploy to GCE
 
-  mysql:
-    image: mysql:latest
-    ports:
-      - "3306:3306"
-    environment:
-      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-      - MYSQL_DATABASE=pbl6
-    volumes:
-      - mysql-data:/var/lib/mysql
-    restart: unless-stopped
-    networks:
-      - movie-ticket-network
+on:
+  push:
+    branches:
+      - main
 
-  redis:
-    image: redis:latest
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    restart: unless-stopped
-    networks:
-      - movie-ticket-network
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-networks:
-  movie-ticket-network:
-    driver: bridge
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-volumes:
-  mysql-data:
-  redis-data:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.GCP_VM_IP }} >> ~/.ssh/known_hosts
+
+      - name: Generate .env file
+        run: |
+          {
+            printf "DATABASE_URL=mysql://root:%s@mysql:3306/movie_ticket_db\n" "${{ secrets.MYSQL_ROOT_PASSWORD }}"
+            printf "REDIS_URL=redis://redis:6379\n"
+            printf "JWT_SECRET=%s\n" "${{ secrets.JWT_SECRET }}"
+            printf "GCP_PROJECT_ID=%s\n" "${{ secrets.GCP_PROJECT_ID }}"
+            printf "GCP_SA_KEY=%s\n" "${{ secrets.GCP_SA_KEY }}"
+            printf "MYSQL_ROOT_PASSWORD=%s\n" "${{ secrets.MYSQL_ROOT_PASSWORD }}"
+          } > .env
+
+      - name: Prepare VM
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} << 'EOF'
+            set -e
+            mkdir -p /opt/movie-ticket-backend
+
+            # Cài docker compose plugin nếu chưa có
+            if ! command -v docker compose &> /dev/null; then
+              sudo apt-get update
+              sudo apt-get install -y docker-compose-plugin
+            fi
+          EOF
+
+      - name: Sync project to VM
+        run: |
+          rsync -avz --delete -e "ssh -i ~/.ssh/id_rsa" ./ \
+            ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }}:/opt/movie-ticket-backend
+
+      - name: Deploy with Docker Compose
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} << 'EOF'
+            set -e
+            cd /opt/movie-ticket-backend
+            docker compose up -d --build
+          EOF
+
+      - name: Debug logs if failed
+        if: failure()
+        run: |
+          ssh -i ~/.ssh/id_rsa ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_VM_IP }} << 'EOF'
+            cd /opt/movie-ticket-backend
+            docker compose logs --tail=200
+          EOF
