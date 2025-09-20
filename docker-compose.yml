@@ -1,28 +1,51 @@
-name: pbl6_project
-
 services:
-  pbl6_db:
-    image: mysql:8.0
-    container_name: pbl6_db
-    env_file: .env
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DATABASE_DATABASE}
-      MYSQL_USER: ${DATABASE_USER}
-      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: movie-ticket-backend:latest
     ports:
-      - "3307:3306"
-    volumes:
-      - pbl6_data:/var/lib/mysql
-      - ./database/init:/docker-entrypoint-initdb.d
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=mysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/pbl6
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - GCP_PROJECT_ID=${GCP_PROJECT_ID}
+      - GCP_SA_KEY=${GCP_SA_KEY}
+    depends_on:
+      - mysql
+      - redis
+    restart: unless-stopped
     networks:
-      - pbl6_network
-    command: --default-authentication-plugin=mysql_native_password
+      - movie-ticket-network
 
-volumes:
-  pbl6_data:
-    driver: local
+  mysql:
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=pbl6
+    volumes:
+      - mysql-data:/var/lib/mysql
+    restart: unless-stopped
+    networks:
+      - movie-ticket-network
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    networks:
+      - movie-ticket-network
 
 networks:
-  pbl6_network:
+  movie-ticket-network:
     driver: bridge
+
+volumes:
+  mysql-data:
+  redis-data:
