@@ -1,0 +1,78 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Account } from 'shared/db/entities/account.entity';
+import { Actor } from 'shared/db/entities/actor.entity';
+import { BookRefreshments } from 'shared/db/entities/book-refreshments.entity';
+import { BookSeat } from 'shared/db/entities/book-seat.entity';
+import { Booking } from 'shared/db/entities/booking.entity';
+import { Branch } from 'shared/db/entities/branch.entity';
+import { Genre } from 'shared/db/entities/genre.entity';
+import { MovieActor } from 'shared/db/entities/movie-actor.entity';
+import { Movie } from 'shared/db/entities/movie.entity';
+import { Permission } from 'shared/db/entities/permission.entity';
+import { Refreshments } from 'shared/db/entities/refreshments.entity';
+import { Review } from 'shared/db/entities/review.entity';
+import { RolePermission } from 'shared/db/entities/role-permission.entity';
+import { Role } from 'shared/db/entities/role.entity';
+import { Room } from 'shared/db/entities/room.entity';
+import { Seat } from 'shared/db/entities/seat.entity';
+import { ShowTime } from 'shared/db/entities/show-time.entity';
+import { SpecialDate } from 'shared/db/entities/special-day.entity';
+import { TypeDay } from 'shared/db/entities/type-day.entity';
+import { TypeSeat } from 'shared/db/entities/type-seat.entity';
+import { Voucher } from 'shared/db/entities/voucher.enity';
+import { DataSource } from 'typeorm';
+import { addTransactionalDataSource } from 'typeorm-transactional';
+
+@Module({
+  imports: [
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        type: 'mysql',
+        host: configService.get('DATABASE_HOST'),
+        port: configService.get('DATABASE_PORT'),
+        username: configService.get('DATABASE_USER'),
+        password: configService.get('DATABASE_PASSWORD'),
+        database: configService.get('DATABASE_DATABASE'),
+        entities: [
+          Account,
+          Actor,
+          BookRefreshments,
+          BookSeat,
+          Booking,
+          Branch,
+          Genre,
+          MovieActor,
+          Movie,
+          Permission,
+          Permission,
+          Refreshments,
+          Review,
+          RolePermission,
+          Role,
+          Room,
+          Seat,
+          ShowTime,
+          SpecialDate,
+          TypeDay,
+          TypeSeat,
+          Voucher
+        ],
+        logging: true,
+        timezone: 'Z',
+        synchronize: true // set to false in production
+      }),
+      inject: [ConfigService],
+      dataSourceFactory: async (options) => {
+        const dataSource = new DataSource(options);
+        await dataSource.initialize();
+        addTransactionalDataSource(dataSource);
+        return dataSource;
+      }
+    })
+  ],
+  exports: [TypeOrmModule]
+})
+export class DatabaseModule {}
