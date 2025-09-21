@@ -20,12 +20,7 @@ export class MailService {
 
   constructor(private mailerService: MailerService) {}
 
-  async sendEmail(
-    subject: string,
-    from: string,
-    to: string | string[],
-    options: MailOptions = {}
-  ) {
+  async sendEmail(subject: string, from: string, to: string | string[], options: MailOptions = {}) {
     to = Array.isArray(to) ? to.join() : to;
     const mailOptions = {
       subject,

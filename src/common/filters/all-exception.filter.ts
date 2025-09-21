@@ -43,10 +43,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       if (typeof exceptionResponse === 'string') {
         apiResponse.message = exceptionResponse;
         apiResponse.code = exceptionResponse.toUpperCase().replace(/ /g, '_');
-      } else if (
-        typeof exceptionResponse === 'object' &&
-        exceptionResponse !== null
-      ) {
+      } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
         const { message, error } = exceptionResponse as {
           message?: string | string[];
           error?: string;
@@ -98,10 +95,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       apiResponse.code = apiResponse.message.toUpperCase().replace(/ /g, '_');
     }
 
-    if (
-      apiResponse.message &&
-      apiResponse.code === RESPONSE_MESSAGES.INTERNAL_SERVER_ERROR.code
-    ) {
+    if (apiResponse.message && apiResponse.code === RESPONSE_MESSAGES.INTERNAL_SERVER_ERROR.code) {
       apiResponse.code = apiResponse.message.toUpperCase().replace(/ /g, '_');
     }
 

@@ -1,10 +1,10 @@
-import { ENTITIES } from '@common/enums';
+import { Entities } from '@common/enums';
 import { Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { Actor } from './actor.entity';
 import { Movie } from './movie.entity';
 
-@Entity(ENTITIES.MOVIE_ACTOR)
+@Entity(Entities.MOVIE_ACTOR)
 export class MovieActor extends BaseEntityTime {
   @PrimaryColumn({ name: 'movie_id' })
   movieId: string;

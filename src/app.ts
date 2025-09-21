@@ -28,9 +28,10 @@ export async function createApp(): Promise<NestExpressApplication> {
   app.use('/public', express.static(join(__dirname, '../', 'public')));
 
   // Api
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api');
   app.enableVersioning({
-    type: VersioningType.URI
+    type: VersioningType.URI,
+    defaultVersion: '1'
   });
 
   // Pipes

@@ -57,10 +57,6 @@ export const RESPONSE_MESSAGES = {
     message: 'Email already exists',
     code: 'EMAIL_ALREADY_EXISTS'
   },
-  INVALID_TOKEN_TYPE: {
-    message: 'Invalid token type',
-    code: 'INVALID_TOKEN_TYPE'
-  },
 
   // Auth
   INVALID_CREDENTIALS: {
@@ -68,9 +64,35 @@ export const RESPONSE_MESSAGES = {
     code: 'INVALID_CREDENTIALS'
   },
 
-  // User
-  USER_NOT_FOUND: {
-    message: 'User not found',
-    code: 'USER_NOT_FOUND'
+  // Account
+  ACCOUNT_NOT_FOUND: {
+    message: 'Account not found',
+    code: 'ACCOUNT_NOT_FOUND'
+  },
+  ACCOUNT_DELETED: {
+    message: 'Account has been deleted',
+    code: 'ACCOUNT_DELETED'
+  },
+  INVALID_CODE_LENGTH: {
+    message: 'Code must be 6 characters long',
+    code: 'INVALID_CODE_LENGTH'
+  },
+  INVALID_CODE: {
+    message: 'Invalid code',
+    code: 'INVALID_CODE'
+  },
+  INVALID_OR_EXPIRED_TOKEN: {
+    message: 'Invalid or expired token',
+    code: 'INVALID_OR_EXPIRED_TOKEN'
+  },
+  ALREADY_LOGGED_OUT: {
+    message: 'You have already logged out',
+    code: 'ALREADY_LOGGED_OUT'
+  },
+
+  // Role
+  ROLE_NOT_FOUND: {
+    message: 'Role not found',
+    code: 'ROLE_NOT_FOUND'
   }
 };
