@@ -1,19 +1,12 @@
-import { ENTITIES } from '@common/enums';
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn
-} from 'typeorm';
+import { Entities } from '@common/enums';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { Genre } from './genre.entity';
 import { MovieActor } from './movie-actor.entity';
 import { Review } from './review.entity';
 import { ShowTime } from './show-time.entity';
 
-@Entity(ENTITIES.MOVIE)
+@Entity(Entities.MOVIE)
 export class Movie extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'movie_id' })
   id: string;

@@ -1,10 +1,9 @@
-import { ENTITIES } from '@common/enums';
-import { PermissionName } from '@common/enums/permission.enum';
+import { Entities, PermissionName } from '@common/enums';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { RolePermission } from './role-permission.entity';
 
-@Entity(ENTITIES.PERMISSION)
+@Entity(Entities.PERMISSION)
 export class Permission extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'permission_id' })
   id: string;
@@ -18,9 +17,6 @@ export class Permission extends BaseEntityTime {
   })
   name: PermissionName;
 
-  @OneToMany(
-    () => RolePermission,
-    (rolePermission) => rolePermission.permission
-  )
+  @OneToMany(() => RolePermission, (rolePermission) => rolePermission.permission)
   rolePermissions: RolePermission[];
 }

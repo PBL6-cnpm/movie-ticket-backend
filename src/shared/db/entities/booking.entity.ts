@@ -1,4 +1,4 @@
-import { ENTITIES } from '@common/enums';
+import { Entities } from '@common/enums';
 import { Min } from 'class-validator';
 import {
   Column,
@@ -14,9 +14,9 @@ import { Account } from './account.entity';
 import { BookRefreshments } from './book-refreshments.entity';
 import { BookSeat } from './book-seat.entity';
 import { ShowTime } from './show-time.entity';
-import { Voucher } from './voucher.enity';
+import { Voucher } from './voucher.entity';
 
-@Entity(ENTITIES.BOOKING)
+@Entity(Entities.BOOKING)
 @Unique(['accountId', 'voucherId'])
 export class Booking extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'booking_id' })
@@ -64,9 +64,6 @@ export class Booking extends BaseEntityTime {
   @JoinColumn({ name: 'show_time_id' })
   showTime: ShowTime;
 
-  @OneToMany(
-    () => BookRefreshments,
-    (bookRefreshments) => bookRefreshments.booking
-  )
+  @OneToMany(() => BookRefreshments, (bookRefreshments) => bookRefreshments.booking)
   bookRefreshmentss: BookRefreshments[];
 }
