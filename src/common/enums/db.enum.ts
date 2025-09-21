@@ -1,6 +1,4 @@
-export enum ENTITIES {
-  USER = 'user',
-
+export enum Entities {
   ACCOUNT = 'account',
   REVIEW = 'review',
   VOUCHER = 'voucher',

@@ -1,11 +1,10 @@
-import { ENTITIES } from '@common/enums';
-import { RoleName } from '@common/enums/role.enum';
+import { Entities, RoleName } from '@common/enums';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { Account } from './account.entity';
 import { RolePermission } from './role-permission.entity';
 
-@Entity(ENTITIES.ROLE)
+@Entity(Entities.ROLE)
 export class Role extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'role_id' })
   id: string;

@@ -1,3 +1,4 @@
+import { AccountStatus, RoleName } from '@common/enums';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
@@ -5,15 +6,13 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  MinLength,
+  IsStrongPassword,
   MaxLength,
-  Matches
+  MinLength
 } from 'class-validator';
-import { UserStatus } from '@common/enums';
 import { RESPONSE_MESSAGES } from 'common/constants/response-message.constant';
-import { AccountStatus } from '@common/enums/account.enum';
 
-export class BaseUserDto {
+export class BaseAccountDto {
   @ApiProperty({ description: 'Email of the user' })
   @IsEmail()
   @IsNotEmpty()
@@ -27,19 +26,37 @@ export class BaseUserDto {
   @IsString()
   @MinLength(8)
   @MaxLength(128)
-  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
-    message: RESPONSE_MESSAGES.PASSWORD_MISSING_REQUIREMENTS.message
-  })
+  @IsStrongPassword(
+    {
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1
+    },
+    {
+      message: RESPONSE_MESSAGES.PASSWORD_MISSING_REQUIREMENTS.message
+    }
+  )
   @IsNotEmpty()
   password: string;
 
   @ApiProperty({
-    description: 'Status of the user',
-    enum: UserStatus,
-    default: UserStatus.INACTIVE,
+    description: 'Status of the account',
+    enum: AccountStatus,
+    default: AccountStatus.PENDING,
     required: false
   })
-  @IsEnum(UserStatus)
+  @IsEnum(AccountStatus)
   @IsOptional()
   status?: AccountStatus;
+
+  @ApiProperty({
+    description: 'Role name of the account',
+    enum: RoleName,
+    required: true
+  })
+  @IsEnum(RoleName)
+  @IsNotEmpty()
+  roleName: RoleName;
 }

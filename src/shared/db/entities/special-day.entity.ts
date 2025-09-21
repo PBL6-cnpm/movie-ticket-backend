@@ -1,10 +1,10 @@
-import { ENTITIES } from '@common/enums';
+import { Entities } from '@common/enums';
 import { Min } from 'class-validator';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { BookSeat } from './book-seat.entity';
 
-@Entity(ENTITIES.SPECIAL_DATE)
+@Entity(Entities.SPECIAL_DATE)
 export class SpecialDate extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'special_date_id' })
   id: string;

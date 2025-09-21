@@ -21,7 +21,7 @@ import { ShowTime } from 'shared/db/entities/show-time.entity';
 import { SpecialDate } from 'shared/db/entities/special-day.entity';
 import { TypeDay } from 'shared/db/entities/type-day.entity';
 import { TypeSeat } from 'shared/db/entities/type-seat.entity';
-import { Voucher } from 'shared/db/entities/voucher.enity';
+import { Voucher } from 'shared/db/entities/voucher.entity';
 import { DataSource } from 'typeorm';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 

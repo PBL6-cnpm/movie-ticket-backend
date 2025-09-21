@@ -1,21 +1,13 @@
-import { ENTITIES } from '@common/enums';
-import { AccountStatus } from '@common/enums/account.enum';
+import { AccountStatus, Entities } from '@common/enums';
 import { Min } from 'class-validator';
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { Booking } from './booking.entity';
 import { Branch } from './branch.entity';
 import { Review } from './review.entity';
 import { Role } from './role.entity';
 
-@Entity(ENTITIES.ACCOUNT)
+@Entity(Entities.ACCOUNT)
 export class Account extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'account_id' })
   id: string;
@@ -23,7 +15,7 @@ export class Account extends BaseEntityTime {
   @Column({ name: 'role_id', nullable: false })
   roleId: string;
 
-  @Column({ name: 'branch_id' })
+  @Column({ name: 'branch_id', nullable: true })
   branchId: string;
 
   @Column({

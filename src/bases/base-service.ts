@@ -70,10 +70,7 @@ export class BaseService<T> {
   }
 
   // Upsert
-  async upsertBy(
-    data: QueryDeepPartialEntity<T>,
-    conflictPaths: (keyof T)[]
-  ): Promise<T> {
+  async upsertBy(data: QueryDeepPartialEntity<T>, conflictPaths: (keyof T)[]): Promise<T> {
     const result = await this.repository.upsert(data, {
       skipUpdateIfNoValuesChanged: true,
       conflictPaths: conflictPaths as string[]
@@ -82,10 +79,7 @@ export class BaseService<T> {
     return result.generatedMaps[0] as T;
   }
 
-  async upsertManyBy(
-    data: QueryDeepPartialEntity<T>[],
-    conflictPaths: (keyof T)[]
-  ): Promise<T[]> {
+  async upsertManyBy(data: QueryDeepPartialEntity<T>[], conflictPaths: (keyof T)[]): Promise<T[]> {
     const result = await this.repository.upsert(data, {
       skipUpdateIfNoValuesChanged: true,
       conflictPaths: conflictPaths as string[]
@@ -95,10 +89,7 @@ export class BaseService<T> {
   }
 
   // Update
-  async updateById(
-    id: string,
-    data: QueryDeepPartialEntity<T>
-  ): Promise<UpdateResult> {
+  async updateById(id: string, data: QueryDeepPartialEntity<T>): Promise<UpdateResult> {
     return this.repository.update(id, data);
   }
 

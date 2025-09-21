@@ -1,16 +1,10 @@
-import { ENTITIES } from '@common/enums';
-import {
-  Column,
-  Entity,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  Unique
-} from 'typeorm';
+import { Entities } from '@common/enums';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn, Unique } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { Account } from './account.entity';
 import { Room } from './room.entity';
 
-@Entity(ENTITIES.BRANCH)
+@Entity(Entities.BRANCH)
 @Unique(['name', 'address'])
 export class Branch extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'branch_id' })

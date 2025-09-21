@@ -1,9 +1,9 @@
-import { UserPayload } from '@common/types/user-payload.type';
+import { AccountPayload } from '@common/types/account-payload.type';
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { Request } from 'express';
 
-export const CurrentUser = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext): UserPayload => {
+export const CurrentAccount = createParamDecorator(
+  (data: unknown, ctx: ExecutionContext): AccountPayload => {
     const request: Request = ctx.switchToHttp().getRequest();
     return request.user;
   }
