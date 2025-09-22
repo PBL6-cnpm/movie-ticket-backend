@@ -1,10 +1,10 @@
-import { ENTITIES } from '@common/enums';
+import { Entities } from '@common/enums';
 import { Min } from 'class-validator';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseAuditedEntity } from '../base-entities/base.entity';
 import { BookRefreshments } from './book-refreshments.entity';
 
-@Entity(ENTITIES.REFRESHMENTS)
+@Entity(Entities.REFRESHMENTS)
 export class Refreshments extends BaseAuditedEntity {
   @PrimaryGeneratedColumn('uuid', { name: 'refreshments_id' })
   id: string;
@@ -32,9 +32,6 @@ export class Refreshments extends BaseAuditedEntity {
   })
   isCurrent: boolean;
 
-  @OneToMany(
-    () => BookRefreshments,
-    (bookRefreshments) => bookRefreshments.refreshments
-  )
+  @OneToMany(() => BookRefreshments, (bookRefreshments) => bookRefreshments.refreshments)
   bookRefreshmentss: BookRefreshments[];
 }

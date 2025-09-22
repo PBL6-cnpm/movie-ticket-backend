@@ -1,4 +1,4 @@
-import { ENTITIES } from '@common/enums';
+import { Entities } from '@common/enums';
 import { Min } from 'class-validator';
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
@@ -7,7 +7,7 @@ import { Seat } from './seat.entity';
 import { SpecialDate } from './special-day.entity';
 import { TypeDay } from './type-day.entity';
 
-@Entity(ENTITIES.BOOK_SEAT)
+@Entity(Entities.BOOK_SEAT)
 export class BookSeat extends BaseEntityTime {
   @PrimaryColumn({ name: 'booking_id' })
   bookingId: string;

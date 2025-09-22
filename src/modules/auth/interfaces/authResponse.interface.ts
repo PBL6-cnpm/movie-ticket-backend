@@ -1,10 +1,11 @@
-import { Account } from 'shared/db/entities/account.entity';
-
-export interface RegisterResponse {
-  verificationToken: string;
-  user: Account;
-}
+import { AccountResponseDto } from '@modules/accounts/dto/account-response.dto';
 
 export interface LoginResponse {
+  accessToken?: string;
+  message?: string;
+  account: AccountResponseDto;
+}
+
+export interface RefreshTokenResponse {
   accessToken: string;
 }

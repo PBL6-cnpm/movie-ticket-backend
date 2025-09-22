@@ -1,10 +1,10 @@
-import { ENTITIES } from '@common/enums';
+import { Entities } from '@common/enums';
 import { Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
-import { Role } from './role.entity';
 import { Permission } from './permission.entity';
+import { Role } from './role.entity';
 
-@Entity(ENTITIES.ROLE_PERMISSION)
+@Entity(Entities.ROLE_PERMISSION)
 export class RolePermission extends BaseEntityTime {
   @PrimaryColumn({ name: 'role_id' })
   roleId: string;

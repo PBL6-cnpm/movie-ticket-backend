@@ -1,9 +1,9 @@
-import { ENTITIES } from '@common/enums';
+import { Entities } from '@common/enums';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { MovieActor } from './movie-actor.entity';
 
-@Entity(ENTITIES.ACTOR)
+@Entity(Entities.ACTOR)
 export class Actor extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'actor_id' })
   id: string;

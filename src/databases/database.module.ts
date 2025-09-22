@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Account } from 'shared/db/entities/account.entity';
@@ -21,10 +21,35 @@ import { ShowTime } from 'shared/db/entities/show-time.entity';
 import { SpecialDate } from 'shared/db/entities/special-day.entity';
 import { TypeDay } from 'shared/db/entities/type-day.entity';
 import { TypeSeat } from 'shared/db/entities/type-seat.entity';
-import { Voucher } from 'shared/db/entities/voucher.enity';
+import { Voucher } from 'shared/db/entities/voucher.entity';
 import { DataSource } from 'typeorm';
 import { addTransactionalDataSource } from 'typeorm-transactional';
 
+const entities = [
+  Account,
+  Actor,
+  BookRefreshments,
+  BookSeat,
+  Booking,
+  Branch,
+  Genre,
+  MovieActor,
+  Movie,
+  Permission,
+  Refreshments,
+  Review,
+  RolePermission,
+  Role,
+  Room,
+  Seat,
+  ShowTime,
+  SpecialDate,
+  TypeDay,
+  TypeSeat,
+  Voucher
+];
+
+@Global()
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({
@@ -35,34 +60,11 @@ import { addTransactionalDataSource } from 'typeorm-transactional';
         port: configService.get('DATABASE_PORT'),
         username: configService.get('DATABASE_USER'),
         password: configService.get('DATABASE_PASSWORD'),
-        database: configService.get('DATABASE_NAME'),
-        entities: [
-          Account,
-          Actor,
-          BookRefreshments,
-          BookSeat,
-          Booking,
-          Branch,
-          Genre,
-          MovieActor,
-          Movie,
-          Permission,
-          Permission,
-          Refreshments,
-          Review,
-          RolePermission,
-          Role,
-          Room,
-          Seat,
-          ShowTime,
-          SpecialDate,
-          TypeDay,
-          TypeSeat,
-          Voucher
-        ],
+        database: configService.get('DATABASE_DATABASE'),
+        entities: entities,
         logging: true,
         timezone: 'Z',
-        synchronize: true // set to false in production
+        synchronize: true
       }),
       inject: [ConfigService],
       dataSourceFactory: async (options) => {
@@ -71,7 +73,8 @@ import { addTransactionalDataSource } from 'typeorm-transactional';
         addTransactionalDataSource(dataSource);
         return dataSource;
       }
-    })
+    }),
+    TypeOrmModule.forFeature(entities)
   ],
   exports: [TypeOrmModule]
 })

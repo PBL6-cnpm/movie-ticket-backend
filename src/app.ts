@@ -1,15 +1,15 @@
-import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { SwaggerModule } from '@nestjs/swagger';
-import * as bodyParser from 'body-parser';
-import * as cookieParser from 'cookie-parser';
 import * as express from 'express';
+import { SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { initializeTransactionalContext } from 'typeorm-transactional';
+import * as bodyParser from 'body-parser';
+import * as cookieParser from 'cookie-parser';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exception.filter';
-import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { swaggerConfig } from './configs/swagger.config';
 
 export async function createApp(): Promise<NestExpressApplication> {
@@ -28,9 +28,10 @@ export async function createApp(): Promise<NestExpressApplication> {
   app.use('/public', express.static(join(__dirname, '../', 'public')));
 
   // Api
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api');
   app.enableVersioning({
-    type: VersioningType.URI
+    type: VersioningType.URI,
+    defaultVersion: '1'
   });
 
   // Pipes

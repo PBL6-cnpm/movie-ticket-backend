@@ -1,11 +1,10 @@
-import { ENTITIES } from '@common/enums';
-import { DayOfWeek } from '@common/enums/type-day.enum';
+import { DayOfWeek, Entities } from '@common/enums';
 import { Min } from 'class-validator';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { BookSeat } from './book-seat.entity';
 
-@Entity(ENTITIES.TYPE_DAY)
+@Entity(Entities.TYPE_DAY)
 export class TypeDay extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'type_day_id' })
   id: string;

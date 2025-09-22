@@ -17,8 +17,7 @@ export const randomNumericCode = (length = 6): string => {
 };
 
 export const randomString = (length = 12): string => {
-  const characters =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   for (let i = 0; i < length; i++) {
     result += characters[randomInt(0, characters.length)];

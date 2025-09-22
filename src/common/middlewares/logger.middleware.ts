@@ -8,21 +8,12 @@ export class LoggerMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-      const obfuscateRequest: Record<string, unknown> = JSON.parse(
-        JSON.stringify(req.body)
-      );
+      const obfuscateRequest: Record<string, unknown> = JSON.parse(JSON.stringify(req.body));
 
-      const sensitiveFields: string[] = [
-        'password',
-        'newPassword',
-        'currentPassword'
-      ];
+      const sensitiveFields: string[] = ['password', 'newPassword', 'currentPassword'];
 
       sensitiveFields.forEach((field: string) => {
-        if (
-          obfuscateRequest[field] &&
-          typeof obfuscateRequest[field] === 'string'
-        ) {
+        if (obfuscateRequest[field] && typeof obfuscateRequest[field] === 'string') {
           obfuscateRequest[field] = '*******';
         }
       });
@@ -33,8 +24,7 @@ export class LoggerMiddleware implements NestMiddleware {
         );
       }
     } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       this.logger.error(
         `${new Date().toISOString()} - [Request Error] ${req.method} ${req.originalUrl || req.baseUrl} - ${errorMessage}`
       );
