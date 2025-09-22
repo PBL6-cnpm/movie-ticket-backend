@@ -82,15 +82,14 @@
 
     .btn-primary {
       box-sizing: border-box;
-      font-size: 24px;
+      font-size: 20px;
       font-weight: bold;
-      padding: 15px 10px 15px 25px;
+      padding: 15px 20px;
       text-decoration: none;
-      background-color: #8A48CD;
-      border-color: #8A48CD;
+      background-color: #FE7E32;
+      border-color: #FE7E32;
       color: #ffffff;
       width: fit-content;
-      letter-spacing: 15px;
       border-radius: 5px;
       text-align: center;
       display:inline-block;
@@ -102,7 +101,7 @@
     }
 
     .divider {
-      border: 0.5px solid #8A48CD;
+      border: 0.5px solid #FE7E32;
       margin-bottom: 15px;
       height: 0;
     }
@@ -258,7 +257,7 @@
                       <div class="divider"></div>
                       
                       <p>Hi {{name}},</p>
-                      <p>Before you finish creating your account, we need to verify your identity. On the verification page, enter the following code.</p>
+                      <p>Thanks for your request! We sent new link as below.</p>
                       
                       <table role="presentation" class="btn">
                         <tbody>
@@ -268,9 +267,9 @@
                                 <tbody>
                                   <tr>
                                     <td valign="top" align="center">
-                                      <p class="center btn-primary">{{code}}</p>
+                                      <a href="{{url}}" class="btn-primary" target="_blank">Verify My Email</a>
                                       <p style="font-weight: normal; margin: 15px; color: #666666;">
-                                        Your verification code expires after <strong>24 hours</strong>.
+                                        Your verification link expires after <strong>24 hours</strong>.
                                       </p>
                                     </td>
                                   </tr>
@@ -281,13 +280,11 @@
                         </tbody>
                       </table>
                       
-                      <p style="font-size: 14px;">
-                        Let us know if you have any queries or questions regarding this email or need any other information regarding our services. You can directly reach out to us by email <a href="mailto:info@npis.com">info@npis.com</a>
-                      </p>
+                      <p style="font-size: 14px;">If you didn't request this link, you can safely ignore this email.</p>
                       
                       <p style="font-size: 14px; margin-bottom: 0;">
                         Best regards, <br>
-                        The IS Project Team
+                        The PBL6 Team
                       </p>
                     </td>
                   </tr>
@@ -303,17 +300,17 @@
             <table role="presentation">
               <tr>
                 <td class="footer-text">
-                  <p style="margin: 0;">This email was sent to you from <strong>no-reply@npis.com</strong></p>
+                  <p style="margin: 0;">This email was sent to you from <strong>no-reply@pbl6.com</strong></p>
                 </td>
               </tr>
               <tr>
                 <td class="footer-address" valign="top" align="center">
-                  <span class="apple-link">NP IS, 381 Tran Hung Dao, Da Nang, Viet Nam</span>
+                  <span class="apple-link">54 Nguyen Luong Bang, Da Nang, Viet Nam</span>
                 </td>
               </tr>
               <tr>
                 <td class="footer-copyright">
-                  <p style="margin: 0;">Copyright &copy; 2025 <b>IS Project</b>, All Rights Reserved.</p>
+                  <p style="margin: 0;">Copyright &copy; 2025 <b>Movie Ticket PBL6</b>, All Rights Reserved.</p>
                 </td>
               </tr>
             </table>
@@ -325,5 +322,4 @@
     </tr>
   </table>
 </body>
-
 </html>

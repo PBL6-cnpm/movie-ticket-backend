@@ -1,4 +1,4 @@
-import { ENTITIES } from '@common/enums';
+import { Entities } from '@common/enums';
 import {
   Column,
   Entity,
@@ -13,7 +13,7 @@ import { Booking } from './booking.entity';
 import { Movie } from './movie.entity';
 import { Room } from './room.entity';
 
-@Entity(ENTITIES.SHOW_TIME)
+@Entity(Entities.SHOW_TIME)
 @Unique(['roomId', 'timeStart', 'showDate'])
 export class ShowTime extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'show_time_id' })

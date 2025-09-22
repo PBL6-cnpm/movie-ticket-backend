@@ -1,11 +1,11 @@
-import { ENTITIES } from '@common/enums';
+import { Entities } from '@common/enums';
 import { Max, Min } from 'class-validator';
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { Account } from './account.entity';
 import { Movie } from './movie.entity';
 
-@Entity(ENTITIES.REVIEW)
+@Entity(Entities.REVIEW)
 export class Review extends BaseEntityTime {
   @PrimaryColumn({ name: 'movie_id' })
   movieId: string;

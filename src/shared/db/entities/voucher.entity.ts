@@ -1,10 +1,10 @@
-import { ENTITIES } from '@common/enums';
+import { Entities } from '@common/enums';
 import { Min } from 'class-validator';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { Booking } from './booking.entity';
 
-@Entity(ENTITIES.VOUCHER)
+@Entity(Entities.VOUCHER)
 export class Voucher extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'voucher_id' })
   id: string;

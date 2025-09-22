@@ -1,4 +1,4 @@
-import { ENTITIES } from '@common/enums';
+import { Entities } from '@common/enums';
 import {
   Column,
   Entity,
@@ -13,7 +13,7 @@ import { Branch } from './branch.entity';
 import { Seat } from './seat.entity';
 import { ShowTime } from './show-time.entity';
 
-@Entity(ENTITIES.ROOM)
+@Entity(Entities.ROOM)
 @Unique(['branchId', 'name'])
 export class Room extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'room_id' })
