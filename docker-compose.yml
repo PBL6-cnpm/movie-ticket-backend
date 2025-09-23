@@ -1,75 +1,17 @@
-version: '3.8'
-
-services:
-  mysql:
-    image: mysql:8.0
-    container_name: movie_ticket_mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${DATABASE_USER}
-      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - movie_ticket_network
-    command: --default-authentication-plugin=mysql_native_password
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-upbl6", "-ppbl6password"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
-
-  redis:
-    image: redis:7-alpine
-    container_name: movie_ticket_redis
-    ports:
-      - "6379:6379"
-    networks:
-      - movie_ticket_network
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 60s
-
-  app:
-    build: .
-    container_name: movie_ticket_app
-    ports:
-      - "3000:3000"
-    environment:
-      DATABASE_HOST: ${DATABASE_HOST}
-      DATABASE_PORT: ${DATABASE_PORT}
-      DATABASE_USER: ${DATABASE_USER}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      DATABASE_NAME: ${DATABASE_NAME}
-      REDIS_URL: ${REDIS_URL}
-      JWT_SECRET: ${JWT_SECRET}
-      GCP_PROJECT_ID: ${GCP_PROJECT_ID}
-    depends_on:
-      - mysql
-      - redis
-    networks:
-      - movie_ticket_network
-    restart: always
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    env_file:
-      - .env
-
-volumes:
-  mysql_data:
+version: "3.8"
 
 networks:
-  movie_ticket_network:
-    driver: bridge
+  movie_app_net:
+    external: true   # join vào network có sẵn
+
+services:
+  backend:
+    build: .
+    container_name: movie-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    networks:
+      - movie_app_net
