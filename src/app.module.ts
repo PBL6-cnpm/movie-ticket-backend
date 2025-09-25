@@ -6,12 +6,11 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { HealthController } from 'health.controller';
+import { RedisConfigModule } from 'shared/modules/redis/redis.module';
 import { AppController } from './app.controller';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
 import { DatabaseModule } from './databases/database.module';
-import { EventModule } from './shared/modules/events/event.module';
 import { MailModule } from './shared/modules/mail/mail.module';
-import { RedisConfigModule } from 'shared/modules/redis/redis.module';
 
 @Module({
   imports: [
@@ -30,7 +29,6 @@ import { RedisConfigModule } from 'shared/modules/redis/redis.module';
     RedisConfigModule,
 
     // Event Module
-    EventModule,
 
     // Feature Modules
     AccountModule,

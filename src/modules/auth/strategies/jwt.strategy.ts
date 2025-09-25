@@ -1,4 +1,6 @@
+import { REDIS_KEYS } from '@common/constants/redis.constant';
 import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
+import { AccountStatus } from '@common/enums';
 import { Unauthorized } from '@common/exceptions/unauthorized.exception';
 import { AccountService } from '@modules/accounts/account.service';
 import { Injectable } from '@nestjs/common';
@@ -6,10 +8,8 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { REDIS_KEYS } from 'shared/modules/redis/redis.constant';
 import { RedisService } from 'shared/modules/redis/redis.service';
 import { JwtPayload } from '../interfaces/jwtPayload.interface';
-import { AccountStatus } from '@common/enums';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

@@ -40,8 +40,11 @@ export class AccountService extends BaseService<Account> {
   }
 
   async getAccountById(accountId: string): Promise<Account> {
-    return this.findOneById(accountId, {
-      where: { status: Not(AccountStatus.DELETED) }
+    return this.findOne({
+      where: {
+        id: accountId,
+        status: Not(AccountStatus.DELETED)
+      }
     });
   }
 }
