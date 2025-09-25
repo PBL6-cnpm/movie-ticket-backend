@@ -33,6 +33,10 @@ export class AuthService {
   private readonly refreshTokenTtl: string;
   private readonly emailVerificationTokenTtl: string;
 
+  private readonly apiEmailVerifyUrl: string;
+  private readonly clientVerifySuccessUrl: string;
+  private readonly clientVerifyFailureUrl: string;
+
   constructor(
     private readonly accountService: AccountService,
     private readonly roleService: RoleService,
@@ -47,6 +51,10 @@ export class AuthService {
     this.accessTokenTtl = this.configService.get<string>('ACCESS_TOKEN_TTL');
     this.refreshTokenTtl = this.configService.get<string>('REFRESH_TOKEN_TTL');
     this.emailVerificationTokenTtl = this.configService.get<string>('EMAIL_VERIFICATION_TOKEN_TTL');
+
+    this.apiEmailVerifyUrl = `${this.configService.get<string>('API_EMAIL_VERIFY_URL')}`;
+    this.clientVerifySuccessUrl = `${this.configService.get<string>('CLIENT_VERIFY_SUCCESS_URL')}`;
+    this.clientVerifyFailureUrl = `${this.configService.get<string>('CLIENT_VERIFY_FAILURE_URL')}`;
   }
 
   async register(registerDto: RegisterDto): Promise<AccountResponseDto> {
@@ -61,24 +69,18 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
     // Create new account
-    const customerId = await this.roleService.getRoleIdByName(RoleName.CUSTOMER);
+    const customerRoleId = await this.roleService.getRoleIdByName(RoleName.CUSTOMER);
     const newAccount = await this.accountService.create({
       ...registerDto,
       password: hashedPassword,
       status: AccountStatus.PENDING,
-      roleId: customerId
+      roleId: customerRoleId
     });
 
     // Send verification email
-    const verificationToken = await this.generateToken(
+    await this.generateAndSendEmailVerification(
       newAccount.id,
       newAccount.email,
-      this.jwtVerificationSecret,
-      this.emailVerificationTokenTtl
-    );
-    await this.sendVerificationEmail(
-      newAccount.email,
-      verificationToken,
       MAIL_TEMPLATE.EMAIL_VERIFICATION_REQUEST
     );
 
@@ -95,39 +97,46 @@ export class AuthService {
     }
 
     // Send verification email
-    const verificationToken = await this.generateToken(
+    await this.generateAndSendEmailVerification(
       account.id,
       account.email,
-      this.jwtVerificationSecret,
-      this.emailVerificationTokenTtl
-    );
-    await this.sendVerificationEmail(
-      account.email,
-      verificationToken,
       MAIL_TEMPLATE.EMAIL_VERIFICATION_RESEND
     );
   }
 
-  async verifyEmailVerification(token: string): Promise<void> {
-    const payload = await this.verifyToken(token, this.jwtVerificationSecret);
+  async verifyEmailVerification(res: Response, token: string): Promise<void> {
+    try {
+      const payload = await this.verifyToken(token, this.jwtVerificationSecret);
 
-    const account = await this.accountService.findOne({
-      where: { email: payload.email },
-      select: ['id', 'status']
-    });
-    if (!account) {
-      throw new NotFound(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
-    }
+      // Check token in redis
+      const storedToken = await this.redisService.get(
+        REDIS_KEYS.EMAIL_VERIFICATION(payload.accountId)
+      );
+      if (!storedToken || storedToken !== token) {
+        throw new BadRequest(RESPONSE_MESSAGES.INVALID_OR_EXPIRED_TOKEN);
+      }
+      await this.redisService.del(REDIS_KEYS.EMAIL_VERIFICATION(payload.accountId));
 
-    // Check account status
-    const isAlreadyActive = this.handleAccountStatus(account.status);
-    if (!isAlreadyActive) {
-      await this.accountService.updateById(account.id, {
-        status: AccountStatus.ACTIVE
+      const account = await this.accountService.findOne({
+        where: { email: payload.email },
+        select: ['id', 'status']
       });
-    }
+      if (!account) {
+        throw new NotFound(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
+      }
 
-    return;
+      // Check account status
+      const isAlreadyActive = this.handleAccountStatus(account.status);
+      if (!isAlreadyActive) {
+        await this.accountService.updateById(account.id, {
+          status: AccountStatus.ACTIVE
+        });
+      }
+
+      return res.redirect(`${this.clientVerifySuccessUrl}?email=${payload.email}`);
+    } catch {
+      return res.redirect(this.clientVerifyFailureUrl);
+    }
   }
 
   async login(res: Response, loginDto: LoginDto): Promise<LoginResponse> {
@@ -145,15 +154,9 @@ export class AuthService {
     const isAlreadyActive = this.handleAccountStatus(account.status);
     if (!isAlreadyActive) {
       // Send verification email
-      const verificationToken = await this.generateToken(
+      await this.generateAndSendEmailVerification(
         account.id,
         account.email,
-        this.jwtVerificationSecret,
-        this.emailVerificationTokenTtl
-      );
-      await this.sendVerificationEmail(
-        account.email,
-        verificationToken,
         MAIL_TEMPLATE.EMAIL_VERIFICATION_RESEND
       );
 
@@ -195,19 +198,7 @@ export class AuthService {
     }
   }
 
-  private async sendVerificationEmail(
-    email: string,
-    token: string,
-    { subject, template }: MailTemplate
-  ): Promise<void> {
-    const url = `${this.configService.get<string>('FRONTEND_URL')}/verify-email?token=${token}`;
-    await this.mailService.sendEmail(subject, MAIL_FROM, email, {
-      template,
-      context: { name: email, url }
-    });
-  }
-
-  // Generate tokens
+  // Tokens
   private async generateToken(
     accountId: string,
     email: string,
@@ -247,7 +238,6 @@ export class AuthService {
     return { accessToken };
   }
 
-  // Verify tokens
   private async verifyToken(token: string, secret: string): Promise<JwtPayload> {
     try {
       return this.jwtService.verifyAsync(token, { secret });
@@ -305,6 +295,13 @@ export class AuthService {
     }
   }
 
+  private async setEmailVerificationTokenToRedis(accountId: string, token: string): Promise<void> {
+    const ttlSeconds = Number(ms(this.emailVerificationTokenTtl as any)) / 1000;
+
+    await this.redisService.set(REDIS_KEYS.EMAIL_VERIFICATION(accountId), token, ttlSeconds);
+  }
+
+  // Others
   private handleAccountStatus(status: AccountStatus): boolean {
     switch (status) {
       case AccountStatus.ACTIVE:
@@ -316,5 +313,34 @@ export class AuthService {
       default:
         throw new BadRequest(RESPONSE_MESSAGES.UNKNOWN_ACCOUNT_STATUS);
     }
+  }
+
+  private async sendVerificationEmail(
+    email: string,
+    token: string,
+    { subject, template }: MailTemplate
+  ): Promise<void> {
+    const url = `${this.apiEmailVerifyUrl}${token}`;
+    await this.mailService.sendEmail(subject, MAIL_FROM, email, {
+      template,
+      context: { name: email, url }
+    });
+  }
+
+  private async generateAndSendEmailVerification(
+    accountId: string,
+    email: string,
+    mailTemplate: MailTemplate
+  ): Promise<void> {
+    const verificationToken = await this.generateToken(
+      accountId,
+      email,
+      this.jwtVerificationSecret,
+      this.emailVerificationTokenTtl
+    );
+
+    await this.sendVerificationEmail(email, verificationToken, mailTemplate);
+
+    await this.setEmailVerificationTokenToRedis(accountId, verificationToken);
   }
 }
