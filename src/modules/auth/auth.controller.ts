@@ -45,7 +45,7 @@ export class AuthController extends BaseController {
     return this.success(result);
   }
 
-  @Post('verification-emails')
+  @Post('email-verifications')
   @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Resend a verification email' })
@@ -60,14 +60,13 @@ export class AuthController extends BaseController {
     return this.success(null);
   }
 
-  @Get('verification-emails/verify/:token')
+  @Get('email-verifications/:token')
   @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify verification email' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Verification email verified successfully' })
-  async verifyEmailVerification(@Param('token') token: string): Promise<SuccessResponse<null>> {
-    await this.authService.verifyEmailVerification(token);
-    return this.success(null);
+  async verifyEmailVerification(@Param('token') token: string, @Res() res: Response) {
+    await this.authService.verifyEmailVerification(res, token);
   }
 
   @Post('login')

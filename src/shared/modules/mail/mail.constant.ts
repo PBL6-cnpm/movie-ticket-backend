@@ -13,4 +13,4 @@ export const MAIL_TEMPLATE = {
   }
 };
 
-export const MAIL_FROM = 'no-reply@pbl6.com';
+export const MAIL_FROM = 'no-reply@cinestech.com';
