@@ -1,4 +1,4 @@
-import { redis } from '@config/index';
+import { REDIS } from '@configs/env.config';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { RedisController } from './redis.controller';
@@ -11,9 +11,9 @@ import { RedisService } from './redis.service';
       useFactory: () => ({
         type: 'single',
         options: {
-          host: redis.host,
-          port: redis.port,
-          password: redis.password,
+          host: REDIS.host,
+          port: REDIS.port,
+          password: REDIS.password,
           retryDelayOnFailover: 1000,
           maxRetriesPerRequest: 5
         }
@@ -24,4 +24,4 @@ import { RedisService } from './redis.service';
   providers: [RedisService],
   exports: [RedisModule, RedisService]
 })
-export class RedisConfigModule {}
+export class RedisModuleCustom {}

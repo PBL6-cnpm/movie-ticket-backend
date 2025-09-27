@@ -1,4 +1,4 @@
-import { db } from '@config/index';
+import { DB } from '@configs/env.config';
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -59,11 +59,11 @@ const entities = [
       imports: [ConfigModule],
       useFactory: () => ({
         type: 'mysql',
-        host: db.host,
-        port: db.port,
-        username: db.username,
-        password: db.password,
-        database: db.database,
+        host: DB.host,
+        port: DB.port,
+        username: DB.username,
+        password: DB.password,
+        database: DB.database,
         entities: entities,
         logging: true,
         timezone: 'Z',

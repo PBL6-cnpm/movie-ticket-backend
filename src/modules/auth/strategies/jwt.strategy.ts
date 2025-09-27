@@ -2,7 +2,7 @@ import { REDIS_KEYS } from '@common/constants/redis.constant';
 import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
 import { AccountStatus } from '@common/enums';
 import { Unauthorized } from '@common/exceptions/unauthorized.exception';
-import { jwt } from '@config/index';
+import { JWT } from '@configs/env.config';
 import { AccountService } from '@modules/accounts/account.service';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
@@ -20,7 +20,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: jwt.secret,
+      secretOrKey: JWT.secret,
       passReqToCallback: true
     });
   }

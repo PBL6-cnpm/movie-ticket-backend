@@ -21,6 +21,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
+    if (response.headersSent) {
+      return;
+    }
+
     const apiResponse: ApiResponse<null> = {
       success: false,
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
