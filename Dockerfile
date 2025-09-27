@@ -25,7 +25,4 @@ COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 
-RUN mkdir -p ./dist/src/common/templates \
-    && cp -r ./dist/src/common/templates ./dist/src/common/templates || true
-
 CMD ["yarn", "start:prod"]
