@@ -2,14 +2,14 @@ import * as env from 'dotenv';
 
 env.config();
 
-export const redis = {
+export const REDIS = {
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
   db: parseInt(process.env.REDIS_DB || '0'),
   password: process.env.REDIS_PASSWORD
 };
 
-export const email = {
+export const EMAIL = {
   from: process.env.EMAIL_FROM,
   smtpHost: process.env.SMTP_HOST,
   smtpPort: parseInt(process.env.SMTP_PORT || '587'),
@@ -17,7 +17,7 @@ export const email = {
   smtpPassword: process.env.SMTP_PASSWORD
 };
 
-export const jwt = {
+export const JWT = {
   secret: process.env.JWT_SECRET,
   expiresIn: process.env.JWT_EXPIRES_IN || '1h',
   accessTokenTtl: process.env.ACCESS_TOKEN_TTL || '15m',
@@ -29,7 +29,7 @@ export const jwt = {
   clientVerifyFailedUrl: process.env.CLIENT_VERIFY_FAILED_URL
 };
 
-export const db = {
+export const DB = {
   host: process.env.DATABASE_HOST,
   port: parseInt(process.env.DATABASE_PORT || '3306'),
   username: process.env.DATABASE_USER,
@@ -37,6 +37,6 @@ export const db = {
   database: process.env.DATABASE_NAME
 };
 
-export const config = {
+export const APP = {
   nodeEnv: process.env.NODE_ENV || 'development'
 };

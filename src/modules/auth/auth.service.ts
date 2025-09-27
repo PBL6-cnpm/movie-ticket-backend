@@ -1,5 +1,5 @@
 import { COOKIE_NAMES } from '@common/constants/cookie.constant';
-import { MAIL_FROM, MAIL_TEMPLATE } from '@common/constants/email.constant';
+import { MAIL_TEMPLATE } from '@common/constants/email.constant';
 import { QUEUE_KEY } from '@common/constants/queue.constant';
 import { REDIS_KEYS } from '@common/constants/redis.constant';
 import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
@@ -7,9 +7,8 @@ import { AccountStatus, RoleName } from '@common/enums';
 import { BadRequest } from '@common/exceptions/bad-request.exception';
 import { NotFound } from '@common/exceptions/not-found.exception';
 import { MailTemplate } from '@common/interfaces/mail-template.interface';
-import { getCookieOptions } from '@common/utils';
-import { parseTtlToSeconds } from '@common/utils/string.helper';
-import { config, jwt } from '@config/index';
+import { getCookieOptions, parseTtlToSeconds } from '@common/utils';
+import { APP, JWT } from '@configs/env.config';
 import { AccountService } from '@modules/accounts/account.service';
 import { AccountResponseDto } from '@modules/accounts/dto/account-response.dto';
 import { RoleService } from '@modules/roles/role.service';
@@ -76,7 +75,7 @@ export class AuthService {
   async requestEmailVerification(resendCodeDto: ResendEmailDto): Promise<void> {
     const account = await this.accountService.findOne({
       where: { email: resendCodeDto.email },
-      select: ['id', 'email']
+      select: ['id', 'email', 'fullName']
     });
     if (!account) {
       throw new NotFound(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
@@ -93,7 +92,7 @@ export class AuthService {
 
   async verifyEmailVerification(res: Response, token: string): Promise<void> {
     try {
-      const payload = await this.verifyToken(token, jwt.jwtVerificationSecret);
+      const payload = await this.verifyToken(token, JWT.jwtVerificationSecret);
 
       // Check token in redis
       const storedToken = await this.redisService.get(
@@ -120,9 +119,9 @@ export class AuthService {
         });
       }
 
-      return res.redirect(`${jwt.clientVerifySuccessUrl}?email=${payload.email}`);
+      return res.redirect(`${JWT.clientVerifySuccessUrl}?email=${payload.email}`);
     } catch {
-      return res.redirect(jwt.clientVerifyFailedUrl);
+      return res.redirect(JWT.clientVerifyFailedUrl);
     }
   }
 
@@ -207,12 +206,12 @@ export class AuthService {
     accountId: string,
     email: string
   ): Promise<{ accessToken: string }> {
-    const accessToken = await this.generateToken(accountId, email, jwt.secret, jwt.accessTokenTtl);
+    const accessToken = await this.generateToken(accountId, email, JWT.secret, JWT.accessTokenTtl);
     const refreshToken = await this.generateToken(
       accountId,
       email,
-      jwt.secret,
-      jwt.refreshTokenTtl
+      JWT.secret,
+      JWT.refreshTokenTtl
     );
 
     this.setRefreshTokenToCookie(res, refreshToken);
@@ -231,8 +230,8 @@ export class AuthService {
 
   // Cookie
   private setRefreshTokenToCookie(res: Response, refreshToken: string) {
-    const expiredTime = parseInt(jwt.refreshTokenTtl) * 1000;
-    const nodeEnv = config.nodeEnv;
+    const expiredTime = parseInt(JWT.refreshTokenTtl) * 1000;
+    const nodeEnv = APP.nodeEnv;
     const cookieOptions = getCookieOptions(nodeEnv);
 
     res.cookie(COOKIE_NAMES.REFRESH_TOKEN, refreshToken, {
@@ -242,7 +241,7 @@ export class AuthService {
   }
 
   private delRefreshTokenFromCookie(res: Response) {
-    const nodeEnv = config.nodeEnv;
+    const nodeEnv = APP.nodeEnv;
     const cookieOptions = getCookieOptions(nodeEnv);
 
     res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, cookieOptions);
@@ -250,7 +249,7 @@ export class AuthService {
 
   // Redis
   private async addRefreshTokenToUserSession(accountId: string, token: string): Promise<void> {
-    const ttlSeconds = parseTtlToSeconds(jwt.refreshTokenTtl);
+    const ttlSeconds = parseTtlToSeconds(JWT.refreshTokenTtl);
 
     await this.redisService.addToRedisSetAndKey(
       REDIS_KEYS.ACTIVE_REFRESH_TOKEN(token),
@@ -270,7 +269,7 @@ export class AuthService {
   }
 
   private async setBlacklistTokenToRedis(token: string): Promise<void> {
-    const payload = await this.verifyToken(token, jwt.secret);
+    const payload = await this.verifyToken(token, JWT.secret);
     const ttl = payload.exp - Math.floor(Date.now() / 1000);
 
     if (ttl > 0) {
@@ -279,7 +278,7 @@ export class AuthService {
   }
 
   private async setEmailVerificationTokenToRedis(accountId: string, token: string): Promise<void> {
-    const ttlSeconds = parseTtlToSeconds(jwt.emailVerificationTokenTtl);
+    const ttlSeconds = parseTtlToSeconds(JWT.emailVerificationTokenTtl);
     await this.redisService.set(REDIS_KEYS.EMAIL_VERIFICATION(accountId), token, ttlSeconds);
   }
 
@@ -297,23 +296,6 @@ export class AuthService {
     }
   }
 
-  private async sendVerificationEmail(
-    email: string,
-    token: string,
-    { subject, template }: MailTemplate
-  ): Promise<void> {
-    const url = `${jwt.apiEmailVerifyUrl}${token}`;
-    await this.mailService.sendEmail({
-      toAddress: email,
-      fromAddress: MAIL_FROM,
-      subject,
-      template,
-      options: {
-        context: { name: email, url }
-      }
-    });
-  }
-
   private async generateAndSendEmailVerification(
     accountId: string,
     email: string,
@@ -323,8 +305,8 @@ export class AuthService {
     const verificationToken = await this.generateToken(
       accountId,
       email,
-      jwt.jwtVerificationSecret,
-      jwt.emailVerificationTokenTtl
+      JWT.jwtVerificationSecret,
+      JWT.emailVerificationTokenTtl
     );
 
     await this.emailQueue.add({
@@ -334,7 +316,7 @@ export class AuthService {
         template: mailTemplate.template,
         subject: mailTemplate.subject,
         options: {
-          context: { name: fullName, url: `${jwt.apiEmailVerifyUrl}${verificationToken}` }
+          context: { name: fullName, url: `${JWT.apiEmailVerifyUrl}${verificationToken}` }
         }
       }
     });

@@ -1,4 +1,4 @@
-import { jwt } from '@config/index';
+import { JWT } from '@configs/env.config';
 import { AccountModule } from '@modules/accounts/account.module';
 import { RoleModule } from '@modules/roles/role.module';
 import { Module } from '@nestjs/common';
@@ -14,9 +14,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     PassportModule,
     JwtModule.registerAsync({
       useFactory: () => ({
-        secret: jwt.secret,
+        secret: JWT.secret,
         signOptions: {
-          expiresIn: jwt.accessTokenTtl
+          expiresIn: JWT.accessTokenTtl
         }
       })
     }),

@@ -1,11 +1,11 @@
-import { config, email } from '@config/index';
+import { APP, EMAIL } from '@configs/env.config';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { Global, Module } from '@nestjs/common';
 import { join } from 'path';
 import { MailService } from './send-mail.service';
 
-const isProd = config.nodeEnv === 'production';
+const isProd = APP.nodeEnv === 'production';
 const templateDir = isProd
   ? join(process.cwd(), 'dist', 'common', 'templates')
   : join(process.cwd(), 'src', 'common', 'templates');
@@ -16,12 +16,12 @@ const templateDir = isProd
     MailerModule.forRootAsync({
       useFactory: () => ({
         transport: {
-          host: email.smtpHost,
-          port: email.smtpPort,
+          host: EMAIL.smtpHost,
+          port: EMAIL.smtpPort,
           secure: false,
           auth: {
-            user: email.smtpUser,
-            pass: email.smtpPassword
+            user: EMAIL.smtpUser,
+            pass: EMAIL.smtpPassword
           }
         },
         template: {
@@ -35,4 +35,4 @@ const templateDir = isProd
   providers: [MailService],
   exports: [MailService]
 })
-export class MailModule {}
+export class MailModuleCustom {}
