@@ -1,8 +1,8 @@
 import { Entities } from '@common/enums';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
-import { Genre } from './genre.entity';
 import { MovieActor } from './movie-actor.entity';
+import { MovieGenre } from './movie_genre.entity';
 import { Review } from './review.entity';
 import { ShowTime } from './show-time.entity';
 
@@ -14,7 +14,7 @@ export class Movie extends BaseEntityTime {
   @Column({ name: 'name', nullable: false })
   name: string;
 
-  @Column({ name: 'description' })
+  @Column({ name: 'description', type: 'varchar', length: 1000, nullable: true })
   description: string;
 
   @Column({ name: 'duration', type: 'int', nullable: false })
@@ -32,9 +32,6 @@ export class Movie extends BaseEntityTime {
   @Column({ name: 'poster' })
   poster: string;
 
-  @Column({ name: 'genre_id' })
-  genreId: string;
-
   @Column({ name: 'release_date', type: 'timestamp' })
   releaseDate: Date;
 
@@ -47,7 +44,6 @@ export class Movie extends BaseEntityTime {
   @OneToMany(() => ShowTime, (showTime) => showTime.movie)
   showTimes: ShowTime[];
 
-  @ManyToOne(() => Genre, (genre) => genre.movies)
-  @JoinColumn({ name: 'genre_id' })
-  genre: Genre;
+  @OneToMany(() => MovieGenre, (movieGenre) => movieGenre.movie)
+  movieGenres: MovieGenre[];
 }

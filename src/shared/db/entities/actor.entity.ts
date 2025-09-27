@@ -11,7 +11,7 @@ export class Actor extends BaseEntityTime {
   @Column({ name: 'name' })
   name: string;
 
-  @Column({ name: 'description' })
+  @Column({ name: 'description', type: 'varchar', length: 1000, nullable: true })
   description: string;
 
   @Column({ name: 'picture' })

@@ -1,6 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 
-import { MailModule } from 'shared/modules/mail/mail.module';
+import { MailModule } from 'shared/modules/send-mail/send-mail.module';
 import { EmailService } from './email.service';
 
 @Global()

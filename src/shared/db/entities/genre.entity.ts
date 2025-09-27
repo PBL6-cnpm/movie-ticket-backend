@@ -1,7 +1,7 @@
 import { Entities } from '@common/enums';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
-import { Movie } from './movie.entity';
+import { MovieGenre } from './movie_genre.entity';
 
 @Entity(Entities.GENRE)
 export class Genre extends BaseEntityTime {
@@ -11,6 +11,6 @@ export class Genre extends BaseEntityTime {
   @Column({ name: 'name' })
   name: string;
 
-  @OneToMany(() => Movie, (movie) => movie.genre)
-  movies: Movie[];
+  @OneToMany(() => MovieGenre, (movieGenre) => movieGenre.genre)
+  movieGenres: MovieGenre[];
 }

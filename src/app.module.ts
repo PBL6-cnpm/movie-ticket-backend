@@ -14,7 +14,7 @@ import { RedisConfigModule } from 'shared/modules/redis/redis.module';
 import { AppController } from './app.controller';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
 import { DatabaseModule } from './databases/database.module';
-import { MailModule } from './shared/modules/mail/mail.module';
+import { MailModule } from './shared/modules/send-mail/send-mail.module';
 
 @Module({
   imports: [

@@ -3,7 +3,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { Global, Module } from '@nestjs/common';
 import { join } from 'path';
-import { MailService } from './mail.service';
+import { MailService } from './send-mail.service';
 
 const isProd = config.nodeEnv === 'production';
 const templateDir = isProd
