@@ -12,5 +12,3 @@ export const MAIL_TEMPLATE = {
     subject: 'Reset your password'
   }
 };
-
-export const MAIL_FROM = 'no-reply@cinestech.com';
