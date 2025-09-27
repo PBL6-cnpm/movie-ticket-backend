@@ -8,7 +8,7 @@ import {
 
 @ValidatorConstraint({ name: 'isFutureDate', async: false })
 export class IsFutureDateConstraint implements ValidatorConstraintInterface {
-  validate(value: any) {
+  validate(value: string) {
     if (!value) return true;
     return new Date(value) >= new Date();
   }

@@ -15,6 +15,9 @@ export class Account extends BaseEntityTime {
   @Column({ name: 'role_id', nullable: false })
   roleId: string;
 
+  @Column({ name: 'full_name' })
+  fullName: string;
+
   @Column({ name: 'branch_id', nullable: true })
   branchId: string;
 

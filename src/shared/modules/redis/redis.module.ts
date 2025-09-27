@@ -1,6 +1,6 @@
+import { redis } from '@config/index';
 import { RedisModule } from '@nestjs-modules/ioredis';
 import { DynamicModule, Global, Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisController } from './redis.controller';
 import { RedisService } from './redis.service';
 
@@ -8,14 +8,12 @@ import { RedisService } from './redis.service';
 @Module({
   imports: [
     RedisModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
+      useFactory: () => ({
         type: 'single',
         options: {
-          host: configService.get<string>('REDIS_HOST'),
-          port: configService.get<number>('REDIS_PORT'),
-          password: configService.get<string>('REDIS_PASSWORD'),
+          host: redis.host,
+          port: redis.port,
+          password: redis.password,
           retryDelayOnFailover: 1000,
           maxRetriesPerRequest: 5
         }

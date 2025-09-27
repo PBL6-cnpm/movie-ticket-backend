@@ -1,33 +1,37 @@
-import { join } from 'path';
+import { email } from '@config/index';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { Global, Module } from '@nestjs/common';
+import { existsSync } from 'fs';
+import { join } from 'path';
 import { MailService } from './mail.service';
-import { ConfigService } from '@nestjs/config';
+
+const templateDir = existsSync(join(process.cwd(), 'dist'))
+  ? join(process.cwd(), 'dist', 'src', 'common', 'templates')
+  : join(process.cwd(), 'src', 'common', 'templates');
 
 @Global()
 @Module({
   imports: [
     MailerModule.forRootAsync({
-      useFactory: (config: ConfigService) => {
-        return {
-          transport: {
-            host: config.get('SMTP_HOST'),
-            port: config.get('SMTP_PORT'),
-            secure: false,
-            auth: {
-              user: config.get('SMTP_USER'),
-              pass: config.get('SMTP_PASSWORD')
-            }
-          },
-          template: {
-            dir: join(process.cwd(), 'src', 'common', 'templates'),
-            adapter: new HandlebarsAdapter(),
-            options: { strict: true }
+      useFactory: () => ({
+        transport: {
+          host: email.smtpHost,
+          port: email.smtpPort,
+          secure: false,
+          auth: {
+            user: email.smtpUser,
+            pass: email.smtpPassword
           }
-        };
-      },
-      inject: [ConfigService]
+        },
+        template: {
+          dir: templateDir,
+          adapter: new HandlebarsAdapter(),
+          options: {
+            strict: true
+          }
+        }
+      })
     })
   ],
   providers: [MailService],

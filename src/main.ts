@@ -6,4 +6,6 @@ async function main() {
   await app.listen(process.env.SERVER_PORT, '0.0.0.0');
 }
 
-main();
+main().catch((err) => {
+  console.error('Error starting the application:', err);
+});
