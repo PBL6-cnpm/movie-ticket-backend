@@ -2,10 +2,9 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 echo "🔍 Running ESLint..."
-yarn lint
+yarn eslint "src/**/*.ts" --fix
 
 echo "🎨 Running Prettier..."
-yarn format
+yarn prettier --write "src/**/*.ts"
 
 echo "✅ Pre-commit checks passed!"
-

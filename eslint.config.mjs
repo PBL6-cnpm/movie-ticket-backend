@@ -1,6 +1,7 @@
 // @ts-check
 import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import unusedImports from 'eslint-plugin-unused-imports'; // 👈 Thêm plugin
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -22,22 +23,28 @@ export default tseslint.config(
         projectService: true,
         tsconfigRootDir: import.meta.dirname
       }
-    }
-  },
-  {
+    },
+    plugins: {
+      'unused-imports': unusedImports
+    },
     rules: {
+      '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn',
-      '@typescript-eslint/no-unsafe-call': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
+      '@typescript-eslint/ban-ts-ignore': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
+      'prettier/prettier': 'error',
+      'no-unused-vars': 'off',
+      'unused-imports/no-unused-imports': 'error',
+      'unused-imports/no-unused-vars': [
+        'warn',
         {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_'
+          vars: 'all',
+          varsIgnorePattern: '^_',
+          args: 'after-used',
+          argsIgnorePattern: '^_'
         }
       ],
-      'no-unused-vars': 'off'
+      'no-duplicate-imports': 'error'
     }
   }
 );
