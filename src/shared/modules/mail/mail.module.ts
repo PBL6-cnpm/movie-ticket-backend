@@ -1,9 +1,14 @@
-import { email } from '@config/index';
+import { config, email } from '@config/index';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { Global, Module } from '@nestjs/common';
 import { join } from 'path';
 import { MailService } from './mail.service';
+
+const isProd = config.nodeEnv === 'production';
+const templateDir = isProd
+  ? join(process.cwd(), 'dist', 'common', 'templates')
+  : join(process.cwd(), 'src', 'common', 'templates');
 
 @Global()
 @Module({
@@ -20,11 +25,9 @@ import { MailService } from './mail.service';
           }
         },
         template: {
-          dir: join(process.cwd(), 'src', 'common', 'templates'),
+          dir: templateDir,
           adapter: new HandlebarsAdapter(),
-          options: {
-            strict: true
-          }
+          options: { strict: true }
         }
       })
     })
