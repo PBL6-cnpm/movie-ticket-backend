@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { Injectable, Logger } from '@nestjs/common';
 import { InjectRedis } from '@nestjs-modules/ioredis';
+import { Injectable, Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
 
 @Injectable()

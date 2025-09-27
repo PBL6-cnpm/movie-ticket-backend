@@ -59,4 +59,9 @@ export class BaseAccountDto {
   @IsEnum(RoleName)
   @IsNotEmpty()
   roleName: RoleName;
+
+  @ApiProperty({ description: 'Full name of the user' })
+  @IsString()
+  @IsNotEmpty()
+  fullName: string;
 }

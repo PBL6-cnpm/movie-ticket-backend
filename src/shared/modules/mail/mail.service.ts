@@ -1,18 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
+import { IEmail } from '@common/interfaces/email.interface';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable, Logger } from '@nestjs/common';
-
-interface MailOptions {
-  template?: string;
-  context?: Record<string, any>;
-  attachments?: Array<{
-    filename: string;
-    path?: string;
-    content?: string | Buffer;
-  }>;
-}
 
 @Injectable()
 export class MailService {
@@ -20,15 +11,16 @@ export class MailService {
 
   constructor(private mailerService: MailerService) {}
 
-  async sendEmail(subject: string, from: string, to: string | string[], options: MailOptions = {}) {
-    to = Array.isArray(to) ? to.join() : to;
+  async sendEmail(data: IEmail) {
+    const { toAddress, fromAddress, subject, template, options } = data;
+    this.logger.log(`Sending mail now with template=${template}`);
     const mailOptions = {
       subject,
-      from,
-      to,
-      template: options.template,
-      context: options.context,
-      attachments: options.attachments
+      from: fromAddress,
+      to: toAddress,
+      template: `./${template}`,
+      context: options?.context,
+      attachments: options?.attachments
     };
 
     this.logger.log('Sending mail now');

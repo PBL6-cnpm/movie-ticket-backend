@@ -1,5 +1,6 @@
 import { COOKIE_NAMES } from '@common/constants/cookie.constant';
-import { MAIL_FROM, MAIL_TEMPLATE } from '@common/constants/mail.constant';
+import { MAIL_FROM, MAIL_TEMPLATE } from '@common/constants/email.constant';
+import { QUEUE_KEY } from '@common/constants/queue.constant';
 import { REDIS_KEYS } from '@common/constants/redis.constant';
 import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
 import { AccountStatus, RoleName } from '@common/enums';
@@ -7,15 +8,17 @@ import { BadRequest } from '@common/exceptions/bad-request.exception';
 import { NotFound } from '@common/exceptions/not-found.exception';
 import { MailTemplate } from '@common/interfaces/mail-template.interface';
 import { getCookieOptions } from '@common/utils';
+import { parseTtlToSeconds } from '@common/utils/string.helper';
+import { config, jwt } from '@config/index';
 import { AccountService } from '@modules/accounts/account.service';
 import { AccountResponseDto } from '@modules/accounts/dto/account-response.dto';
 import { RoleService } from '@modules/roles/role.service';
+import { InjectQueue } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { Queue } from 'bull';
 import { Request, Response } from 'express';
-import * as ms from 'ms';
 import { ExtractJwt } from 'passport-jwt';
 import { MailService } from 'shared/modules/mail/mail.service';
 import { RedisService } from 'shared/modules/redis/redis.service';
@@ -27,35 +30,17 @@ import { JwtPayload } from './interfaces/jwtPayload.interface';
 
 @Injectable()
 export class AuthService {
-  private readonly jwtSecret: string;
-  private readonly jwtVerificationSecret: string;
-  private readonly accessTokenTtl: string;
-  private readonly refreshTokenTtl: string;
-  private readonly emailVerificationTokenTtl: string;
-
-  private readonly apiEmailVerifyUrl: string;
-  private readonly clientVerifySuccessUrl: string;
-  private readonly clientVerifyFailureUrl: string;
-
   constructor(
     private readonly accountService: AccountService,
     private readonly roleService: RoleService,
 
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
     private readonly mailService: MailService,
-    private readonly redisService: RedisService
-  ) {
-    this.jwtSecret = this.configService.get<string>('JWT_SECRET');
-    this.jwtVerificationSecret = this.configService.get<string>('JWT_VERIFICATION_SECRET');
-    this.accessTokenTtl = this.configService.get<string>('ACCESS_TOKEN_TTL');
-    this.refreshTokenTtl = this.configService.get<string>('REFRESH_TOKEN_TTL');
-    this.emailVerificationTokenTtl = this.configService.get<string>('EMAIL_VERIFICATION_TOKEN_TTL');
+    private readonly redisService: RedisService,
 
-    this.apiEmailVerifyUrl = `${this.configService.get<string>('API_EMAIL_VERIFY_URL')}`;
-    this.clientVerifySuccessUrl = `${this.configService.get<string>('CLIENT_VERIFY_SUCCESS_URL')}`;
-    this.clientVerifyFailureUrl = `${this.configService.get<string>('CLIENT_VERIFY_FAILURE_URL')}`;
-  }
+    @InjectQueue(QUEUE_KEY.sendEmail)
+    private readonly emailQueue: Queue
+  ) {}
 
   async register(registerDto: RegisterDto): Promise<AccountResponseDto> {
     const existingAccount = await this.accountService.findOne({
@@ -81,7 +66,8 @@ export class AuthService {
     await this.generateAndSendEmailVerification(
       newAccount.id,
       newAccount.email,
-      MAIL_TEMPLATE.EMAIL_VERIFICATION_REQUEST
+      MAIL_TEMPLATE.EMAIL_VERIFICATION_REQUEST,
+      newAccount.fullName
     );
 
     return new AccountResponseDto(newAccount, RoleName.CUSTOMER);
@@ -100,13 +86,14 @@ export class AuthService {
     await this.generateAndSendEmailVerification(
       account.id,
       account.email,
-      MAIL_TEMPLATE.EMAIL_VERIFICATION_RESEND
+      MAIL_TEMPLATE.EMAIL_VERIFICATION_RESEND,
+      account.fullName
     );
   }
 
   async verifyEmailVerification(res: Response, token: string): Promise<void> {
     try {
-      const payload = await this.verifyToken(token, this.jwtVerificationSecret);
+      const payload = await this.verifyToken(token, jwt.jwtVerificationSecret);
 
       // Check token in redis
       const storedToken = await this.redisService.get(
@@ -133,9 +120,9 @@ export class AuthService {
         });
       }
 
-      return res.redirect(`${this.clientVerifySuccessUrl}?email=${payload.email}`);
+      return res.redirect(`${jwt.clientVerifySuccessUrl}?email=${payload.email}`);
     } catch {
-      return res.redirect(this.clientVerifyFailureUrl);
+      return res.redirect(jwt.clientVerifyFailedUrl);
     }
   }
 
@@ -157,7 +144,8 @@ export class AuthService {
       await this.generateAndSendEmailVerification(
         account.id,
         account.email,
-        MAIL_TEMPLATE.EMAIL_VERIFICATION_RESEND
+        MAIL_TEMPLATE.EMAIL_VERIFICATION_RESEND,
+        account.fullName
       );
 
       return {
@@ -219,17 +207,12 @@ export class AuthService {
     accountId: string,
     email: string
   ): Promise<{ accessToken: string }> {
-    const accessToken = await this.generateToken(
-      accountId,
-      email,
-      this.jwtSecret,
-      this.accessTokenTtl
-    );
+    const accessToken = await this.generateToken(accountId, email, jwt.secret, jwt.accessTokenTtl);
     const refreshToken = await this.generateToken(
       accountId,
       email,
-      this.jwtSecret,
-      this.refreshTokenTtl
+      jwt.secret,
+      jwt.refreshTokenTtl
     );
 
     this.setRefreshTokenToCookie(res, refreshToken);
@@ -248,8 +231,8 @@ export class AuthService {
 
   // Cookie
   private setRefreshTokenToCookie(res: Response, refreshToken: string) {
-    const expiredTime = Number(ms(this.refreshTokenTtl as any));
-    const nodeEnv = this.configService.get<string>('NODE_ENV');
+    const expiredTime = parseInt(jwt.refreshTokenTtl) * 1000;
+    const nodeEnv = config.nodeEnv;
     const cookieOptions = getCookieOptions(nodeEnv);
 
     res.cookie(COOKIE_NAMES.REFRESH_TOKEN, refreshToken, {
@@ -259,7 +242,7 @@ export class AuthService {
   }
 
   private delRefreshTokenFromCookie(res: Response) {
-    const nodeEnv = this.configService.get<string>('NODE_ENV');
+    const nodeEnv = config.nodeEnv;
     const cookieOptions = getCookieOptions(nodeEnv);
 
     res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, cookieOptions);
@@ -267,7 +250,7 @@ export class AuthService {
 
   // Redis
   private async addRefreshTokenToUserSession(accountId: string, token: string): Promise<void> {
-    const ttlSeconds = Number(ms(this.refreshTokenTtl as any)) / 1000;
+    const ttlSeconds = parseTtlToSeconds(jwt.refreshTokenTtl);
 
     await this.redisService.addToRedisSetAndKey(
       REDIS_KEYS.ACTIVE_REFRESH_TOKEN(token),
@@ -287,7 +270,7 @@ export class AuthService {
   }
 
   private async setBlacklistTokenToRedis(token: string): Promise<void> {
-    const payload = await this.verifyToken(token, this.jwtSecret);
+    const payload = await this.verifyToken(token, jwt.secret);
     const ttl = payload.exp - Math.floor(Date.now() / 1000);
 
     if (ttl > 0) {
@@ -296,8 +279,7 @@ export class AuthService {
   }
 
   private async setEmailVerificationTokenToRedis(accountId: string, token: string): Promise<void> {
-    const ttlSeconds = Number(ms(this.emailVerificationTokenTtl as any)) / 1000;
-
+    const ttlSeconds = parseTtlToSeconds(jwt.emailVerificationTokenTtl);
     await this.redisService.set(REDIS_KEYS.EMAIL_VERIFICATION(accountId), token, ttlSeconds);
   }
 
@@ -320,26 +302,42 @@ export class AuthService {
     token: string,
     { subject, template }: MailTemplate
   ): Promise<void> {
-    const url = `${this.apiEmailVerifyUrl}${token}`;
-    await this.mailService.sendEmail(subject, MAIL_FROM, email, {
+    const url = `${jwt.apiEmailVerifyUrl}${token}`;
+    await this.mailService.sendEmail({
+      toAddress: email,
+      fromAddress: MAIL_FROM,
+      subject,
       template,
-      context: { name: email, url }
+      options: {
+        context: { name: email, url }
+      }
     });
   }
 
   private async generateAndSendEmailVerification(
     accountId: string,
     email: string,
-    mailTemplate: MailTemplate
+    mailTemplate: MailTemplate,
+    fullName?: string
   ): Promise<void> {
     const verificationToken = await this.generateToken(
       accountId,
       email,
-      this.jwtVerificationSecret,
-      this.emailVerificationTokenTtl
+      jwt.jwtVerificationSecret,
+      jwt.emailVerificationTokenTtl
     );
 
-    await this.sendVerificationEmail(email, verificationToken, mailTemplate);
+    await this.emailQueue.add({
+      data: {
+        toAddress: email,
+        verificationToken,
+        template: mailTemplate.template,
+        subject: mailTemplate.subject,
+        options: {
+          context: { name: fullName, url: `${jwt.apiEmailVerifyUrl}${verificationToken}` }
+        }
+      }
+    });
 
     await this.setEmailVerificationTokenToRedis(accountId, verificationToken);
   }
