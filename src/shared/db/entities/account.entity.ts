@@ -5,15 +5,12 @@ import { BaseEntityTime } from '../base-entities/base.entity';
 import { Booking } from './booking.entity';
 import { Branch } from './branch.entity';
 import { Review } from './review.entity';
-import { Role } from './role.entity';
+import { AccountRole } from './account-role.entity';
 
 @Entity(Entities.ACCOUNT)
 export class Account extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'account_id' })
   id: string;
-
-  @Column({ name: 'role_id', nullable: false })
-  roleId: string;
 
   @Column({ name: 'full_name' })
   fullName: string;
@@ -48,9 +45,8 @@ export class Account extends BaseEntityTime {
   })
   status: AccountStatus;
 
-  @ManyToOne(() => Role, (role) => role.accounts, { nullable: false })
-  @JoinColumn({ name: 'role_id' })
-  role: Role;
+  @OneToMany(() => AccountRole, (accountRole) => accountRole.account)
+  accountRoles: AccountRole[];
 
   @ManyToOne(() => Branch, (branch) => branch.accounts)
   @JoinColumn({ name: 'branch_id' })

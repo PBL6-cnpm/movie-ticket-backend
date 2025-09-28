@@ -1,11 +1,11 @@
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Role } from 'shared/db/entities/role.entity';
-import { Injectable } from '@nestjs/common';
 import { BaseService } from '@bases/base-service';
+import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
 import { RoleName } from '@common/enums';
 import { NotFound } from '@common/exceptions/not-found.exception';
-import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Role } from 'shared/db/entities/role.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class RoleService extends BaseService<Role> {
@@ -24,5 +24,15 @@ export class RoleService extends BaseService<Role> {
     }
 
     return role.id;
+  }
+
+  async getRoleByName(name: RoleName): Promise<Role> {
+    const role = await this.findOne({ where: { name } });
+
+    if (!role) {
+      throw new NotFound(RESPONSE_MESSAGES.ROLE_NOT_FOUND);
+    }
+
+    return role;
   }
 }

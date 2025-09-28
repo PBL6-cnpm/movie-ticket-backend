@@ -9,6 +9,7 @@ import { NotFound } from '@common/exceptions/not-found.exception';
 import { MailTemplate } from '@common/interfaces/mail-template.interface';
 import { getCookieOptions, parseTtlToSeconds } from '@common/utils';
 import { APP, JWT } from '@configs/env.config';
+import { AccountRoleService } from '@modules/account-role/account-role.service';
 import { AccountService } from '@modules/accounts/account.service';
 import { AccountResponseDto } from '@modules/accounts/dto/account-response.dto';
 import { RoleService } from '@modules/roles/role.service';
@@ -32,6 +33,7 @@ export class AuthService {
   constructor(
     private readonly accountService: AccountService,
     private readonly roleService: RoleService,
+    private readonly accountRoleService: AccountRoleService,
 
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
@@ -53,12 +55,18 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
     // Create new account
-    const customerRoleId = await this.roleService.getRoleIdByName(RoleName.CUSTOMER);
+    const customerRole = await this.roleService.getRoleByName(RoleName.CUSTOMER);
+
     const newAccount = await this.accountService.create({
       ...registerDto,
       password: hashedPassword,
-      status: AccountStatus.PENDING,
-      roleId: customerRoleId
+      status: AccountStatus.PENDING
+    });
+
+    // Create new account_role(Customer) of Account Customer
+    await this.accountRoleService.create({
+      account: newAccount,
+      role: customerRole
     });
 
     // Send verification email
@@ -69,7 +77,7 @@ export class AuthService {
       newAccount.fullName
     );
 
-    return new AccountResponseDto(newAccount, RoleName.CUSTOMER);
+    return new AccountResponseDto(newAccount, [customerRole.name]);
   }
 
   async requestEmailVerification(resendCodeDto: ResendEmailDto): Promise<void> {
@@ -128,7 +136,7 @@ export class AuthService {
   async login(res: Response, loginDto: LoginDto): Promise<LoginResponse> {
     const account = await this.accountService.findOne({
       where: { email: loginDto.email },
-      relations: ['role']
+      relations: ['accountRoles', 'accountRoles.role']
     });
 
     const isValid = account && (await bcrypt.compare(loginDto.password, account.password));

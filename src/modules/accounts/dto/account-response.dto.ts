@@ -5,18 +5,18 @@ export class AccountResponseDto {
   id: string;
   email: string;
   status: AccountStatus;
-  roleName: string;
   branchId: string;
   coin: number;
   createdAt: Date;
+  roleNames: string[];
 
-  constructor(account: Account, roleName?: string) {
+  constructor(account: Account, roleNames?: string[]) {
     this.id = account.id;
     this.email = account.email;
     this.status = account.status;
-    this.roleName = account.role?.name || roleName;
     this.branchId = account.branchId;
     this.coin = account.coin;
     this.createdAt = account.createdAt;
+    this.roleNames = account.accountRoles?.map((ar) => ar.role.name) || roleNames;
   }
 }

@@ -1,4 +1,5 @@
 import { JWT } from '@configs/env.config';
+import { AccountRoleModule } from '@modules/account-role/account-role.module';
 import { AccountModule } from '@modules/accounts/account.module';
 import { RoleModule } from '@modules/roles/role.module';
 import { Module } from '@nestjs/common';
@@ -21,7 +22,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       })
     }),
     AccountModule,
-    RoleModule
+    RoleModule,
+    AccountRoleModule
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtRefreshStrategy],

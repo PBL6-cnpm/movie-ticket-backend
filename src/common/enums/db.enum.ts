@@ -1,5 +1,6 @@
 export enum Entities {
   ACCOUNT = 'account',
+  ACCOUNT_ROLE = 'account_role',
   REVIEW = 'review',
   VOUCHER = 'voucher',
 

@@ -2,6 +2,7 @@ import { DB } from '@configs/env.config';
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AccountRole } from 'shared/db/entities/account-role.entity';
 import { Account } from 'shared/db/entities/account.entity';
 import { Actor } from 'shared/db/entities/actor.entity';
 import { BookRefreshments } from 'shared/db/entities/book-refreshments.entity';
@@ -29,6 +30,7 @@ import { addTransactionalDataSource } from 'typeorm-transactional';
 
 const entities = [
   Account,
+  AccountRole,
   Actor,
   BookRefreshments,
   BookSeat,
