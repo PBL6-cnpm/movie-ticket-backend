@@ -2,6 +2,7 @@ import { DatabaseModule } from '@databases/database.module';
 import { AccountModule } from '@modules/accounts/account.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { JwtGuard } from '@modules/auth/guards/jwt.guard';
+import { MovieModule } from '@modules/movies/movie.module';
 import { RoleModule } from '@modules/roles/role.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
@@ -20,7 +21,10 @@ import { LoggerMiddleware } from './common/middlewares/logger.middleware';
     BullQueueModule,
     AccountModule,
     AuthModule,
-    RoleModule
+    RoleModule,
+
+    //Movie Feature
+    MovieModule
   ],
   controllers: [AppController, HealthController],
   providers: [

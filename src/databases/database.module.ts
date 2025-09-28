@@ -37,6 +37,7 @@ const entities = [
   Booking,
   Branch,
   Genre,
+  MovieGenre,
   MovieActor,
   Movie,
   Permission,

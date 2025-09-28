@@ -102,5 +102,11 @@ export const RESPONSE_MESSAGES = {
   ROLE_NOT_FOUND: {
     message: 'Role not found',
     code: 'ROLE_NOT_FOUND'
+  },
+
+  //Movie
+  MOVIE_NOT_FOUND: {
+    message: 'Movie not found',
+    code: 'MOVIE_NOT_FOUND'
   }
 };
