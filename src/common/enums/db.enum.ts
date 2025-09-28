@@ -7,8 +7,8 @@ export enum Entities {
   ACTOR = 'actor',
   MOVIE = 'movie',
   GENRE = 'genre',
-  MOVIE_GENRE = 'movie_genre',
   MOVIE_ACTOR = 'movie_actor',
+  MOVIE_GENRE = 'movie_genre',
 
   BRANCH = 'branch',
   ROOM = 'room',

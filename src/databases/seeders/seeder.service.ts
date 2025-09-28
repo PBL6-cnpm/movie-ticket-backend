@@ -78,7 +78,7 @@ export class SeederService {
         if (!role) continue;
 
         for (const perName of permList) {
-          const permission = permissions.find((p) => p.name === (perName as PermissionName));
+          const permission = permissions.find((p) => p.name === perName);
           if (!permission) continue;
 
           rolePermEntities.push(
