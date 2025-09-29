@@ -97,6 +97,10 @@ export const RESPONSE_MESSAGES = {
     message: 'Email not verified. Please verify your email to proceed.',
     code: 'EMAIL_NOT_VERIFIED'
   },
+  PASSWORD_CONFIRM_NOT_MATCH: {
+    message: 'Password confirmation does not match',
+    code: 'PASSWORD_CONFIRM_NOT_MATCH'
+  },
 
   // Role
   ROLE_NOT_FOUND: {
