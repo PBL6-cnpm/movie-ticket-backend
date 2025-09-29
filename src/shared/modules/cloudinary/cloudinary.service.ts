@@ -24,8 +24,15 @@ export class CloudinaryService {
       const uploadStream: NodeJS.WritableStream = cloudinary.uploader.upload_stream(
         { folder: 'movies' } as UploadStreamOptions,
         ((error, result?: UploadApiResponse) => {
-          if (error) return reject(new Error(error.message || 'Upload failed'));
-          resolve(result.secure_url);
+          if (error) {
+            const err = error instanceof Error ? error : new Error(String(error));
+            return reject(err);
+          }
+          if (!result || !result.secure_url) {
+            return reject(new Error('Upload failed: no secure_url returned'));
+          }
+          const secureUrl: string = result.secure_url;
+          resolve(secureUrl);
         }) as UploadStreamCallback
       );
       uploadStream.end(file.buffer);
