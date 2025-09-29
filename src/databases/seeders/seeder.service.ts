@@ -97,7 +97,7 @@ export class SeederService {
       const accountRolesToSeed = mapping
         .map((m) => {
           const account = accounts.find((a) => a.email === m.email);
-          const role = roles.find((r) => r.name === m.role);
+          const role = roles.find((r) => r.name === m.role.toString());
           return account && role ? { accountId: account.id, roleId: role.id } : null;
         })
         .filter(Boolean);
