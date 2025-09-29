@@ -1,5 +1,5 @@
+import { RolePermissionSeed } from '@common/constants/role-permission.const';
 import { AccountStatus, PermissionName, RoleName } from '@common/enums';
-import { RolePermissionSeed } from '@common/enums/role-permission.const';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -157,6 +157,18 @@ export class SeederService {
       for (const [roleName, permList] of Object.entries(RolePermissionSeed)) {
         const role = roles.find((r) => r.name === (roleName as RoleName));
         if (!role) continue;
+
+        if (role.name == RoleName.SUPER_ADMIN) {
+          for (const permission of permissions) {
+            rolePermEntities.push(
+              this.rolePermissionRepo.create({
+                role,
+                permission
+              })
+            );
+          }
+          continue;
+        }
 
         for (const perName of permList) {
           const permission = permissions.find((p) => p.name === perName);
