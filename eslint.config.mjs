@@ -33,6 +33,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-call': 'off',
       'prettier/prettier': 'error',
+      '@typescript-eslint/no-unsafe-enum-comparison': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       'no-unused-vars': 'off',
       'unused-imports/no-unused-imports': 'error',

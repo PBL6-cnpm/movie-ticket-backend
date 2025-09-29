@@ -2,8 +2,10 @@ import { REDIS_KEYS } from '@common/constants/redis.constant';
 import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
 import { AccountStatus } from '@common/enums';
 import { Unauthorized } from '@common/exceptions/unauthorized.exception';
+import { IContextUser } from '@common/types/user.type';
 import { JWT } from '@configs/env.config';
 import { AccountService } from '@modules/accounts/account.service';
+import { PermissionService } from '@modules/permissions/permission.service';
 import { RoleService } from '@modules/roles/role.service';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
@@ -17,7 +19,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private readonly redisService: RedisService,
     private readonly accountService: AccountService,
-    private readonly roleService: RoleService
+    private readonly roleService: RoleService,
+    private readonly permissionService: PermissionService
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -44,13 +47,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     // Fetch roles using RoleService
     const roleEntities = await this.roleService.getRolesOfUser(account.id);
-    const roles = roleEntities.map((r) => r.name);
+    const permissions = await this.permissionService.getPermissionsOfRoles(
+      roleEntities.map((r) => r.id)
+    );
 
-    return {
-      accountId: account.id,
+    const userContext: IContextUser = {
+      id: account.id,
       email: account.email,
-      avatarUrl: account.avatarUrl,
-      roles
+      avatarUrl: account?.avatarUrl ?? '',
+      fullname: account.fullName,
+      status: account.status,
+      roles: roleEntities.map((r) => r.name),
+      permissions: permissions.map((p) => p.name),
+      phoneNumber: account?.phoneNumber ?? ''
     };
+
+    return userContext;
   }
 }

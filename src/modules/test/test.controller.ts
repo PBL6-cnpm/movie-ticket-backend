@@ -2,10 +2,9 @@ import { Permissions } from '@common/decorators/permissions.decorator';
 import { Roles } from '@common/decorators/roles.decorator';
 import { PermissionsGuard } from '@common/guards/permissions.guard';
 import { RequestInfoType } from '@common/types/request-info.type';
-import { AuthGuard } from '@modules/auth/guards/auth.guard';
 import { Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
 import { TestService } from './test.service';
-@UseGuards(AuthGuard, PermissionsGuard)
+@UseGuards(PermissionsGuard)
 @Controller('test')
 export class TestController {
   constructor(private readonly testService: TestService) {}

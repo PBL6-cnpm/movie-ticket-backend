@@ -3,7 +3,6 @@ import { PermissionService } from '@modules/permissions/permission.service';
 import { RoleService } from '@modules/roles/role.service';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Account } from 'shared/db/entities/account.entity';
 import { Permission } from 'shared/db/entities/permission.entity';
 import { Role } from 'shared/db/entities/role.entity';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
@@ -30,31 +29,35 @@ export class PermissionsGuard implements CanActivate {
       context.getClass()
     ]);
     const req = context.switchToHttp().getRequest();
-    const user = req.user as Account & { permissions: string[] };
-    const roles = user.accountRoles.map((ar) => ar?.role?.name);
-    const permissions = user.permissions;
-    console.log('user trong permissions guard', roles, permissions);
-    if (roles.map((r) => r.toLowerCase()).includes(RoleName.SUPER_ADMIN.toLowerCase())) {
+
+    const user = req.user;
+    const roles: string[] = user?.roles ?? [];
+    const permissions: string[] = user?.permissions ?? [];
+    if (roles.map((r: string) => r?.toLowerCase()).includes(RoleName.SUPER_ADMIN.toLowerCase())) {
       return true;
     }
+
     if (!requiredRoles && !requiredPermissions) {
       return true;
     }
+
     let isRoleMatch = false;
     let isPermissionMatch = false;
+
     if (
-      !!requiredRoles &&
-      requiredRoles.some((role) => roles.map((r) => r.toLowerCase()).includes(role.toLowerCase()))
+      Array.isArray(requiredRoles) &&
+      requiredRoles.some((role) => roles.map((r) => r?.toLowerCase()).includes(role.toLowerCase()))
     ) {
-      console.log('vao day 1');
       isRoleMatch = true;
     }
 
-    if (!!requiredPermissions && requiredPermissions.some((perm) => permissions?.includes(perm))) {
-      console.log('vao day');
+    if (
+      Array.isArray(requiredPermissions) &&
+      requiredPermissions.some((perm) => permissions.includes(perm))
+    ) {
       isPermissionMatch = true;
     }
 
-    return isRoleMatch && isPermissionMatch;
+    return isRoleMatch || isPermissionMatch;
   }
 }
