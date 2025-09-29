@@ -93,51 +93,18 @@ export class RedisService {
     }
   }
 
-  // Transactional operations: set key and add member to set
-  async addToRedisSetAndKey(
-    key: string,
-    value: string,
-    setKey: string,
-    member: string,
-    ttlSeconds?: number
-  ): Promise<void> {
+  async addToSet(setKey: string, member: string): Promise<void> {
     try {
-      if (!key || !value || !setKey || !member) return;
-      const multi = this.redis.multi();
-
-      if (ttlSeconds && ttlSeconds > 0) {
-        multi.set(key, value, 'EX', ttlSeconds);
-      } else {
-        multi.set(key, value);
-      }
-
-      multi.sadd(setKey, member);
-
-      const results = await multi.exec();
-      if (!results) {
-        throw new Error('Redis multi execution failed');
-      }
+      await this.redis.sadd(setKey, member);
     } catch (error) {
       this.logger.error('Redis add failed', error.stack);
       throw error;
     }
   }
 
-  async removeFromRedisSetAndKey(
-    keyToDelete: string,
-    setKey: string,
-    member: string
-  ): Promise<void> {
+  async removeKeyFromSet(setKey: string, member: string): Promise<void> {
     try {
-      if (!keyToDelete || !setKey || !member) return;
-      const multi = this.redis.multi();
-      multi.del(keyToDelete);
-      multi.srem(setKey, member);
-
-      const results = await multi.exec();
-      if (!results) {
-        throw new Error('Redis multi execution failed');
-      }
+      await this.redis.srem(setKey, member);
     } catch (error) {
       this.logger.error('Redis remove failed', error.stack);
       throw error;
