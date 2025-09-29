@@ -114,7 +114,7 @@ export class SeederService {
     this.logger.log('Seeding roles...');
     try {
       const rolesToSeed = Object.values(RoleName).map((name) => ({
-        name: name as RoleName
+        name: name.toString()
       }));
 
       await this.roleRepo.upsert(rolesToSeed, {
@@ -155,10 +155,10 @@ export class SeederService {
       const rolePermEntities = [];
 
       for (const [roleName, permList] of Object.entries(RolePermissionSeed)) {
-        const role = roles.find((r) => r.name === (roleName as RoleName));
+        const role = roles.find((r) => r.name === roleName.toString());
         if (!role) continue;
 
-        if (role.name == RoleName.SUPER_ADMIN) {
+        if (role.name == RoleName.SUPER_ADMIN.toString()) {
           for (const permission of permissions) {
             rolePermEntities.push(
               this.rolePermissionRepo.create({

@@ -1,4 +1,4 @@
-import { Entities, RoleName } from '@common/enums';
+import { Entities } from '@common/enums';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { AccountRole } from './account-role.entity';
@@ -11,12 +11,10 @@ export class Role extends BaseEntityTime {
 
   @Column({
     name: 'name',
-    type: 'enum',
-    enum: RoleName,
     unique: true,
     nullable: false
   })
-  name: RoleName;
+  name: string;
 
   @OneToMany(() => AccountRole, (accountRole) => accountRole.role)
   accountRoles: AccountRole[];
