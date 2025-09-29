@@ -1,7 +1,7 @@
 // @ts-check
 import eslint from '@eslint/js';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
-import unusedImports from 'eslint-plugin-unused-imports'; // 👈 Thêm plugin
+import unusedImports from 'eslint-plugin-unused-imports';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
@@ -18,21 +18,22 @@ export default tseslint.config(
         ...globals.node,
         ...globals.jest
       },
-      sourceType: 'commonjs',
+      sourceType: 'module',
       parserOptions: {
-        projectService: true,
-        tsconfigRootDir: import.meta.dirname
+        project: './tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+        ecmaVersion: 'latest'
       }
     },
     plugins: {
       'unused-imports': unusedImports
     },
     rules: {
-      '@typescript-eslint/explicit-function-return-type': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/ban-ts-ignore': 'off',
-      '@typescript-eslint/ban-ts-comment': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
       'prettier/prettier': 'error',
+      '@typescript-eslint/no-explicit-any': 'off',
       'no-unused-vars': 'off',
       'unused-imports/no-unused-imports': 'error',
       'unused-imports/no-unused-vars': [

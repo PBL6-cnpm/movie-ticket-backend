@@ -1,15 +1,17 @@
 import { Entities } from '@common/enums';
-import { Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
-import { BaseEntityTime } from '../base-entities/base.entity';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { Account } from './account.entity';
 import { Role } from './role.entity';
 
-@Entity(Entities.ACCOUNT_ROLE)
-export class AccountRole extends BaseEntityTime {
-  @PrimaryColumn({ name: 'account_id' })
+@Entity({ name: Entities.ACCOUNT_ROLE })
+export class AccountRole {
+  @PrimaryGeneratedColumn('uuid', { name: 'account_role_id' })
+  account_role_id: string;
+
+  @Column({ name: 'account_id' })
   accountId: string;
 
-  @PrimaryColumn({ name: 'role_id' })
+  @Column({ name: 'role_id' })
   roleId: string;
 
   @ManyToOne(() => Account, (account) => account.accountRoles)

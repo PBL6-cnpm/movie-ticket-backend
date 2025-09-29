@@ -17,6 +17,6 @@ export class AccountResponseDto {
     this.branchId = account.branchId;
     this.coin = account.coin;
     this.createdAt = account.createdAt;
-    this.roleNames = account.accountRoles?.map((ar) => ar.role.name) || roleNames;
+    this.roleNames = account.accountRoles?.map((ar) => ar.role.name) ?? roleNames;
   }
 }

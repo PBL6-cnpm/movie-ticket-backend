@@ -19,6 +19,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
+import { Account } from 'shared/db/entities/account.entity';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -94,9 +95,9 @@ export class AuthController extends BaseController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Token refreshed successfully' })
   async refreshToken(
     @Res({ passthrough: true }) res: Response,
-    @CurrentAccount() account: AccountPayload
+    @CurrentAccount() account: Account
   ): Promise<SuccessResponse<RefreshTokenResponse>> {
-    const result = await this.authService.refreshToken(res, account.accountId, account.email);
+    const result = await this.authService.refreshToken(res, account);
     return this.success(result);
   }
 

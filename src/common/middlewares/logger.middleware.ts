@@ -7,7 +7,6 @@ export class LoggerMiddleware implements NestMiddleware {
 
   use(req: Request, res: Response, next: NextFunction): void {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const obfuscateRequest: Record<string, unknown> = req.body
         ? JSON.parse(JSON.stringify(req.body))
         : {};

@@ -1,7 +1,10 @@
-import { PermissionName, RoleName } from '@common/enums';
+import { AccountStatus, PermissionName, RoleName } from '@common/enums';
 import { RolePermissionSeed } from '@common/enums/role-permission.const';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcryptjs';
+import { AccountRole } from 'shared/db/entities/account-role.entity';
+import { Account } from 'shared/db/entities/account.entity';
 import { Permission } from 'shared/db/entities/permission.entity';
 import { RolePermission } from 'shared/db/entities/role-permission.entity';
 import { Role } from 'shared/db/entities/role.entity';
@@ -19,16 +22,94 @@ export class SeederService {
     private permissionRepo: Repository<Permission>,
 
     @InjectRepository(RolePermission)
-    private rolePermissionRepo: Repository<RolePermission>
+    private rolePermissionRepo: Repository<RolePermission>,
+
+    @InjectRepository(Account)
+    private accountRepo: Repository<Account>,
+
+    @InjectRepository(AccountRole)
+    private accountRoleRepo: Repository<AccountRole>
   ) {}
 
   async seed() {
     this.logger.log('Starting seeding process...');
     await this.seedRoles();
     await this.seedPermissions();
+    await this.seedAccounts();
+    await this.seedAccountRoles();
     await this.seedRolePermissions();
   }
+  private async seedAccounts() {
+    this.logger.log('Seeding accounts...');
+    try {
+      const rawAccounts = [
+        {
+          fullName: 'Super Admin',
+          email: 'superadmin@example.com',
+          password: 'SuperAdmin@123',
+          status: AccountStatus.ACTIVE
+        },
+        {
+          fullName: 'Admin User',
+          email: 'admin@example.com',
+          password: 'Admin@1234',
+          status: AccountStatus.ACTIVE
+        },
+        {
+          fullName: 'Staff User',
+          email: 'staff@example.com',
+          password: 'Staff@1234',
+          status: AccountStatus.ACTIVE
+        },
+        {
+          fullName: 'Customer User',
+          email: 'customer@example.com',
+          password: 'Customer@1234',
+          status: AccountStatus.ACTIVE
+        }
+      ];
+      const accountsToSeed = [];
+      for (const acc of rawAccounts) {
+        const hashedPassword = await bcrypt.hash(acc.password, 10);
+        accountsToSeed.push({ ...acc, password: hashedPassword });
+      }
+      await this.accountRepo.upsert(accountsToSeed, {
+        skipUpdateIfNoValuesChanged: true,
+        conflictPaths: ['email']
+      });
+      this.logger.log('Seeding accounts completed.');
+    } catch (error) {
+      this.logger.error('Error seeding accounts:', error);
+    }
+  }
 
+  async seedAccountRoles() {
+    this.logger.log('Seeding account roles...');
+    try {
+      const accounts = await this.accountRepo.find();
+      const roles = await this.roleRepo.find();
+      const mapping = [
+        { email: 'superadmin@example.com', role: RoleName.SUPER_ADMIN },
+        { email: 'admin@example.com', role: RoleName.ADMIN },
+        { email: 'staff@example.com', role: RoleName.STAFF },
+        { email: 'customer@example.com', role: RoleName.CUSTOMER }
+      ];
+      const accountRolesToSeed = mapping
+        .map((m) => {
+          const account = accounts.find((a) => a.email === m.email);
+          const role = roles.find((r) => r.name === m.role);
+          return account && role ? { accountId: account.id, roleId: role.id } : null;
+        })
+        .filter(Boolean);
+      await this.accountRoleRepo.upsert(accountRolesToSeed, {
+        skipUpdateIfNoValuesChanged: true,
+        conflictPaths: ['accountId', 'roleId']
+      });
+      this.logger.log('Seeding account roles completed.');
+    } catch (error) {
+      this.logger.error('Error seeding account roles:', error);
+    }
+  }
   private async seedRoles() {
     this.logger.log('Seeding roles...');
     try {
@@ -66,7 +147,7 @@ export class SeederService {
   }
 
   private async seedRolePermissions() {
-    this.logger.log('Seeding role_permissionn...');
+    this.logger.log('Seeding role_permissions...');
     try {
       const roles = await this.roleRepo.find();
       const permissions = await this.permissionRepo.find();
