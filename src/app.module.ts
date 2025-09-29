@@ -4,7 +4,6 @@ import { AccountModule } from '@modules/accounts/account.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { MovieModule } from '@modules/movies/movie.module';
 import { PermissionModule } from '@modules/permissions/permission.module';
-import { RolePermissionModule } from '@modules/role-permission/role-permission.module';
 import { RoleModule } from '@modules/roles/role.module';
 import { TestModule } from '@modules/test/test.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
@@ -29,8 +28,7 @@ import { LoggerMiddleware } from './common/middlewares/logger.middleware';
     MovieModule,
     TestModule,
     SeederModule,
-    PermissionModule,
-    RolePermissionModule
+    PermissionModule
   ],
   controllers: [AppController, HealthController]
 })
