@@ -35,4 +35,11 @@ export class RoleService extends BaseService<Role> {
 
     return role;
   }
+  async getRolesOfUser(userId: string): Promise<Role[]> {
+    // Lấy các role của user thông qua bảng AccountRole
+    return this.roleRepo
+      .createQueryBuilder('role')
+      .innerJoin('role.accountRoles', 'accountRole', 'accountRole.accountId = :userId', { userId })
+      .getMany();
+  }
 }

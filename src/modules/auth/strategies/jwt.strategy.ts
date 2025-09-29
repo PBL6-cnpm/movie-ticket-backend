@@ -4,18 +4,20 @@ import { AccountStatus } from '@common/enums';
 import { Unauthorized } from '@common/exceptions/unauthorized.exception';
 import { JWT } from '@configs/env.config';
 import { AccountService } from '@modules/accounts/account.service';
+import { RoleService } from '@modules/roles/role.service';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { RedisService } from 'shared/modules/redis/redis.service';
-import { JwtPayload } from '../interfaces/jwtPayload.interface';
+import { JwtPayload } from '../interfaces/jwt.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private readonly redisService: RedisService,
-    private readonly accountService: AccountService
+    private readonly accountService: AccountService,
+    private readonly roleService: RoleService
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -40,9 +42,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new Unauthorized(RESPONSE_MESSAGES.UNAUTHORIZED);
     }
 
+    // Fetch roles using RoleService
+    const roleEntities = await this.roleService.getRolesOfUser(account.id);
+    const roles = roleEntities.map((r) => r.name);
+
     return {
       accountId: account.id,
-      email: account.email
+      email: account.email,
+      avatarUrl: account.avatarUrl,
+      roles
     };
   }
 }

@@ -10,7 +10,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { RedisService } from 'shared/modules/redis/redis.service';
-import { JwtPayload } from '../interfaces/jwtPayload.interface';
+import { JwtPayload } from '../interfaces/jwt.interface';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {

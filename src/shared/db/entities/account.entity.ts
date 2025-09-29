@@ -2,10 +2,10 @@ import { AccountStatus, Entities } from '@common/enums';
 import { Min } from 'class-validator';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
+import { AccountRole } from './account-role.entity';
 import { Booking } from './booking.entity';
 import { Branch } from './branch.entity';
 import { Review } from './review.entity';
-import { AccountRole } from './account-role.entity';
 
 @Entity(Entities.ACCOUNT)
 export class Account extends BaseEntityTime {
@@ -36,6 +36,12 @@ export class Account extends BaseEntityTime {
   })
   @Min(0)
   coin: number;
+
+  @Column({ name: 'avatar_url', nullable: true })
+  avatarUrl: string;
+
+  @Column({ name: 'phone_number', nullable: true })
+  phoneNumber: string;
 
   @Column({
     name: 'status',

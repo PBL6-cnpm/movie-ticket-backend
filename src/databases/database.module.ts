@@ -52,7 +52,8 @@ const entities = [
   TypeDay,
   TypeSeat,
   Voucher,
-  MovieGenre
+  MovieGenre,
+  AccountRole
 ];
 
 @Global()
@@ -69,8 +70,8 @@ const entities = [
         database: DB.database,
         entities: entities,
         logging: true,
-        timezone: 'Z',
-        synchronize: true
+        timezone: 'Z'
+        // synchronize: true
       }),
       inject: [ConfigService],
       dataSourceFactory: async (options) => {

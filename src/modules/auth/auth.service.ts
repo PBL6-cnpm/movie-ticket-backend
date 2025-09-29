@@ -1,3 +1,4 @@
+import { userContextCacheKey } from '@common/constants/auth.constant';
 import { COOKIE_NAMES } from '@common/constants/cookie.constant';
 import { MAIL_TEMPLATE } from '@common/constants/email.constant';
 import { QUEUE_KEY } from '@common/constants/queue.constant';
@@ -7,6 +8,7 @@ import { AccountStatus, RoleName } from '@common/enums';
 import { BadRequest } from '@common/exceptions/bad-request.exception';
 import { NotFound } from '@common/exceptions/not-found.exception';
 import { MailTemplate } from '@common/interfaces/mail-template.interface';
+import { IContextUser } from '@common/types/user.type';
 import { getCookieOptions, parseTtlToSeconds } from '@common/utils';
 import { APP, JWT, URL } from '@configs/env.config';
 import { AccountRoleService } from '@modules/account-role/account-role.service';
@@ -16,19 +18,22 @@ import { RoleService } from '@modules/roles/role.service';
 import { InjectQueue } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { Queue } from 'bull';
 import { Request, Response } from 'express';
 import { ExtractJwt } from 'passport-jwt';
+import { AccountRole } from 'shared/db/entities/account-role.entity';
+import { Account } from 'shared/db/entities/account.entity';
 import { RedisService } from 'shared/modules/redis/redis.service';
 import { MailService } from 'shared/modules/send-mail/send-mail.service';
-import { Not } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SendEmailDto } from './dto/send-email.dto';
 import { LoginResponse, RefreshTokenResponse } from './interfaces/authResponse.interface';
-import { JwtPayload } from './interfaces/jwtPayload.interface';
+import { JwtPayload } from './interfaces/jwt.interface';
 
 @Injectable()
 export class AuthService {
@@ -40,7 +45,8 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
     private readonly redisService: RedisService,
-
+    @InjectRepository(AccountRole)
+    private readonly accountRoleRepository: Repository<AccountRole>, // Sử dụng repository của entity AccountRole
     @InjectQueue(QUEUE_KEY.sendEmail)
     private readonly emailQueue: Queue
   ) {}
@@ -65,16 +71,13 @@ export class AuthService {
       status: AccountStatus.PENDING
     });
 
-    // Create new account_role(Customer) of Account Customer
-    await this.accountRoleService.create({
-      account: newAccount,
-      role: customerRole
+    await this.accountRoleRepository.save({
+      accountId: newAccount.id,
+      roleId: customerRole.id
     });
-
     // Send verification email
     await this.generateAndSendEmailVerification(
-      newAccount.id,
-      newAccount.email,
+      newAccount,
       MAIL_TEMPLATE.EMAIL_VERIFICATION_REQUEST,
       newAccount.fullName
     );
@@ -92,12 +95,7 @@ export class AuthService {
     }
 
     // Send verification email
-    await this.generateAndSendEmailVerification(
-      account.id,
-      account.email,
-      MAIL_TEMPLATE.EMAIL_VERIFICATION_RESEND,
-      account.fullName
-    );
+    await this.generateAndSendEmailVerification(account, MAIL_TEMPLATE.EMAIL_VERIFICATION_RESEND);
   }
 
   async verifyEmailVerification(res: Response, token: string): Promise<void> {
@@ -150,12 +148,7 @@ export class AuthService {
     const isAlreadyActive = this.handleAccountStatus(account.status);
     if (!isAlreadyActive) {
       // Send verification email
-      await this.generateAndSendEmailVerification(
-        account.id,
-        account.email,
-        MAIL_TEMPLATE.EMAIL_VERIFICATION_RESEND,
-        account.fullName
-      );
+      await this.generateAndSendEmailVerification(account, MAIL_TEMPLATE.EMAIL_VERIFICATION_RESEND);
 
       return {
         message: RESPONSE_MESSAGES.EMAIL_NOT_VERIFIED.message,
@@ -163,20 +156,16 @@ export class AuthService {
       };
     }
 
-    const { accessToken } = await this.generateAndStoreTokens(res, account.id, account.email);
-
+    const { accessToken } = await this.generateAndStoreTokens(res, account);
+    await this.setContextUserToCache(account as unknown as IContextUser);
     return {
       accessToken,
       account: new AccountResponseDto(account)
     };
   }
 
-  async refreshToken(
-    res: Response,
-    accountId: string,
-    email: string
-  ): Promise<RefreshTokenResponse> {
-    const { accessToken } = await this.generateAndStoreTokens(res, accountId, email);
+  async refreshToken(res: Response, account: Account): Promise<RefreshTokenResponse> {
+    const { accessToken } = await this.generateAndStoreTokens(res, account);
 
     return { accessToken };
   }
@@ -247,12 +236,16 @@ export class AuthService {
   private async generateToken(
     accountId: string,
     email: string,
+    avatarUrl: string,
+    roles: AccountRole[],
     secret: string,
     ttl: string
   ): Promise<string> {
     const payload: JwtPayload = {
       accountId,
       email,
+      avatarUrl,
+      roles,
       iat: Math.floor(Date.now() / 1000)
     };
 
@@ -261,21 +254,31 @@ export class AuthService {
 
   private async generateAndStoreTokens(
     res: Response,
-    accountId: string,
-    email: string
+    account: Account
   ): Promise<{ accessToken: string }> {
-    const accessToken = await this.generateToken(accountId, email, JWT.secret, JWT.accessTokenTtl);
-    const refreshToken = await this.generateToken(
-      accountId,
-      email,
-      JWT.secret,
-      JWT.refreshTokenTtl
-    );
+    const [accessToken, refreshToken] = await Promise.all([
+      this.generateToken(
+        account.id,
+        account.email,
+        account.avatarUrl,
+        account.accountRoles,
+        JWT.secret,
+        JWT.accessTokenTtl
+      ),
+      this.generateToken(
+        account.id,
+        account.email,
+        account.avatarUrl,
+        account.accountRoles,
+        JWT.secret,
+        JWT.refreshTokenTtl
+      )
+    ]);
 
     this.setRefreshTokenToCookie(res, refreshToken);
 
     // Store refresh token in redis
-    await this.redisService.addToSet(REDIS_KEYS.USER_SESSIONS(accountId), refreshToken);
+    await this.redisService.addToSet(REDIS_KEYS.USER_SESSIONS(account.id), refreshToken);
 
     return { accessToken };
   }
@@ -298,6 +301,10 @@ export class AuthService {
       ...cookieOptions,
       maxAge: expiredTime
     });
+  }
+  private async setContextUserToCache(user: IContextUser) {
+    const ttlSeconds = parseTtlToSeconds(JWT.refreshTokenTtl);
+    await this.redisService.set(userContextCacheKey(user.id), user, ttlSeconds);
   }
 
   private delRefreshTokenFromCookie(res: Response) {
@@ -354,21 +361,22 @@ export class AuthService {
   }
 
   private async generateAndSendEmailVerification(
-    accountId: string,
-    email: string,
+    account: Account,
     mailTemplate: MailTemplate,
     fullName?: string
   ): Promise<void> {
     const verificationToken = await this.generateToken(
-      accountId,
-      email,
+      account.id,
+      account.email,
+      account.avatarUrl,
+      account.accountRoles,
       JWT.jwtVerificationSecret,
       JWT.emailVerificationTokenTtl
     );
 
     await this.emailQueue.add({
       data: {
-        toAddress: email,
+        toAddress: account.email,
         verificationToken,
         template: mailTemplate.template,
         subject: mailTemplate.subject,
@@ -378,7 +386,7 @@ export class AuthService {
       }
     });
 
-    await this.setEmailVerificationTokenToRedis(accountId, verificationToken);
+    await this.setEmailVerificationTokenToRedis(account.id, verificationToken);
   }
 
   private async generateAndSendPasswordResetEmail(
@@ -390,6 +398,8 @@ export class AuthService {
     const verificationToken = await this.generateToken(
       accountId,
       email,
+      '',
+      [],
       JWT.jwtVerificationSecret,
       JWT.passwordResetTokenTtl
     );
