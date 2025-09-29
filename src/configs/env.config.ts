@@ -19,21 +19,14 @@ export const EMAIL = {
 
 export const JWT = {
   secret: process.env.JWT_SECRET,
-  jwtVerificationSecret: process.env.JWT_VERIFICATION_SECRET,
-
   expiresIn: process.env.JWT_EXPIRES_IN || '1h',
   accessTokenTtl: process.env.ACCESS_TOKEN_TTL || '15m',
+  jwtVerificationSecret: process.env.JWT_VERIFICATION_SECRET,
   refreshTokenTtl: process.env.REFRESH_TOKEN_TTL || '7d',
-  emailVerificationTokenTtl: process.env.EMAIL_VERIFICATION_TOKEN_TTL || '24h',
-  passwordResetTokenTtl: process.env.PASSWORD_RESET_TOKEN_TTL || '1m'
-};
-
-export const URL = {
+  emailVerificationTokenTtl: process.env.EMAIL_VERIFICATION_TOKEN_TTL || '1h',
   apiEmailVerifyUrl: process.env.API_EMAIL_VERIFY_URL,
-
   clientVerifySuccessUrl: process.env.CLIENT_VERIFY_SUCCESS_URL,
-  clientVerifyFailedUrl: process.env.CLIENT_VERIFY_FAILED_URL,
-  clientResetPasswordUrl: process.env.CLIENT_RESET_PASSWORD_URL
+  clientVerifyFailedUrl: process.env.CLIENT_VERIFY_FAILED_URL
 };
 
 export const DB = {
