@@ -18,7 +18,7 @@ export class AccountRole {
   @JoinColumn({ name: 'account_id' })
   account: Account;
 
-  @ManyToOne(() => Role, (role) => role.accountRoles)
+  @ManyToOne(() => Role, (role) => role.accountRoles, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'role_id' })
   role: Role;
 }
