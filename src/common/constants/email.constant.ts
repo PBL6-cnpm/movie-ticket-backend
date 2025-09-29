@@ -7,8 +7,8 @@ export const MAIL_TEMPLATE = {
     template: 'email-verification-resend',
     subject: 'Resend verification code'
   },
-  RESET_PASSWORD_REQUEST: {
-    template: 'reset-password-request',
+  SEND_RESET_PASSWORD: {
+    template: 'send-reset-password-code',
     subject: 'Reset your password'
   }
 };

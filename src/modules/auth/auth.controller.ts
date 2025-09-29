@@ -22,8 +22,7 @@ import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { SendEmailDto } from './dto/send-email.dto';
+import { ResendEmailDto } from './dto/resend-email.dto';
 import { LoginResponse, RefreshTokenResponse } from './interfaces/authResponse.interface';
 
 @Controller('auth')
@@ -55,9 +54,9 @@ export class AuthController extends BaseController {
     description: 'Verification email resent successfully'
   })
   async requestEmailVerification(
-    @Body() sendEmailDto: SendEmailDto
+    @Body() resendCodeDto: ResendEmailDto
   ): Promise<SuccessResponse<null>> {
-    await this.authService.requestEmailVerification(sendEmailDto);
+    await this.authService.requestEmailVerification(resendCodeDto);
     return this.success(null);
   }
 
@@ -110,26 +109,6 @@ export class AuthController extends BaseController {
     @CurrentAccount() account: AccountPayload
   ): Promise<SuccessResponse<null>> {
     await this.authService.logout(req, res, account.accountId);
-    return this.success(null);
-  }
-
-  @Post('forgot-password')
-  @Public()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Request password reset' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Password reset email sent successfully' })
-  async requestPasswordReset(@Body() sendEmailDto: SendEmailDto): Promise<SuccessResponse<null>> {
-    await this.authService.requestPasswordReset(sendEmailDto);
-    return this.success(null);
-  }
-
-  @Post('reset-password')
-  @Public()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verify password reset token' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Password reset token is valid' })
-  async resetPassword(@Body() resetPassword: ResetPasswordDto): Promise<SuccessResponse<null>> {
-    await this.authService.resetPassword(resetPassword);
     return this.success(null);
   }
 }
