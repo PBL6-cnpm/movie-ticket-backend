@@ -1,3 +1,4 @@
+import { RESPONSE_MESSAGES } from '@common/constants';
 import { AccountStatus, RoleName } from '@common/enums';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -10,7 +11,6 @@ import {
   MaxLength,
   MinLength
 } from 'class-validator';
-import { RESPONSE_MESSAGES } from 'common/constants/response-message.constant';
 
 export class BaseAccountDto {
   @ApiProperty({ description: 'Email of the user' })

@@ -1,4 +1,4 @@
-import { QUEUE_KEY } from '@common/constants/queue.constant';
+import { QUEUE_KEY } from '@common/constants';
 import { IEmailQueue } from '@common/interfaces/email.interface';
 import { Process, Processor } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';

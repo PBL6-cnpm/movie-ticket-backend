@@ -1,8 +1,8 @@
-import { AccountPayload } from './account-payload.type';
+import { ContextUser } from './user.type';
 
 declare module 'express' {
   export interface Request {
-    user?: AccountPayload;
+    user?: ContextUser;
     cookies?: Record<string, string>;
   }
 }

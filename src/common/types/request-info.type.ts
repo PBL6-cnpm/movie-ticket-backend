@@ -1,5 +1,5 @@
 import { IsOptional, ValidateNested } from 'class-validator';
-import { IContextUser } from './user.type';
+import { ContextUser } from './user.type';
 
 class Header {
   @ValidateNested()
@@ -10,7 +10,7 @@ class Header {
 export class RequestInfoType {
   @ValidateNested()
   @IsOptional()
-  user: IContextUser;
+  user: ContextUser;
 
   @ValidateNested()
   @IsOptional()

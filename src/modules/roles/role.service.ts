@@ -1,7 +1,7 @@
 import { BaseService } from '@bases/base-service';
-import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
+import { RESPONSE_MESSAGES } from '@common/constants';
 import { RoleName } from '@common/enums';
-import { NotFound } from '@common/exceptions/not-found.exception';
+import { NotFound } from '@common/exceptions';
 import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from 'shared/db/entities/role.entity';

@@ -1,17 +1,8 @@
-import { userContextCacheKey } from '@common/constants/auth.constant';
-import { COOKIE_NAMES } from '@common/constants/cookie.constant';
-import { MAIL_TEMPLATE } from '@common/constants/email.constant';
-import { QUEUE_KEY } from '@common/constants/queue.constant';
-import { REDIS_KEYS } from '@common/constants/redis.constant';
-import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
 import { AccountStatus, RoleName } from '@common/enums';
-import { BadRequest } from '@common/exceptions/bad-request.exception';
-import { NotFound } from '@common/exceptions/not-found.exception';
 import { MailTemplate } from '@common/interfaces/mail-template.interface';
-import { IContextUser } from '@common/types/user.type';
+import { ContextUser } from '@common/types/user.type';
 import { getCookieOptions, parseTtlToSeconds } from '@common/utils';
 import { APP, JWT, URL } from '@configs/env.config';
-import { AccountRoleService } from '@modules/account-role/account-role.service';
 import { AccountService } from '@modules/accounts/account.service';
 import { AccountResponseDto } from '@modules/accounts/dto/account-response.dto';
 import { RoleService } from '@modules/roles/role.service';
@@ -26,7 +17,6 @@ import { ExtractJwt } from 'passport-jwt';
 import { AccountRole } from 'shared/db/entities/account-role.entity';
 import { Account } from 'shared/db/entities/account.entity';
 import { RedisService } from 'shared/modules/redis/redis.service';
-import { MailService } from 'shared/modules/send-mail/send-mail.service';
 import { Not, Repository } from 'typeorm';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -34,16 +24,22 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SendEmailDto } from './dto/send-email.dto';
 import { LoginResponse, RefreshTokenResponse } from './interfaces/authResponse.interface';
 import { JwtPayload } from './interfaces/jwt.interface';
+import {
+  COOKIE_NAMES,
+  MAIL_TEMPLATE,
+  QUEUE_KEY,
+  REDIS_KEYS,
+  RESPONSE_MESSAGES
+} from '@common/constants';
+import { BadRequest, NotFound } from '@common/exceptions';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly accountService: AccountService,
     private readonly roleService: RoleService,
-    private readonly accountRoleService: AccountRoleService,
 
     private readonly jwtService: JwtService,
-    private readonly mailService: MailService,
     private readonly redisService: RedisService,
     @InjectRepository(AccountRole)
     private readonly accountRoleRepository: Repository<AccountRole>, // Sử dụng repository của entity AccountRole
@@ -75,11 +71,11 @@ export class AuthService {
       accountId: newAccount.id,
       roleId: customerRole.id
     });
+
     // Send verification email
     await this.generateAndSendEmailVerification(
       newAccount,
-      MAIL_TEMPLATE.EMAIL_VERIFICATION_REQUEST,
-      newAccount.fullName
+      MAIL_TEMPLATE.EMAIL_VERIFICATION_REQUEST
     );
 
     return new AccountResponseDto(newAccount, [customerRole.name]);
@@ -156,16 +152,18 @@ export class AuthService {
       };
     }
 
-    const { accessToken } = await this.generateAndStoreTokens(res, account);
-    await this.setContextUserToCache(account as unknown as IContextUser);
+    const { accessToken } = await this.generateAndStoreAuthTokens(res, account);
+
+    await this.setContextUserToCache(account as unknown as ContextUser);
+
     return {
       accessToken,
       account: new AccountResponseDto(account)
     };
   }
 
-  async refreshToken(res: Response, account: Account): Promise<RefreshTokenResponse> {
-    const { accessToken } = await this.generateAndStoreTokens(res, account);
+  async refreshToken(res: Response, account: ContextUser): Promise<RefreshTokenResponse> {
+    const { accessToken } = await this.generateAndStoreAuthTokens(res, account as Account);
 
     return { accessToken };
   }
@@ -232,46 +230,56 @@ export class AuthService {
     await this.redisService.del(REDIS_KEYS.USER_SESSIONS(account.id));
   }
 
+  async getProfile(accountId: string): Promise<AccountResponseDto> {
+    const account = await this.accountService.getAccountById(accountId);
+
+    if (!account) {
+      throw new NotFound(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
+    }
+
+    return new AccountResponseDto(account);
+  }
+
   // Tokens
   private async generateToken(
+    secret: string,
+    ttl: string,
     accountId: string,
     email: string,
-    avatarUrl: string,
-    roles: AccountRole[],
-    secret: string,
-    ttl: string
+    avatarUrl?: string,
+    roles?: AccountRole[]
   ): Promise<string> {
     const payload: JwtPayload = {
       accountId,
       email,
-      avatarUrl,
-      roles,
+      ...(roles && roles.length > 0 && { roles }),
+      ...(avatarUrl && { avatarUrl }),
       iat: Math.floor(Date.now() / 1000)
     };
 
     return this.jwtService.signAsync(payload, { secret, expiresIn: ttl });
   }
 
-  private async generateAndStoreTokens(
+  private async generateAndStoreAuthTokens(
     res: Response,
     account: Account
   ): Promise<{ accessToken: string }> {
     const [accessToken, refreshToken] = await Promise.all([
       this.generateToken(
+        JWT.secret,
+        JWT.accessTokenTtl,
         account.id,
         account.email,
         account.avatarUrl,
-        account.accountRoles,
-        JWT.secret,
-        JWT.accessTokenTtl
+        account.accountRoles
       ),
       this.generateToken(
+        JWT.secret,
+        JWT.refreshTokenTtl,
         account.id,
         account.email,
         account.avatarUrl,
-        account.accountRoles,
-        JWT.secret,
-        JWT.refreshTokenTtl
+        account.accountRoles
       )
     ]);
 
@@ -293,7 +301,7 @@ export class AuthService {
 
   // Cookie
   private setRefreshTokenToCookie(res: Response, refreshToken: string) {
-    const expiredTime = parseInt(JWT.refreshTokenTtl) * 1000;
+    const expiredTime = parseTtlToSeconds(JWT.refreshTokenTtl) * 1000; // in ms
     const nodeEnv = APP.nodeEnv;
     const cookieOptions = getCookieOptions(nodeEnv);
 
@@ -301,10 +309,6 @@ export class AuthService {
       ...cookieOptions,
       maxAge: expiredTime
     });
-  }
-  private async setContextUserToCache(user: IContextUser) {
-    const ttlSeconds = parseTtlToSeconds(JWT.refreshTokenTtl);
-    await this.redisService.set(userContextCacheKey(user.id), user, ttlSeconds);
   }
 
   private delRefreshTokenFromCookie(res: Response) {
@@ -346,6 +350,11 @@ export class AuthService {
     await this.redisService.set(REDIS_KEYS.RESET_PASSWORD(accountId), token, ttlSeconds);
   }
 
+  private async setContextUserToCache(user: ContextUser) {
+    const ttlSeconds = parseTtlToSeconds(JWT.refreshTokenTtl);
+    await this.redisService.set(REDIS_KEYS.ACCOUNT_CONTEXT(user.id), user, ttlSeconds);
+  }
+
   // Others
   private handleAccountStatus(status: AccountStatus): boolean {
     switch (status) {
@@ -362,16 +371,15 @@ export class AuthService {
 
   private async generateAndSendEmailVerification(
     account: Account,
-    mailTemplate: MailTemplate,
-    fullName?: string
+    mailTemplate: MailTemplate
   ): Promise<void> {
     const verificationToken = await this.generateToken(
+      JWT.jwtVerificationSecret,
+      JWT.emailVerificationTokenTtl,
       account.id,
       account.email,
       account.avatarUrl,
-      account.accountRoles,
-      JWT.jwtVerificationSecret,
-      JWT.emailVerificationTokenTtl
+      account.accountRoles
     );
 
     await this.emailQueue.add({
@@ -381,7 +389,7 @@ export class AuthService {
         template: mailTemplate.template,
         subject: mailTemplate.subject,
         options: {
-          context: { name: fullName, url: `${URL.apiEmailVerifyUrl}${verificationToken}` }
+          context: { name: account.fullName, url: `${URL.apiEmailVerifyUrl}${verificationToken}` }
         }
       }
     });
@@ -396,12 +404,10 @@ export class AuthService {
     isVerified: boolean
   ): Promise<void> {
     const verificationToken = await this.generateToken(
-      accountId,
-      email,
-      '',
-      [],
       JWT.jwtVerificationSecret,
-      JWT.passwordResetTokenTtl
+      JWT.passwordResetTokenTtl,
+      accountId,
+      email
     );
 
     const mailTemplate = MAIL_TEMPLATE.RESET_PASSWORD_REQUEST;

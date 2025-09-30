@@ -1,4 +1,4 @@
-import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
+import { RESPONSE_MESSAGES } from '@common/constants';
 import { BadRequest } from '@common/exceptions/bad-request.exception';
 import { PaginationDto } from '@common/types/pagination-base.type';
 import { ActorResponseDto } from '@modules/actors/dto/actor-response.dto';

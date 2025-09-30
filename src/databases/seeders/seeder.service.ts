@@ -1,4 +1,4 @@
-import { RolePermissionSeed } from '@common/constants/role-permission.const';
+import { RolePermissionSeed } from '@common/constants';
 import { AccountStatus, PermissionName, RoleName } from '@common/enums';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
