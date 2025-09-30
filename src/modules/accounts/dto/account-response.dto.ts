@@ -7,6 +7,8 @@ export class AccountResponseDto {
   status: AccountStatus;
   branchId: string;
   coin: number;
+  avatarUrl: string;
+  phoneNumber: string;
   createdAt: Date;
   roleNames: string[];
 
@@ -16,6 +18,8 @@ export class AccountResponseDto {
     this.status = account.status;
     this.branchId = account.branchId;
     this.coin = account.coin;
+    this.avatarUrl = account.avatarUrl;
+    this.phoneNumber = account.phoneNumber;
     this.createdAt = account.createdAt;
     this.roleNames = account.accountRoles?.map((ar) => ar.role.name) ?? roleNames;
   }

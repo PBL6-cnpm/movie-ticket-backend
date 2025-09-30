@@ -1,4 +1,4 @@
-import { SortType } from '@common/constants/base.constant';
+import { SortType } from '@common/constants';
 import { OrderValidator } from '@common/validators/order.validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';

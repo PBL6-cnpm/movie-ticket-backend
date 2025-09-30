@@ -2,15 +2,18 @@ import { AccountStatus } from '@common/enums/account.enum';
 import { ApiProperty } from '@nestjs/swagger';
 import { Account } from 'shared/db/entities/account.entity';
 
-export class IContextUser {
+export class ContextUser {
   @ApiProperty()
   id: string;
 
   @ApiProperty()
-  fullname: string;
+  email: string;
 
   @ApiProperty()
-  email: string;
+  fullName: string;
+
+  @ApiProperty({ required: false, enum: AccountStatus, default: AccountStatus.PENDING })
+  status?: AccountStatus;
 
   @ApiProperty()
   avatarUrl: string;
@@ -24,12 +27,9 @@ export class IContextUser {
   @ApiProperty({ isArray: true, type: String })
   permissions?: string[];
 
-  @ApiProperty({ required: false, enum: AccountStatus, default: AccountStatus.PENDING })
-  status?: AccountStatus;
-
   constructor(partial: Partial<Account>) {
     this.id = partial.id;
-    this.fullname = partial.fullName;
+    this.fullName = partial.fullName;
     this.email = partial.email;
     this.avatarUrl = partial.avatarUrl;
     this.phoneNumber = partial.phoneNumber;

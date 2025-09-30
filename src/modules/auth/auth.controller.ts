@@ -2,7 +2,6 @@ import { BaseController } from '@bases/base-controller';
 import { CurrentAccount } from '@common/decorators/current-account.decorator';
 import { Public } from '@common/decorators/public.decorator';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
-import { AccountPayload } from '@common/types/account-payload.type';
 import { AccountResponseDto } from '@modules/accounts/dto/account-response.dto';
 import {
   Body,
@@ -19,13 +18,13 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
-import { Account } from 'shared/db/entities/account.entity';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SendEmailDto } from './dto/send-email.dto';
 import { LoginResponse, RefreshTokenResponse } from './interfaces/authResponse.interface';
+import { ContextUser } from '@common/types/user.type';
 
 @Controller('auth')
 @ApiTags('Authentication')
@@ -95,7 +94,7 @@ export class AuthController extends BaseController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Token refreshed successfully' })
   async refreshToken(
     @Res({ passthrough: true }) res: Response,
-    @CurrentAccount() account: Account
+    @CurrentAccount() account: ContextUser
   ): Promise<SuccessResponse<RefreshTokenResponse>> {
     const result = await this.authService.refreshToken(res, account);
     return this.success(result);
@@ -108,9 +107,9 @@ export class AuthController extends BaseController {
   async logout(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-    @CurrentAccount() account: AccountPayload
+    @CurrentAccount() account: ContextUser
   ): Promise<SuccessResponse<null>> {
-    await this.authService.logout(req, res, account.accountId);
+    await this.authService.logout(req, res, account.id);
     return this.success(null);
   }
 
@@ -132,5 +131,19 @@ export class AuthController extends BaseController {
   async resetPassword(@Body() resetPassword: ResetPasswordDto): Promise<SuccessResponse<null>> {
     await this.authService.resetPassword(resetPassword);
     return this.success(null);
+  }
+
+  @Get('me')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Current user profile retrieved successfully'
+  })
+  async getProfile(
+    @CurrentAccount() account: ContextUser
+  ): Promise<SuccessResponse<AccountResponseDto>> {
+    const result = await this.authService.getProfile(account.id);
+    return this.success(result);
   }
 }

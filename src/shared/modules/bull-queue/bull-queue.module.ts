@@ -1,4 +1,4 @@
-import { BULL_OPTS, QUEUE_KEY } from '@common/constants/queue.constant';
+import { BULL_OPTS, QUEUE_KEY } from '@common/constants';
 import { REDIS } from '@configs/env.config';
 import { BullModule } from '@nestjs/bull';
 import { Global, Module } from '@nestjs/common';

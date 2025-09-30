@@ -1,8 +1,6 @@
-import { REDIS_KEYS } from '@common/constants/redis.constant';
-import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
 import { AccountStatus } from '@common/enums';
-import { Unauthorized } from '@common/exceptions/unauthorized.exception';
-import { IContextUser } from '@common/types/user.type';
+import { Unauthorized } from '@common/exceptions';
+import { ContextUser } from '@common/types/user.type';
 import { JWT } from '@configs/env.config';
 import { AccountService } from '@modules/accounts/account.service';
 import { PermissionService } from '@modules/permissions/permission.service';
@@ -13,6 +11,7 @@ import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { RedisService } from 'shared/modules/redis/redis.service';
 import { JwtPayload } from '../interfaces/jwt.interface';
+import { REDIS_KEYS, RESPONSE_MESSAGES } from '@common/constants';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -51,15 +50,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       roleEntities.map((r) => r.id)
     );
 
-    const userContext: IContextUser = {
+    const userContext: ContextUser = {
       id: account.id,
       email: account.email,
-      avatarUrl: account?.avatarUrl ?? '',
-      fullname: account.fullName,
+      fullName: account.fullName,
       status: account.status,
+      avatarUrl: account?.avatarUrl ?? '',
+      phoneNumber: account?.phoneNumber ?? '',
       roles: roleEntities.map((r) => r.name),
-      permissions: permissions.map((p) => p.name),
-      phoneNumber: account?.phoneNumber ?? ''
+      permissions: permissions.map((p) => p.name)
     };
 
     return userContext;
