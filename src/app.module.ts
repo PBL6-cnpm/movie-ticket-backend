@@ -1,6 +1,7 @@
 import { DatabaseModule } from '@databases/database.module';
 import { SeederModule } from '@databases/seeders/seeder.module';
 import { AccountModule } from '@modules/accounts/account.module';
+import { ActorModule } from '@modules/actors/actor.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { JwtGuard } from '@modules/auth/guards/jwt.guard';
 import { MovieModule } from '@modules/movies/movie.module';
@@ -29,6 +30,7 @@ import { LoggerMiddleware } from './common/middlewares/logger.middleware';
 
     //Movie Feature
     MovieModule,
+    ActorModule,
     TestModule,
     SeederModule,
     PermissionModule,

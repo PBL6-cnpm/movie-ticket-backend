@@ -112,5 +112,19 @@ export const RESPONSE_MESSAGES = {
   MOVIE_NOT_FOUND: {
     message: 'Movie not found',
     code: 'MOVIE_NOT_FOUND'
+  },
+  MOVIE_NAME_EXISTS: {
+    message: 'Movie name already exists',
+    code: 'MOVIE_NAME_EXISTS'
+  },
+
+  //Actor
+  ACTOR_NOT_FOUND: {
+    message: 'Actor not found',
+    code: 'ACTOR_NOT_FOUND'
+  },
+  ACTOR_NAME_EXISTS: {
+    message: 'Actor name already exists',
+    code: 'ACTOR_NAME_EXISTS'
   }
 };
