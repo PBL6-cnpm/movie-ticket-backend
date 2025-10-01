@@ -122,9 +122,5 @@ export const RESPONSE_MESSAGES = {
   ACTOR_NOT_FOUND: {
     message: 'Actor not found',
     code: 'ACTOR_NOT_FOUND'
-  },
-  ACTOR_NAME_EXISTS: {
-    message: 'Actor name already exists',
-    code: 'ACTOR_NAME_EXISTS'
   }
 };

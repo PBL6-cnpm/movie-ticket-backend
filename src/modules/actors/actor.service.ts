@@ -21,11 +21,6 @@ export class ActorService {
     createRequest: CreateActorDto,
     picture?: Express.Multer.File
   ): Promise<ActorResponseDto> {
-    const existingActor = await this.actorRepo.findOne({ where: { name: createRequest.name } });
-    if (existingActor) {
-      throw new Error(`Actor with name ${createRequest.name} already exists`);
-    }
-
     let cloudUrl = '';
     if (picture) {
       cloudUrl = await this.cloudinaryService.uploadFileBuffer(picture);
@@ -64,14 +59,6 @@ export class ActorService {
   ): Promise<ActorResponseDto> {
     const actor = await this.actorRepo.findOne({ where: { id } });
     if (!actor) throw new BadRequest(RESPONSE_MESSAGES.ACTOR_NOT_FOUND);
-
-    // Nếu đổi tên, kiểm tra trùng
-    if (updateDto.name && updateDto.name !== actor.name) {
-      const duplicate = await this.actorRepo.findOne({ where: { name: updateDto.name } });
-      if (duplicate) {
-        throw new BadRequest(RESPONSE_MESSAGES.ACTOR_NAME_EXISTS);
-      }
-    }
 
     let cloudUrl = actor.picture;
     if (picture) {
