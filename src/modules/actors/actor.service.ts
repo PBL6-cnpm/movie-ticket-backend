@@ -1,4 +1,4 @@
-import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
+import { RESPONSE_MESSAGES } from '@common/constants';
 import { BadRequest } from '@common/exceptions/bad-request.exception';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
