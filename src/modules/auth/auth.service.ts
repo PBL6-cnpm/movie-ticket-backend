@@ -1,7 +1,7 @@
 import { AccountStatus, RoleName } from '@common/enums';
 import { MailTemplate } from '@common/interfaces/mail-template.interface';
 import { ContextUser } from '@common/types/user.type';
-import { getCookieOptions, parseTtlToSeconds } from '@common/utils';
+import { generatePassword, getCookieOptions, parseTtlToSeconds } from '@common/utils';
 import { APP, JWT, URL } from '@configs/env.config';
 import { AccountService } from '@modules/accounts/account.service';
 import { AccountResponseDto } from '@modules/accounts/dto/account-response.dto';
@@ -17,10 +17,9 @@ import { ExtractJwt } from 'passport-jwt';
 import { AccountRole } from 'shared/db/entities/account-role.entity';
 import { Account } from 'shared/db/entities/account.entity';
 import { RedisService } from 'shared/modules/redis/redis.service';
-import { Not, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SendEmailDto } from './dto/send-email.dto';
 import { LoginResponse, RefreshTokenResponse } from './interfaces/authResponse.interface';
 import { JwtPayload } from './interfaces/jwt.interface';
@@ -187,47 +186,27 @@ export class AuthService {
       throw new NotFound(RESPONSE_MESSAGES.INVALID_CREDENTIALS);
     }
 
-    // Send reset password email
-    const isVerified = account.status !== AccountStatus.PENDING;
-    await this.generateAndSendPasswordResetEmail(
-      account.id,
-      account.email,
-      account.fullName,
-      isVerified
-    );
-  }
+    // Send new password email
+    const newPassword = generatePassword();
 
-  async resetPassword(resetPassword: ResetPasswordDto): Promise<void> {
-    const payload = await this.verifyToken(resetPassword.token, JWT.jwtVerificationSecret);
-
-    // Check token in redis
-    const storedToken = await this.redisService.get(REDIS_KEYS.RESET_PASSWORD(payload.accountId));
-    if (!storedToken || storedToken !== resetPassword.token) {
-      throw new BadRequest(RESPONSE_MESSAGES.INVALID_OR_EXPIRED_TOKEN);
-    }
-    await this.redisService.del(REDIS_KEYS.RESET_PASSWORD(payload.accountId));
-
-    // Check account existence
-    const account = await this.accountService.findOne({
-      where: {
-        email: payload.email,
-        status: Not(AccountStatus.DELETED)
-      },
-      select: ['id', 'status']
-    });
-    if (!account) {
-      throw new NotFound(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
-    }
-
-    // Hash new password
-    const hashedPassword = await bcrypt.hash(resetPassword.password, 10);
-    await this.accountService.updateById(account.id, {
-      password: hashedPassword,
-      status: AccountStatus.ACTIVE
+    const mailTemplate = MAIL_TEMPLATE.RESET_PASSWORD_REQUEST;
+    await this.emailQueue.add({
+      data: {
+        toAddress: account.email,
+        template: mailTemplate.template,
+        subject: mailTemplate.subject,
+        options: {
+          context: {
+            name: account.fullName,
+            newPassword
+          }
+        }
+      }
     });
 
-    // Delete all existing user sessions
-    await this.redisService.del(REDIS_KEYS.USER_SESSIONS(account.id));
+    // Update new password
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.accountService.updateById(account.id, { password: newHashedPassword });
   }
 
   async getProfile(accountId: string): Promise<AccountResponseDto> {
@@ -345,11 +324,6 @@ export class AuthService {
     await this.redisService.set(REDIS_KEYS.EMAIL_VERIFICATION(accountId), token, ttlSeconds);
   }
 
-  private async setPasswordResetTokenToRedis(accountId: string, token: string): Promise<void> {
-    const ttlSeconds = parseTtlToSeconds(JWT.passwordResetTokenTtl);
-    await this.redisService.set(REDIS_KEYS.RESET_PASSWORD(accountId), token, ttlSeconds);
-  }
-
   private async setContextUserToCache(user: ContextUser) {
     const ttlSeconds = parseTtlToSeconds(JWT.refreshTokenTtl);
     await this.redisService.set(REDIS_KEYS.ACCOUNT_CONTEXT(user.id), user, ttlSeconds);
@@ -385,7 +359,6 @@ export class AuthService {
     await this.emailQueue.add({
       data: {
         toAddress: account.email,
-        verificationToken,
         template: mailTemplate.template,
         subject: mailTemplate.subject,
         options: {
@@ -395,38 +368,5 @@ export class AuthService {
     });
 
     await this.setEmailVerificationTokenToRedis(account.id, verificationToken);
-  }
-
-  private async generateAndSendPasswordResetEmail(
-    accountId: string,
-    email: string,
-    fullName: string,
-    isVerified: boolean
-  ): Promise<void> {
-    const verificationToken = await this.generateToken(
-      JWT.jwtVerificationSecret,
-      JWT.passwordResetTokenTtl,
-      accountId,
-      email
-    );
-
-    const mailTemplate = MAIL_TEMPLATE.RESET_PASSWORD_REQUEST;
-    await this.emailQueue.add({
-      data: {
-        toAddress: email,
-        verificationToken,
-        template: mailTemplate.template,
-        subject: mailTemplate.subject,
-        options: {
-          context: {
-            name: fullName,
-            url: `${URL.clientResetPasswordUrl}?token=${verificationToken}`,
-            isVerified
-          }
-        }
-      }
-    });
-
-    await this.setPasswordResetTokenToRedis(accountId, verificationToken);
   }
 }
