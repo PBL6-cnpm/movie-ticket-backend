@@ -62,6 +62,6 @@ export class BaseAccountDto {
 
   @ApiProperty({ description: 'Full name of the user' })
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   fullName: string;
 }
