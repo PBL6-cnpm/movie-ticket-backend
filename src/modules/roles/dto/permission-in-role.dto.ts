@@ -1,4 +1,4 @@
-import { Permission } from 'shared/db/entities/permission.entity';
+import { Permission } from '@shared/db/entities/permission.entity';
 
 export class PermissionInRole {
   id: string;

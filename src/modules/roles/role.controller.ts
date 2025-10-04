@@ -2,7 +2,7 @@ import { BaseController } from '@bases/base-controller';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Role } from 'shared/db/entities/role.entity';
+import { Role } from '@shared/db/entities/role.entity';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { RoleResponseDto } from './dto/role-response.dto';
 import { RoleService } from './role.service';

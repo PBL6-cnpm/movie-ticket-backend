@@ -20,7 +20,10 @@ export async function createApp(): Promise<NestExpressApplication> {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Enable CORS
-  app.enableCors();
+  app.enableCors({
+    credentials: true,
+    origin: ['http://localhost:5173', 'https://cinestech.me/', 'https://admin.cinestech.me/']
+  });
 
   app.enableShutdownHooks();
 
