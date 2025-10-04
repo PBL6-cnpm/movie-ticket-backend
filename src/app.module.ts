@@ -17,6 +17,7 @@ import { EmailModule } from 'shared/modules/bull-queue/queue-process/email/email
 import { RedisModuleCustom } from 'shared/modules/redis/redis.module';
 import { AppController } from './app.controller';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -24,11 +25,12 @@ import { LoggerMiddleware } from './common/middlewares/logger.middleware';
     RedisModuleCustom,
     EmailModule,
     BullQueueModule,
+    ThrottlerModule.forRoot([{ limit: 10, ttl: 60000 }]), // 10 requests per minute
+
+    //Movie Feature
     AccountModule,
     AuthModule,
     RoleModule,
-
-    //Movie Feature
     MovieModule,
     ActorModule,
     TestModule,
