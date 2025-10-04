@@ -22,7 +22,7 @@ export async function createApp(): Promise<NestExpressApplication> {
   // Enable CORS
   app.enableCors({
     credentials: true,
-    origin: ['http://localhost:5173', 'https://cinestech.me/', 'https://admin.cinestech.me/']
+    origin: ['http://localhost:5173', 'https://cinestech.me', 'https://admin.cinestech.me']
   });
 
   app.enableShutdownHooks();
