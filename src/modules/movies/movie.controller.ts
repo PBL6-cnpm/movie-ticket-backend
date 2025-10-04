@@ -1,6 +1,9 @@
 import { BaseController } from '@bases/base-controller';
 import { Public } from '@common/decorators/public.decorator';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
+import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
+import PaginationHelper from '@common/utils/pagination.util';
+import { ActorResponseDto } from '@modules/actors/dto/actor-response.dto';
 import {
   Body,
   Controller,
@@ -84,9 +87,38 @@ export class MovieController extends BaseController {
 
   @Get('search/by-name')
   @ApiOperation({ summary: 'Search movies & actors by name' })
-  async searchByName(@Query('name') name: string): Promise<SuccessResponse<MovieResponseDto[]>> {
-    const movies = await this.movieService.searchByName(name);
-    return this.success(movies);
+  async searchByName(
+    @Query('name') name: string,
+    @Query() dto: PaginationDto
+  ): Promise<
+    SuccessResponse<{
+      movies: IPaginatedResponse<MovieResponseDto>;
+      actors: IPaginatedResponse<ActorResponseDto>;
+    }>
+  > {
+    const { movies, actors, totalMovies, totalActors } = await this.movieService.searchByName(
+      name,
+      dto
+    );
+
+    const paginatedMovies = PaginationHelper.pagination({
+      limit: dto.limit,
+      offset: dto.offset,
+      totalItems: totalMovies,
+      items: movies
+    });
+
+    const paginatedActors = PaginationHelper.pagination({
+      limit: dto.limit,
+      offset: dto.offset,
+      totalItems: totalActors,
+      items: actors
+    });
+
+    return this.success({
+      movies: paginatedMovies,
+      actors: paginatedActors
+    });
   }
 
   @Get('genres/all')
@@ -97,19 +129,40 @@ export class MovieController extends BaseController {
   }
 
   @Get('filter/by-genres')
-  @ApiOperation({ summary: 'Filter movies by genres' })
+  @ApiOperation({ summary: 'Filter movies by genres (paginated)' })
   async filterByGenres(
-    @Query('genres') genres: string | string[]
-  ): Promise<SuccessResponse<MovieResponseDto[]>> {
+    @Query('genres') genres: string | string[],
+    @Query() dto: PaginationDto
+  ): Promise<SuccessResponse<IPaginatedResponse<MovieResponseDto>>> {
     let genreList: string[] = [];
-
     if (typeof genres === 'string') {
       genreList = genres.split(',').map((g) => g.trim());
     } else if (Array.isArray(genres)) {
       genreList = genres;
     }
+    const { items, total } = await this.movieService.filterMoviesByGenre(genreList, dto);
+    const paginated = PaginationHelper.pagination({
+      limit: dto.limit,
+      offset: dto.offset,
+      totalItems: total,
+      items
+    });
+    return this.success(paginated);
+  }
 
-    const movies = await this.movieService.filterMovies(genreList);
-    return this.success(movies);
+  @Get()
+  @ApiOperation({ summary: 'Get paginated list of movies' })
+  async getPaginatedMovies(
+    @Query() dto: PaginationDto
+  ): Promise<SuccessResponse<IPaginatedResponse<MovieResponseDto>>> {
+    const { items, total } = await this.movieService.getList(dto);
+
+    const paginated = PaginationHelper.pagination({
+      limit: dto.limit,
+      offset: dto.offset,
+      totalItems: total,
+      items
+    });
+    return this.success(paginated);
   }
 }

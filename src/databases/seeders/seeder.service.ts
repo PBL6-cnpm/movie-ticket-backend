@@ -1,4 +1,4 @@
-import { RolePermissionSeed } from '@common/constants/role-permission.const';
+import { RolePermissionSeed } from '@common/constants';
 import { AccountStatus, PermissionName, RoleName } from '@common/enums';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -97,7 +97,7 @@ export class SeederService {
       const accountRolesToSeed = mapping
         .map((m) => {
           const account = accounts.find((a) => a.email === m.email);
-          const role = roles.find((r) => r.name === m.role.toString());
+          const role = roles.find((r) => r.name === m.role);
           return account && role ? { accountId: account.id, roleId: role.id } : null;
         })
         .filter(Boolean);
@@ -114,7 +114,7 @@ export class SeederService {
     this.logger.log('Seeding roles...');
     try {
       const rolesToSeed = Object.values(RoleName).map((name) => ({
-        name: name.toString()
+        name: name as RoleName
       }));
 
       await this.roleRepo.upsert(rolesToSeed, {
@@ -155,10 +155,10 @@ export class SeederService {
       const rolePermEntities = [];
 
       for (const [roleName, permList] of Object.entries(RolePermissionSeed)) {
-        const role = roles.find((r) => r.name === roleName.toString());
+        const role = roles.find((r) => r.name === (roleName as RoleName));
         if (!role) continue;
 
-        if (role.name == RoleName.SUPER_ADMIN.toString()) {
+        if (role.name === (RoleName.SUPER_ADMIN as RoleName)) {
           for (const permission of permissions) {
             rolePermEntities.push(
               this.rolePermissionRepo.create({

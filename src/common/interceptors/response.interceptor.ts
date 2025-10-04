@@ -1,5 +1,5 @@
 // src/common/interceptors/response.interceptor.ts
-import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
+import { RESPONSE_MESSAGES } from '@common/constants';
 import { ApiResponse, SuccessResponse } from '@common/interfaces/api-response.interface';
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Response } from 'express';

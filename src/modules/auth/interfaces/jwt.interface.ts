@@ -1,4 +1,3 @@
-import { RoleName } from '@common/enums/role.enum';
 import { AccountRole } from 'shared/db/entities/account-role.entity';
 
 export interface JwtPayload {
@@ -9,11 +8,4 @@ export interface JwtPayload {
   code?: string;
   iat: number;
   exp?: number;
-}
-
-export interface JwtClaims {
-  type: 'refresh' | 'access';
-  accountId: string;
-  jti: string;
-  role: RoleName;
 }

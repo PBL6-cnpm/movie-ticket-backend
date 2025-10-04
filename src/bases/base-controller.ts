@@ -1,4 +1,4 @@
-import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
+import { RESPONSE_MESSAGES } from '@common/constants';
 import { ApiMessage, SuccessResponse } from '@common/interfaces/api-response.interface';
 
 export class BaseController {

@@ -1,5 +1,7 @@
-import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
+import { RESPONSE_MESSAGES } from '@common/constants';
 import { BadRequest } from '@common/exceptions/bad-request.exception';
+import { PaginationDto } from '@common/types/pagination-base.type';
+import { ActorResponseDto } from '@modules/actors/dto/actor-response.dto';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Actor } from 'shared/db/entities/actor.entity';
@@ -35,7 +37,7 @@ export class MovieService {
   ): Promise<MovieResponseDto> {
     const existingMovie = await this.movieRepo.findOne({ where: { name: createRequest.name } });
     if (existingMovie) {
-      throw new Error(`Movie with name ${createRequest.name} already exists`);
+      throw new BadRequest(RESPONSE_MESSAGES.MOVIE_NAME_EXISTS);
     }
 
     let cloudUrl = '';
@@ -114,6 +116,14 @@ export class MovieService {
     const movie = await this.movieRepo.findOne({ where: { id } });
     if (!movie) throw new BadRequest(RESPONSE_MESSAGES.MOVIE_NOT_FOUND);
 
+    // Kiểm tra trùng tên khi đổi
+    if (updateDto.name && updateDto.name !== movie.name) {
+      const duplicate = await this.movieRepo.findOne({ where: { name: updateDto.name } });
+      if (duplicate) {
+        throw new BadRequest(RESPONSE_MESSAGES.MOVIE_NAME_EXISTS);
+      }
+    }
+
     let cloudUrl = movie.poster;
     if (poster) {
       cloudUrl = await this.cloudinaryService.uploadFileBuffer(poster);
@@ -158,18 +168,42 @@ export class MovieService {
     return new MovieResponseDto(updatedMovie);
   }
 
-  async searchByName(name: string): Promise<MovieResponseDto[]> {
-    const movies = await this.movieRepo
+  async searchByName(
+    name: string,
+    dto: PaginationDto
+  ): Promise<{
+    movies: MovieResponseDto[];
+    actors: ActorResponseDto[];
+    totalMovies: number;
+    totalActors: number;
+  }> {
+    const { limit, offset } = dto;
+
+    // Query phim
+    const [movies, totalMovies] = await this.movieRepo
       .createQueryBuilder('movie')
       .leftJoinAndSelect('movie.movieGenres', 'movieGenre')
       .leftJoinAndSelect('movieGenre.genre', 'genre')
-      .leftJoinAndSelect('movie.movieActors', 'movieActor')
-      .leftJoinAndSelect('movieActor.actor', 'actor')
       .where('movie.name COLLATE utf8mb4_unicode_ci LIKE :name', { name: `%${name}%` })
-      .orWhere('actor.name COLLATE utf8mb4_unicode_ci LIKE :name', { name: `%${name}%` })
-      .getMany();
+      .orderBy('movie.releaseDate', 'DESC')
+      .skip(offset)
+      .take(limit)
+      .getManyAndCount();
 
-    return movies.map((m) => new MovieResponseDto(m));
+    // Query diễn viên
+    const [actors, totalActors] = await this.actorRepo
+      .createQueryBuilder('actor')
+      .where('actor.name COLLATE utf8mb4_unicode_ci LIKE :name', { name: `%${name}%` })
+      .skip(offset)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      movies: movies.map((m) => new MovieResponseDto(m)),
+      actors: actors.map((a) => new ActorResponseDto(a)),
+      totalMovies,
+      totalActors
+    };
   }
 
   async getAllGenres(): Promise<{ id: string; name: string }[]> {
@@ -177,7 +211,11 @@ export class MovieService {
     return genres.map((g) => ({ id: g.id, name: g.name }));
   }
 
-  async filterMovies(genres: string[] = []): Promise<MovieResponseDto[]> {
+  async filterMoviesByGenre(
+    genres: string[] = [],
+    dto: PaginationDto
+  ): Promise<{ items: MovieResponseDto[]; total: number }> {
+    const { limit, offset } = dto;
     let query = this.movieRepo
       .createQueryBuilder('movie')
       .leftJoinAndSelect('movie.movieGenres', 'movieGenre')
@@ -198,7 +236,24 @@ export class MovieService {
       });
     }
 
-    const movies = await query.getMany();
-    return movies.map((m) => new MovieResponseDto(m));
+    query = query.orderBy('movie.releaseDate', 'DESC').skip(offset).take(limit);
+
+    const [movies, total] = await query.getManyAndCount();
+    const items = movies.map((m) => new MovieResponseDto(m));
+    return { items, total };
+  }
+
+  async getList(dto: PaginationDto): Promise<{ items: MovieResponseDto[]; total: number }> {
+    const { limit, offset } = dto;
+
+    const [movies, total] = await this.movieRepo.findAndCount({
+      skip: offset,
+      take: limit,
+      relations: ['movieGenres', 'movieGenres.genre', 'movieActors', 'movieActors.actor'],
+      order: { releaseDate: 'DESC' }
+    });
+
+    const items = movies.map((m) => new MovieResponseDto(m));
+    return { items, total };
   }
 }

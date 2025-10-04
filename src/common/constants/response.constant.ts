@@ -112,5 +112,29 @@ export const RESPONSE_MESSAGES = {
   MOVIE_NOT_FOUND: {
     message: 'Movie not found',
     code: 'MOVIE_NOT_FOUND'
+  },
+  MOVIE_NAME_EXISTS: {
+    message: 'Movie name already exists',
+    code: 'MOVIE_NAME_EXISTS'
+  },
+
+  //Actor
+  ACTOR_NOT_FOUND: {
+    message: 'Actor not found',
+    code: 'ACTOR_NOT_FOUND'
+  },
+
+  // Order
+  FORMAT_ORDER_INCORRECT: {
+    message: 'Format of order is incorrect',
+    code: 'FORMAT_ORDER_INCORRECT'
   }
 };
+
+const createMessageESMap = (
+  obj: Record<string, { message: string; code: string }>
+): Map<string, string> => {
+  return new Map(Object.entries(obj).map(([, { message, code }]) => [message, code]));
+};
+
+export const RESPONSE_MESSAGES_MAP = createMessageESMap(RESPONSE_MESSAGES);

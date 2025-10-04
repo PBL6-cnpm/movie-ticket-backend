@@ -1,13 +1,16 @@
 import { DatabaseModule } from '@databases/database.module';
 import { SeederModule } from '@databases/seeders/seeder.module';
 import { AccountModule } from '@modules/accounts/account.module';
+import { ActorModule } from '@modules/actors/actor.module';
 import { AuthModule } from '@modules/auth/auth.module';
+import { JwtGuard } from '@modules/auth/guards/jwt.guard';
 import { MovieModule } from '@modules/movies/movie.module';
 import { PermissionModule } from '@modules/permissions/permission.module';
 import { RolePermissionModule } from '@modules/role-permission/role-permission.module';
 import { RoleModule } from '@modules/roles/role.module';
 import { TestModule } from '@modules/test/test.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { HealthController } from 'health.controller';
 import { BullQueueModule } from 'shared/modules/bull-queue/bull-queue.module';
 import { EmailModule } from 'shared/modules/bull-queue/queue-process/email/email.module';
@@ -27,12 +30,20 @@ import { LoggerMiddleware } from './common/middlewares/logger.middleware';
 
     //Movie Feature
     MovieModule,
+    ActorModule,
     TestModule,
     SeederModule,
     PermissionModule,
     RolePermissionModule
   ],
-  controllers: [AppController, HealthController]
+
+  controllers: [AppController, HealthController],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtGuard
+    }
+  ]
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

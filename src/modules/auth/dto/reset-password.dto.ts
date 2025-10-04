@@ -1,8 +1,8 @@
-import { IsString } from 'class-validator';
+import { RESPONSE_MESSAGES } from '@common/constants';
+import { Match } from '@common/validators/match.validator';
 import { BaseAccountDto } from '@modules/accounts/dto/base-account.dto';
 import { PickType } from '@nestjs/swagger';
-import { Match } from '@common/validators/match.validator';
-import { RESPONSE_MESSAGES } from '@common/constants/response-message.constant';
+import { IsString } from 'class-validator';
 
 export class ResetPasswordDto extends PickType(BaseAccountDto, ['password'] as const) {
   @IsString()
