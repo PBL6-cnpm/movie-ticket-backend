@@ -15,8 +15,8 @@ import {
   Post
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { RolePermission } from 'shared/db/entities/role-permission.entity';
-import { Role } from 'shared/db/entities/role.entity';
+import { RolePermission } from '@shared/db/entities/role-permission.entity';
+import { Role } from '@shared/db/entities/role.entity';
 import { PermissionResponseDto } from './dto/permission-response.dto';
 import { PermissionUpdateResponseDto } from './dto/permission-update-response.dto';
 import { PermissionService } from './permission.service';

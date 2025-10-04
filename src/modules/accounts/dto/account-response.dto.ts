@@ -1,5 +1,5 @@
 import { AccountStatus } from '@common/enums';
-import { Account } from 'shared/db/entities/account.entity';
+import { Account } from '@shared/db/entities/account.entity';
 
 export class AccountResponseDto {
   id: string;

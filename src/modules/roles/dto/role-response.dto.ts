@@ -1,4 +1,4 @@
-import { Role } from 'shared/db/entities/role.entity';
+import { Role } from '@shared/db/entities/role.entity';
 
 export class RoleResponseDto {
   id: string;

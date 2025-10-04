@@ -1,4 +1,4 @@
-import { Movie } from 'shared/db/entities/movie.entity';
+import { Movie } from '@shared/db/entities/movie.entity';
 
 export class MovieResponseDto {
   id: string;

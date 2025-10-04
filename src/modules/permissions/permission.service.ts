@@ -1,8 +1,8 @@
 import { BaseService } from '@bases/base-service';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Permission } from 'shared/db/entities/permission.entity';
-import { RolePermission } from 'shared/db/entities/role-permission.entity';
+import { Permission } from '@shared/db/entities/permission.entity';
+import { RolePermission } from '@shared/db/entities/role-permission.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()

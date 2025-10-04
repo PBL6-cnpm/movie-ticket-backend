@@ -6,7 +6,7 @@ import { Role } from './role.entity';
 @Entity({ name: Entities.ACCOUNT_ROLE })
 export class AccountRole {
   @PrimaryGeneratedColumn('uuid', { name: 'account_role_id' })
-  account_role_id: string;
+  accountRoleId: string;
 
   @Column({ name: 'account_id' })
   accountId: string;
