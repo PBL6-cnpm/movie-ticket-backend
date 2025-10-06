@@ -31,6 +31,6 @@ export class TypeDay extends BaseEntityTime {
   })
   isCurrent: boolean;
 
-  @OneToMany(() => BookSeat, (bookSeat) => bookSeat.typeDay)
+  @OneToMany(() => BookSeat, (bookSeat) => bookSeat.typeDay, { cascade: true })
   bookSeats: BookSeat;
 }

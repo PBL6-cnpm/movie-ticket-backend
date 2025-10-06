@@ -32,6 +32,8 @@ export class Refreshments extends BaseAuditedEntity {
   })
   isCurrent: boolean;
 
-  @OneToMany(() => BookRefreshments, (bookRefreshments) => bookRefreshments.refreshments)
+  @OneToMany(() => BookRefreshments, (bookRefreshments) => bookRefreshments.refreshments, {
+    cascade: true
+  })
   bookRefreshmentss: BookRefreshments[];
 }

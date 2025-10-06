@@ -31,6 +31,6 @@ export class TypeSeat extends BaseEntityTime {
   })
   isCurrent: boolean;
 
-  @OneToMany(() => Seat, (seat) => seat.typeSeat)
+  @OneToMany(() => Seat, (seat) => seat.typeSeat, { cascade: true })
   seats: Seat[];
 }

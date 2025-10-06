@@ -17,6 +17,6 @@ export class Actor extends BaseEntityTime {
   @Column({ name: 'picture' })
   picture: string;
 
-  @OneToMany(() => MovieActor, (movieActor) => movieActor.actor)
+  @OneToMany(() => MovieActor, (movieActor) => movieActor.actor, { cascade: true })
   movieActors: MovieActor[];
 }

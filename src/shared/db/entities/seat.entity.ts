@@ -42,6 +42,6 @@ export class Seat extends BaseEntityTime {
   @JoinColumn({ name: 'type_seat_id' })
   typeSeat: TypeSeat;
 
-  @OneToMany(() => BookSeat, (bookSeat) => bookSeat.seat)
+  @OneToMany(() => BookSeat, (bookSeat) => bookSeat.seat, { cascade: true })
   bookSeats: BookSeat[];
 }

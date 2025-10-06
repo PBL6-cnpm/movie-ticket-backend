@@ -28,6 +28,6 @@ export class Voucher extends BaseEntityTime {
   @Min(0)
   discountPercent: number;
 
-  @OneToMany(() => Booking, (booking) => booking.voucher)
+  @OneToMany(() => Booking, (booking) => booking.voucher, { cascade: true })
   bookings: Booking[];
 }

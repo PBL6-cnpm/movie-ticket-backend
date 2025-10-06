@@ -51,16 +51,16 @@ export class Account extends BaseEntityTime {
   })
   status: AccountStatus;
 
-  @OneToMany(() => AccountRole, (accountRole) => accountRole.account)
+  @OneToMany(() => AccountRole, (accountRole) => accountRole.account, { cascade: true })
   accountRoles: AccountRole[];
 
   @ManyToOne(() => Branch, (branch) => branch.accounts)
   @JoinColumn({ name: 'branch_id' })
   branch: Branch;
 
-  @OneToMany(() => Review, (review) => review.account)
+  @OneToMany(() => Review, (review) => review.account, { cascade: true })
   reviews: Review[];
 
-  @OneToMany(() => Booking, (booking) => booking.account)
+  @OneToMany(() => Booking, (booking) => booking.account, { cascade: true })
   bookings: Booking[];
 }

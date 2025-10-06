@@ -26,7 +26,7 @@ export class RoleService extends BaseService<Role> {
       throw new NotFound(RESPONSE_MESSAGES.ROLE_NOT_FOUND);
     }
 
-    return role.id;
+    return role.id as string;
   }
 
   async getRoleByName(name: RoleName): Promise<Role> {
@@ -46,14 +46,14 @@ export class RoleService extends BaseService<Role> {
       .getMany();
   }
 
-  async createNewRole(createRoleDto: CreateRoleDto) {
+  async createNewRole(createRoleDto: CreateRoleDto): Promise<Role> {
     const exists = await this.roleRepo.findOne({ where: { name: createRoleDto.name } });
     if (exists) {
       throw new ConflictException('Role already exists');
     }
 
     const role = this.roleRepo.create(createRoleDto);
-    return await this.roleRepo.save(role);
+    return this.roleRepo.save(role);
   }
 
   async deleteRole(id: string): Promise<void> {

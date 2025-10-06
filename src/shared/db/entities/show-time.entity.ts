@@ -53,6 +53,6 @@ export class ShowTime extends BaseEntityTime {
   @JoinColumn({ name: 'room_id' })
   room: Room;
 
-  @OneToMany(() => Booking, (booking) => booking.showTime)
+  @OneToMany(() => Booking, (booking) => booking.showTime, { cascade: true })
   bookings: Booking[];
 }

@@ -16,9 +16,9 @@ export class Branch extends BaseEntityTime {
   @Column({ name: 'address', nullable: false })
   address: string;
 
-  @OneToMany(() => Account, (account) => account.branch)
+  @OneToMany(() => Account, (account) => account.branch, { cascade: true })
   accounts: Account[];
 
-  @OneToMany(() => Room, (room) => room.branch)
+  @OneToMany(() => Room, (room) => room.branch, { cascade: true })
   rooms: Room[];
 }

@@ -2,7 +2,7 @@ import { Entities } from '@common/enums';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { MovieActor } from './movie-actor.entity';
-import { MovieGenre } from './movie_genre.entity';
+import { MovieGenre } from './movie-genre.entity';
 import { Review } from './review.entity';
 import { ShowTime } from './show-time.entity';
 
@@ -35,15 +35,15 @@ export class Movie extends BaseEntityTime {
   @Column({ name: 'release_date', type: 'timestamp' })
   releaseDate: Date;
 
-  @OneToMany(() => MovieActor, (movieActor) => movieActor.movie)
+  @OneToMany(() => MovieActor, (movieActor) => movieActor.movie, { cascade: true })
   movieActors: MovieActor[];
 
-  @OneToMany(() => Review, (review) => review.movie)
+  @OneToMany(() => Review, (review) => review.movie, { cascade: true })
   reviews: Review[];
 
-  @OneToMany(() => ShowTime, (showTime) => showTime.movie)
+  @OneToMany(() => ShowTime, (showTime) => showTime.movie, { cascade: true })
   showTimes: ShowTime[];
 
-  @OneToMany(() => MovieGenre, (movieGenre) => movieGenre.movie)
+  @OneToMany(() => MovieGenre, (movieGenre) => movieGenre.movie, { cascade: true })
   movieGenres: MovieGenre[];
 }

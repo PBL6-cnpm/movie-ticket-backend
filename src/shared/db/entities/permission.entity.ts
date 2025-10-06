@@ -17,6 +17,6 @@ export class Permission extends BaseEntityTime {
   })
   name: PermissionName;
 
-  @OneToMany(() => RolePermission, (rolePermission) => rolePermission.permission)
+  @OneToMany(() => RolePermission, (rolePermission) => rolePermission.permission, { cascade: true })
   rolePermissions: RolePermission[];
 }

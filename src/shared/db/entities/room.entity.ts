@@ -35,9 +35,9 @@ export class Room extends BaseEntityTime {
   @JoinColumn({ name: 'branch_id' })
   branch: Branch;
 
-  @OneToMany(() => Seat, (seat) => seat.room)
+  @OneToMany(() => Seat, (seat) => seat.room, { cascade: true })
   seats: Seat[];
 
-  @OneToMany(() => ShowTime, (showTime) => showTime.room)
+  @OneToMany(() => ShowTime, (showTime) => showTime.room, { cascade: true })
   showTimes: ShowTime[];
 }
