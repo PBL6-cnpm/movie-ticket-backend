@@ -3,7 +3,7 @@ import { IEmailQueue } from '@common/interfaces/email.interface';
 import { Process, Processor } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
 import { Job } from 'bull';
-import { MailService } from 'shared/modules/send-mail/send-mail.service';
+import { MailService } from '@shared/modules/send-mail/send-mail.service';
 
 @Injectable()
 @Processor(QUEUE_KEY.sendEmail)

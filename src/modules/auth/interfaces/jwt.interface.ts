@@ -1,4 +1,4 @@
-import { AccountRole } from 'shared/db/entities/account-role.entity';
+import { AccountRole } from '@shared/db/entities/account-role.entity';
 
 export interface JwtPayload {
   accountId: string;

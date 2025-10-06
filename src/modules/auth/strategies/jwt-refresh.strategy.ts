@@ -1,3 +1,4 @@
+import { COOKIE_NAMES, REDIS_KEYS, RESPONSE_MESSAGES } from '@common/constants';
 import { AccountStatus } from '@common/enums';
 import { Unauthorized } from '@common/exceptions';
 import { ContextUser } from '@common/types/user.type';
@@ -7,11 +8,10 @@ import { PermissionService } from '@modules/permissions/permission.service';
 import { RoleService } from '@modules/roles/role.service';
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
+import { RedisService } from '@shared/modules/redis/redis.service';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { RedisService } from 'shared/modules/redis/redis.service';
 import { JwtPayload } from '../interfaces/jwt.interface';
-import { COOKIE_NAMES, REDIS_KEYS, RESPONSE_MESSAGES } from '@common/constants';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {

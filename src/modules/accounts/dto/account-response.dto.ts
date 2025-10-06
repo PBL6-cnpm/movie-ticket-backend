@@ -1,9 +1,10 @@
 import { AccountStatus } from '@common/enums';
-import { Account } from 'shared/db/entities/account.entity';
+import { Account } from '@shared/db/entities/account.entity';
 
 export class AccountResponseDto {
   id: string;
   email: string;
+  fullName: string;
   status: AccountStatus;
   branchId: string;
   coin: number;
@@ -15,6 +16,7 @@ export class AccountResponseDto {
   constructor(account: Account, roleNames?: string[]) {
     this.id = account.id;
     this.email = account.email;
+    this.fullName = account.fullName;
     this.status = account.status;
     this.branchId = account.branchId;
     this.coin = account.coin;

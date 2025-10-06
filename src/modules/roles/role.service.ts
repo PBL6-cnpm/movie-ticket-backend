@@ -4,7 +4,7 @@ import { RoleName } from '@common/enums';
 import { NotFound } from '@common/exceptions';
 import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Role } from 'shared/db/entities/role.entity';
+import { Role } from '@shared/db/entities/role.entity';
 import { Repository } from 'typeorm';
 import { CreateRoleDto } from './dto/create-role.dto';
 

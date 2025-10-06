@@ -1,4 +1,4 @@
-import { Actor } from 'shared/db/entities/actor.entity';
+import { Actor } from '@shared/db/entities/actor.entity';
 
 export class ActorResponseDto {
   id: string;

@@ -21,10 +21,11 @@ import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SendEmailDto } from './dto/send-email.dto';
 import { LoginResponse, RefreshTokenResponse } from './interfaces/authResponse.interface';
 import { ContextUser } from '@common/types/user.type';
+import { EmailThrottlerGuard } from '@common/guards/email-throttle.guard';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 @ApiTags('Authentication')
@@ -115,21 +116,13 @@ export class AuthController extends BaseController {
 
   @Post('forgot-password')
   @Public()
+  @UseGuards(EmailThrottlerGuard)
+  @Throttle({ default: { limit: 3, ttl: 3600000 } }) // 3 requests per hour
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Request password reset' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Password reset email sent successfully' })
   async requestPasswordReset(@Body() sendEmailDto: SendEmailDto): Promise<SuccessResponse<null>> {
     await this.authService.requestPasswordReset(sendEmailDto);
-    return this.success(null);
-  }
-
-  @Post('reset-password')
-  @Public()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Verify password reset token' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Password reset token is valid' })
-  async resetPassword(@Body() resetPassword: ResetPasswordDto): Promise<SuccessResponse<null>> {
-    await this.authService.resetPassword(resetPassword);
     return this.success(null);
   }
 

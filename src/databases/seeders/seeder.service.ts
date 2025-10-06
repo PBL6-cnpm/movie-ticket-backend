@@ -3,12 +3,12 @@ import { AccountStatus, PermissionName, RoleName } from '@common/enums';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
-import { AccountRole } from 'shared/db/entities/account-role.entity';
-import { Account } from 'shared/db/entities/account.entity';
-import { Branch } from 'shared/db/entities/branch.entity';
-import { Permission } from 'shared/db/entities/permission.entity';
-import { RolePermission } from 'shared/db/entities/role-permission.entity';
-import { Role } from 'shared/db/entities/role.entity';
+import { AccountRole } from '@shared/db/entities/account-role.entity';
+import { Account } from '@shared/db/entities/account.entity';
+import { Branch } from '@shared/db/entities/branch.entity';
+import { Permission } from '@shared/db/entities/permission.entity';
+import { RolePermission } from '@shared/db/entities/role-permission.entity';
+import { Role } from '@shared/db/entities/role.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()

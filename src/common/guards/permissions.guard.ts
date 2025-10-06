@@ -3,8 +3,8 @@ import { PermissionService } from '@modules/permissions/permission.service';
 import { RoleService } from '@modules/roles/role.service';
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Permission } from 'shared/db/entities/permission.entity';
-import { Role } from 'shared/db/entities/role.entity';
+import { Permission } from '@shared/db/entities/permission.entity';
+import { Role } from '@shared/db/entities/role.entity';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 
