@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcryptjs';
 import { AccountRole } from '@shared/db/entities/account-role.entity';
 import { Account } from '@shared/db/entities/account.entity';
+import { Branch } from '@shared/db/entities/branch.entity';
 import { Permission } from '@shared/db/entities/permission.entity';
 import { RolePermission } from '@shared/db/entities/role-permission.entity';
 import { Role } from '@shared/db/entities/role.entity';
@@ -28,17 +29,51 @@ export class SeederService {
     private accountRepo: Repository<Account>,
 
     @InjectRepository(AccountRole)
-    private accountRoleRepo: Repository<AccountRole>
+    private accountRoleRepo: Repository<AccountRole>,
+
+    @InjectRepository(Branch)
+    private branchRepo: Repository<Branch>
   ) {}
 
   async seed() {
     this.logger.log('Starting seeding process...');
     await this.seedRoles();
     await this.seedPermissions();
+    await this.seedBranches();
     await this.seedAccounts();
     await this.seedAccountRoles();
     await this.seedRolePermissions();
   }
+
+  private async seedBranches() {
+    this.logger.log('Seeding branches...');
+    try {
+      const branchesToSeed = [
+        {
+          name: 'CoopMart Hà Nội',
+          address: '75 Thanh Xuân, Hà Nội'
+        },
+        {
+          name: 'Lotte Cinema Gò Vấp',
+          address: '242 Nguyễn Văn Lượng, Gò Vấp, TP.HCM'
+        },
+        {
+          name: 'CGV Vincom',
+          address: '191 Ba Tháng Hai, Phường 12, Quận 10, TP.HCM'
+        }
+      ];
+
+      await this.branchRepo.upsert(branchesToSeed, {
+        skipUpdateIfNoValuesChanged: true,
+        conflictPaths: ['name', 'address']
+      });
+
+      this.logger.log('Seeding branches completed.');
+    } catch (error) {
+      this.logger.error('Error seeding branches:', error);
+    }
+  }
+
   private async seedAccounts() {
     this.logger.log('Seeding accounts...');
     try {
