@@ -101,6 +101,10 @@ export const RESPONSE_MESSAGES = {
     message: 'Password confirmation does not match',
     code: 'PASSWORD_CONFIRM_NOT_MATCH'
   },
+  INVALID_GOOGLE_TOKEN: {
+    message: 'Invalid Google token',
+    code: 'INVALID_GOOGLE_TOKEN'
+  },
 
   // Role
   ROLE_NOT_FOUND: {

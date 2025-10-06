@@ -64,4 +64,14 @@ export class BaseAccountDto {
   @IsString()
   @IsNotEmpty()
   fullName: string;
+
+  @ApiProperty({ description: 'Phone number of the user', required: false })
+  @IsString()
+  @IsOptional()
+  phoneNumber?: string;
+
+  @ApiProperty({ description: 'Avatar URL of the user', required: false })
+  @IsString()
+  @IsOptional()
+  avatarUrl?: string;
 }

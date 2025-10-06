@@ -1,7 +1,9 @@
 import { BaseController } from '@bases/base-controller';
 import { CurrentAccount } from '@common/decorators/current-account.decorator';
 import { Public } from '@common/decorators/public.decorator';
+import { EmailThrottlerGuard } from '@common/guards/email-throttle.guard';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
+import { ContextUser } from '@common/types/user.type';
 import { AccountResponseDto } from '@modules/accounts/dto/account-response.dto';
 import {
   Body,
@@ -17,15 +19,14 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SendEmailDto } from './dto/send-email.dto';
+import { SocialLoginDto } from './dto/social-login.dto';
 import { LoginResponse, RefreshTokenResponse } from './interfaces/authResponse.interface';
-import { ContextUser } from '@common/types/user.type';
-import { EmailThrottlerGuard } from '@common/guards/email-throttle.guard';
-import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 @ApiTags('Authentication')
@@ -84,6 +85,22 @@ export class AuthController extends BaseController {
     @Body() loginDto: LoginDto
   ): Promise<SuccessResponse<LoginResponse>> {
     const result = await this.authService.login(res, loginDto);
+    return this.success(result);
+  }
+
+  @Post('google/login')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login or register with Google' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Login or registration with Google successful'
+  })
+  async socialLogin(
+    @Res({ passthrough: true }) res: Response,
+    @Body() socialLoginDto: SocialLoginDto
+  ): Promise<SuccessResponse<LoginResponse>> {
+    const result = await this.authService.socialLogin(res, socialLoginDto);
     return this.success(result);
   }
 

@@ -1,28 +1,3 @@
-import { AccountStatus, RoleName } from '@common/enums';
-import { MailTemplate } from '@common/interfaces/mail-template.interface';
-import { ContextUser } from '@common/types/user.type';
-import { generatePassword, getCookieOptions, parseTtlToSeconds } from '@common/utils';
-import { APP, JWT, URL } from '@configs/env.config';
-import { AccountService } from '@modules/accounts/account.service';
-import { AccountResponseDto } from '@modules/accounts/dto/account-response.dto';
-import { RoleService } from '@modules/roles/role.service';
-import { InjectQueue } from '@nestjs/bull';
-import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
-import * as bcrypt from 'bcryptjs';
-import { Queue } from 'bull';
-import { Request, Response } from 'express';
-import { ExtractJwt } from 'passport-jwt';
-import { AccountRole } from '@shared/db/entities/account-role.entity';
-import { Account } from '@shared/db/entities/account.entity';
-import { RedisService } from '@shared/modules/redis/redis.service';
-import { Repository } from 'typeorm';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { SendEmailDto } from './dto/send-email.dto';
-import { LoginResponse, RefreshTokenResponse } from './interfaces/authResponse.interface';
-import { JwtPayload } from './interfaces/jwt.interface';
 import {
   COOKIE_NAMES,
   MAIL_TEMPLATE,
@@ -30,20 +5,49 @@ import {
   REDIS_KEYS,
   RESPONSE_MESSAGES
 } from '@common/constants';
+import { AccountStatus, RoleName } from '@common/enums';
 import { BadRequest, NotFound } from '@common/exceptions';
+import { MailTemplate } from '@common/interfaces/mail-template.interface';
+import { ContextUser } from '@common/types/user.type';
+import { generatePassword, getCookieOptions, parseTtlToSeconds } from '@common/utils';
+import { APP, GOOGLE, JWT, URL } from '@configs/env.config';
+import { AccountService } from '@modules/accounts/account.service';
+import { AccountResponseDto } from '@modules/accounts/dto/account-response.dto';
+import { RoleService } from '@modules/roles/role.service';
+import { InjectQueue } from '@nestjs/bull';
+import { Injectable } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AccountRole } from '@shared/db/entities/account-role.entity';
+import { Account } from '@shared/db/entities/account.entity';
+import { RedisService } from '@shared/modules/redis/redis.service';
+import * as bcrypt from 'bcryptjs';
+import { Queue } from 'bull';
+import { Request, Response } from 'express';
+import { OAuth2Client } from 'google-auth-library';
+import { ExtractJwt } from 'passport-jwt';
+import { Repository } from 'typeorm';
+import { GoogleProfileDto } from './dto/google-profile.dto';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
+import { SendEmailDto } from './dto/send-email.dto';
+import { SocialLoginDto } from './dto/social-login.dto';
+import { LoginResponse, RefreshTokenResponse } from './interfaces/authResponse.interface';
+import { JwtPayload } from './interfaces/jwt.interface';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly accountService: AccountService,
     private readonly roleService: RoleService,
+    @InjectRepository(AccountRole)
+    private readonly accountRoleRepository: Repository<AccountRole>,
 
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
-    @InjectRepository(AccountRole)
-    private readonly accountRoleRepository: Repository<AccountRole>, // Sử dụng repository của entity AccountRole
     @InjectQueue(QUEUE_KEY.sendEmail)
-    private readonly emailQueue: Queue
+    private readonly emailQueue: Queue,
+    private googleClient: OAuth2Client
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AccountResponseDto> {
@@ -54,21 +58,17 @@ export class AuthService {
       throw new BadRequest(RESPONSE_MESSAGES.EMAIL_ALREADY_EXISTS);
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-
-    // Create new account
-    const customerRole = await this.roleService.getRoleByName(RoleName.CUSTOMER);
+    // // Create new account
+    const [customerRole, hashedPassword] = await Promise.all([
+      this.roleService.getRoleByName(RoleName.CUSTOMER),
+      bcrypt.hash(registerDto.password, 10)
+    ]);
 
     const newAccount = await this.accountService.create({
       ...registerDto,
       password: hashedPassword,
-      status: AccountStatus.PENDING
-    });
-
-    await this.accountRoleRepository.save({
-      accountId: newAccount.id,
-      roleId: customerRole.id
+      status: AccountStatus.PENDING,
+      accountRoles: [{ role: customerRole }]
     });
 
     // Send verification email
@@ -115,7 +115,7 @@ export class AuthService {
         throw new NotFound(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
       }
 
-      const isAlreadyActive = this.handleAccountStatus(account.status);
+      const isAlreadyActive = this.isActiveAccount(account.status);
       if (!isAlreadyActive) {
         await this.accountService.updateById(account.id, {
           status: AccountStatus.ACTIVE
@@ -140,7 +140,7 @@ export class AuthService {
       throw new BadRequest(RESPONSE_MESSAGES.INVALID_CREDENTIALS);
     }
 
-    const isAlreadyActive = this.handleAccountStatus(account.status);
+    const isAlreadyActive = this.isActiveAccount(account.status);
     if (!isAlreadyActive) {
       // Send verification email
       await this.generateAndSendEmailVerification(account, MAIL_TEMPLATE.EMAIL_VERIFICATION_RESEND);
@@ -330,7 +330,7 @@ export class AuthService {
   }
 
   // Others
-  private handleAccountStatus(status: AccountStatus): boolean {
+  private isActiveAccount(status: AccountStatus): boolean {
     switch (status) {
       case AccountStatus.ACTIVE:
         return true;
@@ -368,5 +368,70 @@ export class AuthService {
     });
 
     await this.setEmailVerificationTokenToRedis(account.id, verificationToken);
+  }
+
+  async socialLogin(res: Response, socialLoginDto: SocialLoginDto): Promise<LoginResponse> {
+    const googleProfile = await this.verifyGoogleToken(socialLoginDto.token);
+    if (!googleProfile) {
+      throw new BadRequest(RESPONSE_MESSAGES.INVALID_GOOGLE_TOKEN);
+    }
+
+    const account = await this.findOrCreateAccount(googleProfile);
+
+    const { accessToken } = await this.generateAndStoreAuthTokens(res, account);
+
+    await this.setContextUserToCache(account as unknown as ContextUser);
+
+    return {
+      accessToken,
+      account: new AccountResponseDto(account)
+    };
+  }
+
+  private async verifyGoogleToken(idToken: string): Promise<GoogleProfileDto> {
+    const ticket = await this.googleClient.verifyIdToken({
+      idToken,
+      audience: GOOGLE.clientID
+    });
+    const payload = ticket.getPayload();
+
+    if (!payload) {
+      return null;
+    }
+
+    return new GoogleProfileDto(payload);
+  }
+
+  async findOrCreateAccount(profile: GoogleProfileDto): Promise<Account> {
+    const account = await this.accountService.findOne({
+      where: { email: profile.email },
+      relations: ['accountRoles', 'accountRoles.role']
+    });
+
+    if (account) {
+      const isVerified = this.isActiveAccount(account.status);
+
+      if (!isVerified) {
+        await this.accountService.updateById(account.id, { status: AccountStatus.ACTIVE });
+        return account;
+      }
+
+      return account;
+    }
+
+    // Create a new account if it doesn't exist
+    const [customerRole, hashedPassword] = await Promise.all([
+      this.roleService.getRoleByName(RoleName.CUSTOMER),
+      bcrypt.hash(generatePassword(), 10)
+    ]);
+
+    const newAccount = await this.accountService.create({
+      ...profile,
+      password: hashedPassword,
+      status: AccountStatus.ACTIVE,
+      accountRoles: [{ role: customerRole }]
+    });
+
+    return newAccount;
   }
 }

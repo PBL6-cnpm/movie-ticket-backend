@@ -29,11 +29,19 @@ export const JWT = {
 };
 
 export const URL = {
+  apiBaseUrl: process.env.API_BASE_URL,
   apiEmailVerifyUrl: process.env.API_EMAIL_VERIFY_URL,
 
+  clientBaseUrlDev: process.env.CLIENT_BASE_URL_DEV,
+  clientBaseUrl: process.env.CLIENT_BASE_URL,
+  internalClientBaseUrl: process.env.INTERNAL_CLIENT_BASE_URL,
   clientVerifySuccessUrl: process.env.CLIENT_VERIFY_SUCCESS_URL,
-  clientVerifyFailedUrl: process.env.CLIENT_VERIFY_FAILED_URL,
-  clientResetPasswordUrl: process.env.CLIENT_RESET_PASSWORD_URL
+  clientVerifyFailedUrl: process.env.CLIENT_VERIFY_FAILED_URL
+};
+
+export const GOOGLE = {
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET
 };
 
 export const DB = {
