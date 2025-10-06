@@ -124,6 +124,12 @@ export const RESPONSE_MESSAGES = {
     code: 'ACTOR_NOT_FOUND'
   },
 
+  // Branch
+  BRANCH_NOT_FOUND: {
+    message: 'Branch not found',
+    code: 'BRANCH_NOT_FOUND'
+  },
+
   // Order
   FORMAT_ORDER_INCORRECT: {
     message: 'Format of order is incorrect',

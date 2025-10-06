@@ -9,5 +9,5 @@ export class RegisterDto extends PickType(BaseAccountDto, [
 ] as const) {
   @ApiPropertyOptional()
   @IsOptional()
-  fullName?: string;
+  fullName: string;
 }

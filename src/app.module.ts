@@ -4,6 +4,7 @@ import { AccountModule } from '@modules/accounts/account.module';
 import { ActorModule } from '@modules/actors/actor.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { JwtGuard } from '@modules/auth/guards/jwt.guard';
+import { BranchModule } from '@modules/branch/branch.module';
 import { MovieModule } from '@modules/movies/movie.module';
 import { PermissionModule } from '@modules/permissions/permission.module';
 import { RolePermissionModule } from '@modules/role-permission/role-permission.module';
@@ -27,6 +28,7 @@ import { LoggerMiddleware } from './common/middlewares/logger.middleware';
     AccountModule,
     AuthModule,
     RoleModule,
+    BranchModule,
 
     //Movie Feature
     MovieModule,
