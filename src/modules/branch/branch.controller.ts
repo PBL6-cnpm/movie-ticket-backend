@@ -12,7 +12,7 @@ import {
   Post,
   Put
 } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Branch } from '@shared/db/entities/branch.entity';
 import { BranchService } from './branch.service';
 import { BranchResponseDto } from './dto/branch-response.dto';
@@ -20,6 +20,7 @@ import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 
 @Controller('branches')
+@ApiBearerAuth()
 @ApiTags('Branches')
 export class BranchController extends BaseController {
   private readonly logger = new Logger(BranchController.name);
