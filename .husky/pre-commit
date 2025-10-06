@@ -2,3 +2,5 @@
 . "$(dirname "$0")/_/husky.sh"
 
 npx eslint "src/**/*.ts" --fix
+yarn build
+yarn lint
