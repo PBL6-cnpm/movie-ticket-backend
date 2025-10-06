@@ -11,6 +11,7 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { swaggerConfig } from './configs/swagger.config';
+import { URL } from '@configs/env.config';
 
 export async function createApp(): Promise<NestExpressApplication> {
   // Transaction
@@ -22,7 +23,7 @@ export async function createApp(): Promise<NestExpressApplication> {
   // Enable CORS
   app.enableCors({
     credentials: true,
-    origin: ['http://localhost:5173', 'https://cinestech.me', 'https://admin.cinestech.me']
+    origin: [URL.clientBaseUrlDev, URL.clientBaseUrl, URL.internalClientBaseUrl]
   });
 
   app.enableShutdownHooks();
