@@ -1,4 +1,5 @@
 import { BaseController } from '@bases/base-controller';
+import { Public } from '@common/decorators/public.decorator';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import {
   Body,
@@ -55,6 +56,7 @@ export class BranchController extends BaseController {
   }
 
   @Get()
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get all branches',
