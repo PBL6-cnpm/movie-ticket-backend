@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Branch } from 'shared/db/entities/branch.entity';
+import { Branch } from '@shared/db/entities/branch.entity';
 
 export class BranchResponseDto {
   @ApiProperty({

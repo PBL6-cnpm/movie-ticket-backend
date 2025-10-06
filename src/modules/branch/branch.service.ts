@@ -3,7 +3,7 @@ import { RESPONSE_MESSAGES } from '@common/constants';
 import { NotFound } from '@common/exceptions';
 import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Branch } from 'shared/db/entities/branch.entity';
+import { Branch } from '@shared/db/entities/branch.entity';
 import { Repository } from 'typeorm';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
