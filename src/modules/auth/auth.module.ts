@@ -35,7 +35,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     JwtRefreshStrategy,
     {
       provide: OAuth2Client,
-      useFactory: () => new OAuth2Client(GOOGLE.clientID)
+      useFactory: (): OAuth2Client => new OAuth2Client(GOOGLE.clientID)
     }
   ],
   exports: [AuthService, JwtModule, RoleModule, PermissionModule]
