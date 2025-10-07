@@ -2,7 +2,6 @@
 /dist
 /node_modules
 package-lock.json
-yarn-lock.json
 
 # Logs
 logs
@@ -48,8 +47,6 @@ env/Makefile.override.dev
 tags
 tags.lock
 tags.temp
-
-yarn.lock
 
 
 # Demo FE

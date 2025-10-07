@@ -26,7 +26,7 @@ export class RoleService extends BaseService<Role> {
       throw new NotFound(RESPONSE_MESSAGES.ROLE_NOT_FOUND);
     }
 
-    return role.id as string;
+    return role.id;
   }
 
   async getRoleByName(name: RoleName): Promise<Role> {
