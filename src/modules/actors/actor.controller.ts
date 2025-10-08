@@ -1,6 +1,8 @@
 import { BaseController } from '@bases/base-controller';
 import { Public } from '@common/decorators/public.decorator';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
+import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
+import PaginationHelper from '@common/utils/pagination.util';
 import {
   Body,
   Controller,
@@ -10,6 +12,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors
 } from '@nestjs/common';
@@ -61,5 +64,22 @@ export class ActorController extends BaseController {
   ): Promise<SuccessResponse<ActorResponseDto>> {
     const updated = await this.actorService.updateActor(id, updateDto, picture);
     return this.updated(updated);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all actors' })
+  @HttpCode(HttpStatus.OK)
+  async getAllActors(
+    @Query() dto: PaginationDto
+  ): Promise<SuccessResponse<IPaginatedResponse<ActorResponseDto>>> {
+    const { items, total } = await this.actorService.getAllActors(dto);
+
+    const paginated = PaginationHelper.pagination({
+      limit: dto.limit,
+      offset: dto.offset,
+      totalItems: total,
+      items
+    });
+    return this.success(paginated);
   }
 }

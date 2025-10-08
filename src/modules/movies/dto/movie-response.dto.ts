@@ -1,3 +1,4 @@
+import { ReviewResponseDto } from '@modules/reviews/dto/review-response.dto';
 import { Movie } from '@shared/db/entities/movie.entity';
 
 export class MovieResponseDto {
@@ -10,9 +11,13 @@ export class MovieResponseDto {
   trailer: string;
   poster: string;
   releaseDate: Date;
+  screeningStart: Date;
+  screeningEnd: Date;
 
   genres: { id: string; name: string }[];
   actors: { id: string; name: string; picture: string }[];
+
+  reviews?: ReviewResponseDto[];
 
   createdAt: Date;
   updatedAt: Date;
@@ -27,6 +32,8 @@ export class MovieResponseDto {
     this.trailer = movie.trailer;
     this.poster = movie.poster;
     this.releaseDate = movie.releaseDate;
+    this.screeningStart = movie.screeningStart;
+    this.screeningEnd = movie.screeningEnd;
 
     this.genres = movie.movieGenres
       ? movie.movieGenres.map((mg) => ({
@@ -45,5 +52,9 @@ export class MovieResponseDto {
 
     this.createdAt = movie.createdAt;
     this.updatedAt = movie.updatedAt;
+
+    if (movie.reviews) {
+      this.reviews = movie.reviews.map((r) => new ReviewResponseDto(r));
+    }
   }
 }

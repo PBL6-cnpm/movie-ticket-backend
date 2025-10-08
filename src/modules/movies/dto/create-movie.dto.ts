@@ -1,6 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsArray, IsDate, IsInt, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import {
+  IsArray,
+  IsDate,
+  IsDateString,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength
+} from 'class-validator';
 export class CreateMovieDto {
   @ApiProperty({ description: 'Title of the movie' })
   @IsString()
@@ -41,6 +50,26 @@ export class CreateMovieDto {
   @Type(() => Date)
   @IsDate()
   releaseDate: Date;
+
+  @ApiProperty()
+  @Transform(({ value }: { value: unknown }) => {
+    if (typeof value === 'string' && value.trim() === '') return undefined;
+    if (value === null || value === undefined) return undefined;
+    return value as string;
+  })
+  @IsOptional()
+  @IsDateString({}, { message: 'screeningStart must be a valid date string (YYYY-MM-DD)' })
+  screeningStart?: string;
+
+  @ApiProperty()
+  @Transform(({ value }: { value: unknown }) => {
+    if (typeof value === 'string' && value.trim() === '') return undefined;
+    if (value === null || value === undefined) return undefined;
+    return value as string;
+  })
+  @IsOptional()
+  @IsDateString({}, { message: 'screeningEnd must be a valid date string (YYYY-MM-DD)' })
+  screeningEnd?: string;
 
   @ApiProperty({ type: [String], description: 'Danh sách thể loại (genres) của bộ phim' })
   @IsArray()

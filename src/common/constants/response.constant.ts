@@ -121,6 +121,10 @@ export const RESPONSE_MESSAGES = {
     message: 'Movie name already exists',
     code: 'MOVIE_NAME_EXISTS'
   },
+  MOVIE_INVALID_SCREENING_DATES: {
+    message: 'screeningEnd must be after or equal to screeningStart',
+    code: 'MOVIE_INVALID_SCREENING_DATES'
+  },
 
   //Actor
   ACTOR_NOT_FOUND: {
