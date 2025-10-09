@@ -36,7 +36,7 @@ export const URL = {
   clientBaseUrl: process.env.CLIENT_BASE_URL,
   internalClientBaseUrl: process.env.INTERNAL_CLIENT_BASE_URL,
   clientVerifySuccessUrl: process.env.CLIENT_VERIFY_SUCCESS_URL,
-  clientVerifyFailedUrl: process.env.CLIENT_VERIFY_FAILED_URL
+  clientVerifyFailureUrl: process.env.CLIENT_VERIFY_FAILURE_URL
 };
 
 export const GOOGLE = {

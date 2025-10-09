@@ -124,7 +124,7 @@ export class AuthService {
 
       return res.redirect(URL.clientVerifySuccessUrl);
     } catch {
-      return res.redirect(URL.clientVerifyFailedUrl);
+      return res.redirect(URL.clientVerifyFailureUrl);
     }
   }
 

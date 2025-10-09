@@ -60,7 +60,7 @@ export const RESPONSE_MESSAGES = {
 
   // Auth
   INVALID_CREDENTIALS: {
-    message: 'Invalid email or password',
+    message: 'Invalid credentials',
     code: 'INVALID_CREDENTIALS'
   },
 
