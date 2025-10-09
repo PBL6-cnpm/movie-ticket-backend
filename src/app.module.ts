@@ -19,6 +19,7 @@ import { RedisModuleCustom } from '@shared/modules/redis/redis.module';
 import { AppController } from './app.controller';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { TypeSeatModule } from '@modules/type-seat/typeSeat.module';
 
 @Module({
   imports: [
@@ -38,7 +39,8 @@ import { ThrottlerModule } from '@nestjs/throttler';
     TestModule,
     SeederModule,
     PermissionModule,
-    RolePermissionModule
+    RolePermissionModule,
+    TypeSeatModule
   ],
 
   controllers: [AppController, HealthController],

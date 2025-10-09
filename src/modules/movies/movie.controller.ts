@@ -24,7 +24,6 @@ import { MovieResponseDto } from './dto/movie-response.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { MovieService } from './movie.service';
 
-// @ApiBearerAuth()
 @Public()
 @Controller('movies')
 @ApiTags('Movie')

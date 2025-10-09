@@ -60,7 +60,7 @@ export const RESPONSE_MESSAGES = {
 
   // Auth
   INVALID_CREDENTIALS: {
-    message: 'Invalid email or password',
+    message: 'Invalid credentials',
     code: 'INVALID_CREDENTIALS'
   },
 
@@ -142,6 +142,20 @@ export const RESPONSE_MESSAGES = {
   FORMAT_ORDER_INCORRECT: {
     message: 'Format of order is incorrect',
     code: 'FORMAT_ORDER_INCORRECT'
+  },
+
+  // TypeSeat
+  TYPE_SEAT_NOT_FOUND: {
+    message: 'Type seat not found',
+    code: 'TYPE_SEAT_NOT_FOUND'
+  },
+  TYPE_SEAT_NAME_EXISTS: {
+    message: 'Type seat name already exists',
+    code: 'TYPE_SEAT_NAME_EXISTS'
+  },
+  INVALID_PRICE: {
+    message: 'Price must be a positive number',
+    code: 'INVALID_PRICE'
   }
 };
 
