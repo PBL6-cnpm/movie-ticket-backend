@@ -1,4 +1,4 @@
-import { Review } from 'shared/db/entities/review.entity';
+import { Review } from '@shared/db/entities/review.entity';
 
 export class ReviewResponseDto {
   movieId: string;
