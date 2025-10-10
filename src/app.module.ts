@@ -20,6 +20,7 @@ import { RedisModuleCustom } from '@shared/modules/redis/redis.module';
 import { AppController } from './app.controller';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
 import { HealthController } from './health.controller';
+import { TypeSeatModule } from '@modules/type-seat/typeSeat.module';
 
 @Module({
   imports: [
@@ -40,7 +41,8 @@ import { HealthController } from './health.controller';
     TestModule,
     SeederModule,
     PermissionModule,
-    RolePermissionModule
+    RolePermissionModule,
+    TypeSeatModule
   ],
 
   controllers: [AppController, HealthController],

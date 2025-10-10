@@ -2,6 +2,7 @@ import { RESPONSE_MESSAGES } from '@common/constants';
 import { BadRequest } from '@common/exceptions/bad-request.exception';
 import { PaginationDto } from '@common/types/pagination-base.type';
 import { ActorResponseDto } from '@modules/actors/dto/actor-response.dto';
+import { ReviewResponseDto } from '@modules/reviews/dto/review-response.dto';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Actor } from '@shared/db/entities/actor.entity';
@@ -9,7 +10,7 @@ import { Genre } from '@shared/db/entities/genre.entity';
 import { MovieActor } from '@shared/db/entities/movie-actor.entity';
 import { MovieGenre } from '@shared/db/entities/movie-genre.entity';
 import { Movie } from '@shared/db/entities/movie.entity';
-import { Repository } from 'typeorm';
+import { Brackets, MoreThan, Repository } from 'typeorm';
 import { CloudinaryService } from '../../shared/modules/cloudinary/cloudinary.service';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { MovieResponseDto } from './dto/movie-response.dto';
@@ -31,6 +32,19 @@ export class MovieService {
     private readonly movieGenreRepo: Repository<MovieGenre>
   ) {}
 
+  parseDate = (value: unknown): Date | undefined => {
+    if (value === null || value === undefined || value === '') return undefined;
+
+    if (value instanceof Date) return isNaN(value.getTime()) ? undefined : value;
+
+    if (typeof value === 'string') {
+      const d = new Date(value);
+      return isNaN(d.getTime()) ? undefined : d; // thêm check an toàn
+    }
+
+    return undefined;
+  };
+
   async createMovie(
     createRequest: CreateMovieDto,
     poster?: Express.Multer.File
@@ -47,8 +61,18 @@ export class MovieService {
     } else {
       throw new Error('Poster file is required');
     }
+
+    const screeningStart = this.parseDate(createRequest.screeningStart);
+    const screeningEnd = this.parseDate(createRequest.screeningEnd);
+
+    if (screeningStart && screeningEnd && screeningEnd < screeningStart) {
+      throw new BadRequest(RESPONSE_MESSAGES.MOVIE_INVALID_SCREENING_DATES);
+    }
+
     const movie = this.movieRepo.create({
       ...createRequest,
+      screeningStart,
+      screeningEnd,
       poster: cloudUrl
     });
     await this.movieRepo.save(movie);
@@ -100,12 +124,25 @@ export class MovieService {
   async getMovieById(id: string): Promise<MovieResponseDto> {
     const movie = await this.movieRepo.findOne({
       where: { id },
-      relations: ['movieGenres', 'movieGenres.genre', 'movieActors', 'movieActors.actor']
+      relations: [
+        'movieGenres',
+        'movieGenres.genre',
+        'movieActors',
+        'movieActors.actor',
+        'reviews',
+        'reviews.account'
+      ]
     });
+
     if (!movie) {
       throw new BadRequest(RESPONSE_MESSAGES.MOVIE_NOT_FOUND);
     }
-    return new MovieResponseDto(movie);
+
+    const dto = new MovieResponseDto(movie);
+
+    dto.reviews = movie.reviews ? movie.reviews.map((r) => new ReviewResponseDto(r)) : [];
+
+    return dto;
   }
 
   async updateMovie(
@@ -129,7 +166,26 @@ export class MovieService {
       cloudUrl = await this.cloudinaryService.uploadFileBuffer(poster);
     }
 
-    Object.assign(movie, updateDto, { poster: cloudUrl });
+    const preparedDto: Partial<Movie> = {
+      ...updateDto,
+      screeningStart:
+        updateDto.screeningStart === undefined
+          ? null
+          : (this.parseDate(updateDto.screeningStart) ?? null),
+      screeningEnd:
+        updateDto.screeningEnd === undefined
+          ? null
+          : (this.parseDate(updateDto.screeningEnd) ?? null),
+      poster: cloudUrl
+    };
+
+    if (preparedDto.screeningStart && preparedDto.screeningEnd) {
+      if (preparedDto.screeningEnd < preparedDto.screeningStart) {
+        throw new BadRequest(RESPONSE_MESSAGES.MOVIE_INVALID_SCREENING_DATES);
+      }
+    }
+    Object.assign(movie, preparedDto);
+
     await this.movieRepo.save(movie);
 
     if (updateDto.genre) {
@@ -255,5 +311,79 @@ export class MovieService {
 
     const items = movies.map((m) => new MovieResponseDto(m));
     return { items, total };
+  }
+
+  async getUpcomingMovies(
+    dto: PaginationDto
+  ): Promise<{ items: MovieResponseDto[]; total: number }> {
+    const { limit, offset } = dto;
+    const now = new Date();
+
+    const [movies, total] = await this.movieRepo.findAndCount({
+      where: {
+        screeningStart: MoreThan(now) // > now
+      },
+      relations: ['movieGenres.genre', 'movieActors.actor'],
+      order: { screeningStart: 'ASC' },
+      skip: offset,
+      take: limit
+    });
+
+    return { items: movies.map((m) => new MovieResponseDto(m)), total };
+  }
+
+  async getNowShowingMovies(
+    dto: PaginationDto
+  ): Promise<{ items: MovieResponseDto[]; total: number }> {
+    const { limit, offset } = dto;
+    const now = new Date();
+
+    const [movies, total] = await this.movieRepo
+      .createQueryBuilder('movie')
+      .leftJoinAndSelect('movie.movieGenres', 'movieGenre')
+      .leftJoinAndSelect('movieGenre.genre', 'genre')
+      .leftJoinAndSelect('movie.movieActors', 'movieActor')
+      .leftJoinAndSelect('movieActor.actor', 'actor')
+      .where('movie.screeningStart <= :now', { now })
+      .andWhere(
+        new Brackets((qb) =>
+          qb.where('movie.screeningEnd IS NULL').orWhere('movie.screeningEnd >= :now', { now })
+        )
+      )
+      .orderBy('movie.screeningStart', 'DESC')
+      .skip(offset)
+      .take(limit)
+      .getManyAndCount();
+
+    return { items: movies.map((m) => new MovieResponseDto(m)), total };
+  }
+
+  async getTopRevenueMoviesThisMonth(): Promise<MovieResponseDto[]> {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+    const movies = await this.movieRepo
+      .createQueryBuilder('movie')
+      .leftJoin('movie.showTimes', 'showTime')
+      .leftJoin('showTime.bookings', 'booking')
+      .select('movie')
+      .addSelect('COALESCE(SUM(booking.totalBookingPrice), 0)', 'totalRevenue')
+      .where('booking.dateTimeBooking BETWEEN :start AND :end', {
+        start: startOfMonth,
+        end: endOfMonth
+      })
+      .groupBy('movie.id')
+      .orderBy('totalRevenue', 'DESC')
+      .limit(5)
+      .getRawAndEntities();
+
+    // Gộp entity + tổng doanh thu
+    const result = movies.entities.map((movie, i) => ({
+      ...new MovieResponseDto(movie),
+      totalRevenue: Number(movies.raw[i].totalRevenue) || 0
+    }));
+
+    return result;
   }
 }

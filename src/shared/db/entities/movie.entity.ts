@@ -35,7 +35,13 @@ export class Movie extends BaseEntityTime {
   @Column({ name: 'release_date', type: 'timestamp' })
   releaseDate: Date;
 
-  @OneToMany(() => MovieActor, (movieActor) => movieActor.movie, { cascade: true })
+  @Column({ name: 'screening_start', type: 'timestamp', nullable: true })
+  screeningStart: Date;
+
+  @Column({ name: 'screening_end', type: 'timestamp', nullable: true })
+  screeningEnd: Date;
+
+  @OneToMany(() => MovieActor, (movieActor) => movieActor.movie)
   movieActors: MovieActor[];
 
   @OneToMany(() => Review, (review) => review.movie, { cascade: true })

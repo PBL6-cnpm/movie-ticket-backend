@@ -1,5 +1,6 @@
 import { RESPONSE_MESSAGES } from '@common/constants';
 import { BadRequest } from '@common/exceptions/bad-request.exception';
+import { PaginationDto } from '@common/types/pagination-base.type';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Actor } from '@shared/db/entities/actor.entity';
@@ -57,7 +58,10 @@ export class ActorService {
     updateDto: UpdateActorDto,
     picture?: Express.Multer.File
   ): Promise<ActorResponseDto> {
-    const actor = await this.actorRepo.findOne({ where: { id } });
+    const actor = await this.actorRepo.findOne({
+      where: { id },
+      relations: ['movieActors', 'movieActors.movie']
+    });
     if (!actor) throw new BadRequest(RESPONSE_MESSAGES.ACTOR_NOT_FOUND);
 
     let cloudUrl = actor.picture;
@@ -68,11 +72,20 @@ export class ActorService {
     Object.assign(actor, updateDto, { picture: cloudUrl });
     await this.actorRepo.save(actor);
 
-    const updated = await this.actorRepo.findOne({
-      where: { id: actor.id },
-      relations: ['movieActors', 'movieActors.movie']
+    return new ActorResponseDto(actor);
+  }
+
+  async getAllActors(dto: PaginationDto): Promise<{ items: ActorResponseDto[]; total: number }> {
+    const { limit, offset } = dto;
+
+    const [actors, total] = await this.actorRepo.findAndCount({
+      skip: offset,
+      take: limit,
+      relations: ['movieActors', 'movieActors.movie'],
+      order: { name: 'ASC' }
     });
 
-    return new ActorResponseDto(updated);
+    const items = actors.map((a) => new ActorResponseDto(a));
+    return { items, total };
   }
 }

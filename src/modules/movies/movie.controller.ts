@@ -24,13 +24,49 @@ import { MovieResponseDto } from './dto/movie-response.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { MovieService } from './movie.service';
 
-// @ApiBearerAuth()
 @Public()
 @Controller('movies')
 @ApiTags('Movie')
 export class MovieController extends BaseController {
   constructor(private readonly movieService: MovieService) {
     super();
+  }
+
+  @Get('now-showing')
+  @ApiOperation({ summary: 'Get movies that are currently showing' })
+  async getNowShowingMovies(
+    @Query() dto: PaginationDto
+  ): Promise<SuccessResponse<IPaginatedResponse<MovieResponseDto>>> {
+    const { items, total } = await this.movieService.getNowShowingMovies(dto);
+    const paginated = PaginationHelper.pagination({
+      limit: dto.limit,
+      offset: dto.offset,
+      totalItems: total,
+      items
+    });
+    return this.success(paginated);
+  }
+
+  @Get('upcoming')
+  @ApiOperation({ summary: 'Get upcoming movies' })
+  async getUpcomingMovies(
+    @Query() dto: PaginationDto
+  ): Promise<SuccessResponse<IPaginatedResponse<MovieResponseDto>>> {
+    const { items, total } = await this.movieService.getUpcomingMovies(dto);
+    const paginated = PaginationHelper.pagination({
+      limit: dto.limit,
+      offset: dto.offset,
+      totalItems: total,
+      items
+    });
+    return this.success(paginated);
+  }
+
+  @Get('top/revenue/month')
+  @ApiOperation({ summary: 'Get top 5 movies by revenue in current month' })
+  async getTopRevenueMoviesThisMonth(): Promise<SuccessResponse<MovieResponseDto[]>> {
+    const result = await this.movieService.getTopRevenueMoviesThisMonth();
+    return this.success(result);
   }
 
   @Post()
@@ -49,6 +85,8 @@ export class MovieController extends BaseController {
         director: { type: 'string' },
         trailer: { type: 'string' },
         releaseDate: { type: 'string', format: 'date' },
+        screeningStart: { type: 'string', format: 'date' },
+        screeningEnd: { type: 'string', format: 'date' },
         genre: { type: 'array', items: { type: 'string' } },
         actors: { type: 'array', items: { type: 'string' } },
         poster: { type: 'string', format: 'binary' }
@@ -61,14 +99,6 @@ export class MovieController extends BaseController {
   ): Promise<SuccessResponse<MovieResponseDto>> {
     const newMovie = await this.movieService.createMovie(createMovieDto, poster);
     return this.created(newMovie);
-  }
-
-  @Get(':id')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get movie by ID' })
-  async getMovieById(@Param('id') id: string): Promise<SuccessResponse<MovieResponseDto>> {
-    const movie = await this.movieService.getMovieById(id);
-    return this.success(movie);
   }
 
   @Patch(':id')
@@ -164,5 +194,13 @@ export class MovieController extends BaseController {
       items
     });
     return this.success(paginated);
+  }
+
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get movie by ID' })
+  async getMovieById(@Param('id') id: string): Promise<SuccessResponse<MovieResponseDto>> {
+    const movie = await this.movieService.getMovieById(id);
+    return this.success(movie);
   }
 }
