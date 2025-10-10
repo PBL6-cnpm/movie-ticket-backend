@@ -6,9 +6,9 @@ export class AccountResponseDto {
   email: string;
   fullName: string;
   status: AccountStatus;
-  branchId: string;
-  coin: number;
-  avatarUrl: string;
+  branchId?: string;
+  coin?: number;
+  avatarUrl?: string;
   phoneNumber: string;
   createdAt: Date;
   roleNames: string[];

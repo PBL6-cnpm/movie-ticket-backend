@@ -52,8 +52,7 @@ const entities = [
   TypeDay,
   TypeSeat,
   Voucher,
-  MovieGenre,
-  AccountRole
+  MovieGenre
 ];
 
 @Global()

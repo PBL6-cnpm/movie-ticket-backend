@@ -1,5 +1,6 @@
 import { DatabaseModule } from '@databases/database.module';
 import { SeederModule } from '@databases/seeders/seeder.module';
+import { AccountRoleModule } from '@modules/account-role/account-role.module';
 import { AccountModule } from '@modules/accounts/account.module';
 import { ActorModule } from '@modules/actors/actor.module';
 import { AuthModule } from '@modules/auth/auth.module';
@@ -12,13 +13,13 @@ import { RoleModule } from '@modules/roles/role.module';
 import { TestModule } from '@modules/test/test.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { HealthController } from './health.controller';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { BullQueueModule } from '@shared/modules/bull-queue/bull-queue.module';
 import { EmailModule } from '@shared/modules/bull-queue/queue-process/email/email.module';
 import { RedisModuleCustom } from '@shared/modules/redis/redis.module';
 import { AppController } from './app.controller';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 
     //Movie Feature
     AccountModule,
+    AccountRoleModule,
     AuthModule,
     RoleModule,
     BranchModule,
