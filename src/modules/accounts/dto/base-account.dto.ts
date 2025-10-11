@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
   IsStrongPassword,
+  IsUUID,
   MaxLength,
   MinLength
 } from 'class-validator';
@@ -74,4 +75,13 @@ export class BaseAccountDto {
   @IsString()
   @IsOptional()
   avatarUrl?: string;
+
+  @ApiProperty({
+    description: 'ID chi nhánh (tùy chọn cho admin)',
+    example: 'branch-uuid-here',
+    required: false
+  })
+  @IsOptional()
+  @IsUUID('4', { message: 'Branch ID phải là UUID hợp lệ' })
+  branchId?: string;
 }

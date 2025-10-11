@@ -73,7 +73,7 @@ export class AccountService extends BaseService<Account> {
       email: createAdminAccountDto.email,
       password: hashedPassword,
       fullName: createAdminAccountDto.fullName,
-      phoneNumber: createAdminAccountDto.phone,
+      phoneNumber: createAdminAccountDto.phoneNumber,
       branchId: createAdminAccountDto.branchId,
       status: AccountStatus.ACTIVE,
       accountRoles: [adminAccountRole]
