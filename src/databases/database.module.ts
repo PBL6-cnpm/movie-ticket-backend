@@ -68,7 +68,7 @@ const entities = [
         password: DB.password,
         database: DB.database,
         entities: entities,
-        logging: true,
+        logging: false,
         timezone: 'Z'
         // synchronize: true
       }),

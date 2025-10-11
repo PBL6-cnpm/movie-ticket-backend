@@ -203,4 +203,12 @@ export class MovieController extends BaseController {
     const movie = await this.movieService.getMovieById(id);
     return this.success(movie);
   }
+
+  @Get('/get-with-branches/:id')
+  async getMovieWithBranches(
+    @Param('id') id: string
+  ): Promise<SuccessResponse<IPaginatedResponse<MovieResponseDto>>> {
+    const result = await this.movieService.getMovieWithBranches(id);
+    return this.success(result);
+  }
 }

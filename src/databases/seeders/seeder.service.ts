@@ -2,13 +2,18 @@ import { RolePermissionSeed } from '@common/constants';
 import { AccountStatus, PermissionName, RoleName } from '@common/enums';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as bcrypt from 'bcryptjs';
 import { AccountRole } from '@shared/db/entities/account-role.entity';
 import { Account } from '@shared/db/entities/account.entity';
 import { Branch } from '@shared/db/entities/branch.entity';
+import { Movie } from '@shared/db/entities/movie.entity';
 import { Permission } from '@shared/db/entities/permission.entity';
 import { RolePermission } from '@shared/db/entities/role-permission.entity';
 import { Role } from '@shared/db/entities/role.entity';
+import { Room } from '@shared/db/entities/room.entity';
+import { Seat } from '@shared/db/entities/seat.entity';
+import { ShowTime } from '@shared/db/entities/show-time.entity';
+import { TypeSeat } from '@shared/db/entities/type-seat.entity';
+import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -32,35 +37,185 @@ export class SeederService {
     private accountRoleRepo: Repository<AccountRole>,
 
     @InjectRepository(Branch)
-    private branchRepo: Repository<Branch>
+    private branchRepo: Repository<Branch>,
+
+    @InjectRepository(Room)
+    private roomRepo: Repository<Room>,
+
+    @InjectRepository(TypeSeat)
+    private typeSeatRepo: Repository<TypeSeat>,
+
+    @InjectRepository(Seat)
+    private seatRepo: Repository<Seat>,
+
+    @InjectRepository(ShowTime)
+    private showTimeRepo: Repository<ShowTime>,
+
+    @InjectRepository(Movie)
+    private movieRepo: Repository<Movie>
   ) {}
 
   async seed() {
     this.logger.log('Starting seeding process...');
-    await this.seedRoles();
-    await this.seedPermissions();
-    await this.seedBranches();
-    await this.seedAccounts();
-    await this.seedAccountRoles();
-    await this.seedRolePermissions();
+    // this.seedRoles(),
+    // this.seedPermissions(),
+    // this.seedAccounts(),
+    // this.seedAccountRoles(),
+    // this.seedRolePermissions(),
+    // this.seedBranches(),
+    // await this.seedRooms();
+    // await this.seedTypeSeats();
+    // await this.seedSeats();
+    await this.seedShowTimes();
+  }
+  private async seedRooms() {
+    this.logger.log('Seeding rooms...');
+    const branches = await this.branchRepo.find();
+    const roomsToSeed = [];
+    for (const branch of branches) {
+      for (let i = 1; i <= 8; i++) {
+        roomsToSeed.push({ name: `Room ${i}`, branchId: branch.id });
+      }
+    }
+    await this.roomRepo.upsert(roomsToSeed, {
+      skipUpdateIfNoValuesChanged: true,
+      conflictPaths: ['name', 'branchId']
+    });
+    this.logger.log('Seeding rooms completed.');
+  }
+
+  private async seedTypeSeats() {
+    this.logger.log('Seeding type seats...');
+    const typeSeatsToSeed = [
+      { name: 'Standard', price: 80000, is_current: true },
+      { name: 'VIP', price: 130000, is_current: true },
+      { name: 'Couple', price: 160000, is_current: true },
+      { name: 'Deluxe', price: 200000, is_current: true }
+    ];
+    await this.typeSeatRepo.upsert(typeSeatsToSeed, {
+      skipUpdateIfNoValuesChanged: true,
+      conflictPaths: ['name']
+    });
+    this.logger.log('Seeding type seats completed.');
+  }
+
+  private async seedSeats() {
+    this.logger.log('Seeding seats...');
+    const rooms = await this.roomRepo.find();
+    const typeSeats = await this.typeSeatRepo.find(); // Standard, VIP, Couple, Deluxe
+    const seatsToSeed = [];
+
+    // Define rows A-J
+    const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+
+    for (const room of rooms) {
+      for (const row of rows) {
+        // Randomize seat count per row (12-20)
+        const seatCount = Math.floor(Math.random() * 9) + 12; // 12-20 seats
+
+        for (let i = 1; i <= seatCount; i++) {
+          // Assign typeSeat based on row or seat number (you can adjust rules)
+          let typeSeat = typeSeats[0]; // Standard
+          if (row >= 'H') typeSeat = typeSeats[1]; // VIP for back rows
+          if (row === 'G') typeSeat = typeSeats[2]; // Couple row
+          if (row === 'J') typeSeat = typeSeats[3]; // Deluxe row
+
+          seatsToSeed.push({
+            roomId: room.id,
+            typeSeatId: typeSeat.id,
+            name: `${row}${i}`
+          });
+        }
+      }
+    }
+
+    await this.seatRepo.upsert(seatsToSeed, {
+      skipUpdateIfNoValuesChanged: true,
+      conflictPaths: ['roomId', 'name']
+    });
+    this.logger.log('Seeding seats completed.');
+  }
+
+  private async seedShowTimes() {
+    this.logger.log('🎬 Seeding show_times...');
+
+    const movies = await this.movieRepo.find();
+    const rooms = await this.roomRepo.find();
+
+    const MAX_SHOWTIMES = 14000;
+    const HOURS_BETWEEN_SHOWS = 3;
+    const START_HOUR = 8;
+    const END_HOUR = 22;
+
+    const showTimes: any[] = [];
+
+    // Đảm bảo mỗi phòng có ít nhất 1 suất chiếu
+    for (const room of rooms) {
+      const randomMovie = movies[Math.floor(Math.random() * movies.length)];
+      if (!randomMovie.screeningStart || !randomMovie.screeningEnd) continue;
+
+      const startDate = new Date(randomMovie.screeningStart);
+      const timeStart = new Date(startDate);
+      timeStart.setHours(START_HOUR, 0, 0, 0);
+
+      showTimes.push({
+        movieId: randomMovie.id,
+        roomId: room.id,
+        timeStart,
+        showDate: new Date(timeStart)
+      });
+    }
+
+    // Sinh thêm các suất ngẫu nhiên cho đến khi đạt tối đa 1500
+    while (showTimes.length < MAX_SHOWTIMES) {
+      const movie = movies[Math.floor(Math.random() * movies.length)];
+      if (!movie.screeningStart || !movie.screeningEnd) continue;
+
+      const room = rooms[Math.floor(Math.random() * rooms.length)];
+
+      const startDate = new Date(movie.screeningStart);
+      const endDate = new Date(movie.screeningEnd);
+      const diffDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const randomDayOffset = Math.floor(Math.random() * diffDays);
+      const showDate = new Date(startDate);
+      showDate.setDate(showDate.getDate() + randomDayOffset);
+
+      const randomHour =
+        START_HOUR +
+        HOURS_BETWEEN_SHOWS *
+          Math.floor(Math.random() * ((END_HOUR - START_HOUR) / HOURS_BETWEEN_SHOWS));
+      const timeStart = new Date(showDate);
+      timeStart.setHours(randomHour, 0, 0, 0);
+
+      showTimes.push({
+        movieId: movie.id,
+        roomId: room.id,
+        timeStart,
+        showDate
+      });
+    }
+
+    await this.showTimeRepo.upsert(showTimes, {
+      skipUpdateIfNoValuesChanged: true,
+      conflictPaths: ['movieId', 'roomId', 'timeStart', 'showDate']
+    });
+
+    this.logger.log(`✅ Seeding completed. Total show_times inserted: ${showTimes.length}`);
   }
 
   private async seedBranches() {
     this.logger.log('Seeding branches...');
     try {
       const branchesToSeed = [
-        {
-          name: 'CoopMart Hà Nội',
-          address: '75 Thanh Xuân, Hà Nội'
-        },
-        {
-          name: 'Lotte Cinema Gò Vấp',
-          address: '242 Nguyễn Văn Lượng, Gò Vấp, TP.HCM'
-        },
-        {
-          name: 'CGV Vincom',
-          address: '191 Ba Tháng Hai, Phường 12, Quận 10, TP.HCM'
-        }
+        { name: 'CGV Vincom Center', address: '191 3/2 Street, District 10, Ho Chi Minh City' },
+        { name: 'Lotte Cinema Go Vap', address: '242 Nguyen Van Luong, Go Vap, Ho Chi Minh City' },
+        { name: 'Galaxy Nguyen Du', address: '116 Nguyen Du, District 1, Ho Chi Minh City' },
+        { name: 'CoopMart Hanoi', address: '75 Thanh Xuan, Hanoi' },
+        { name: 'Beta Cineplex Thai Nguyen', address: '66 Luong Ngoc Quyen, Thai Nguyen' },
+        { name: 'CGV Da Nang', address: '478 2/9 Street, Hai Chau, Da Nang' },
+        { name: 'Lotte Cinema Can Tho', address: '1 Hoa Binh Avenue, Ninh Kieu, Can Tho' },
+        { name: 'Cinestar Hue', address: '25 Hung Vuong, Hue City' },
+        { name: 'Mega GS Dong Nai', address: '82 Le Hong Phong, Bien Hoa City, Dong Nai' }
       ];
 
       await this.branchRepo.upsert(branchesToSeed, {
