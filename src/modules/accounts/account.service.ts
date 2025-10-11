@@ -98,7 +98,8 @@ export class AccountService extends BaseService<Account> {
       where: {
         id: accountId,
         status: Not(AccountStatus.DELETED)
-      }
+      },
+      relations: ['branch']
     });
   }
 

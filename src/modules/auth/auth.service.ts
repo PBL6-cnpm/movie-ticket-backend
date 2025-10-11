@@ -131,7 +131,7 @@ export class AuthService {
   async login(res: Response, loginDto: LoginDto): Promise<LoginResponse> {
     const account = await this.accountService.findOne({
       where: { email: loginDto.email },
-      relations: ['accountRoles', 'accountRoles.role']
+      relations: ['accountRoles', 'accountRoles.role', 'branch']
     });
 
     const isValid = account && (await bcrypt.compare(loginDto.password, account.password));
@@ -153,7 +153,7 @@ export class AuthService {
 
     const { accessToken } = await this.generateAndStoreAuthTokens(res, account);
 
-    await this.setContextUserToCache(account as unknown as ContextUser);
+    await this.setContextUserToCache(this.convertAccountToContextUser(account));
 
     return {
       accessToken,
@@ -329,6 +329,10 @@ export class AuthService {
     await this.redisService.set(REDIS_KEYS.ACCOUNT_CONTEXT(user.id), user, ttlSeconds);
   }
 
+  private convertAccountToContextUser(account: Account): ContextUser {
+    return new ContextUser(account);
+  }
+
   // Others
   private isActiveAccount(status: AccountStatus): boolean {
     switch (status) {
@@ -380,7 +384,7 @@ export class AuthService {
 
     const { accessToken } = await this.generateAndStoreAuthTokens(res, account);
 
-    await this.setContextUserToCache(account as unknown as ContextUser);
+    await this.setContextUserToCache(this.convertAccountToContextUser(account));
 
     return {
       accessToken,
@@ -405,7 +409,7 @@ export class AuthService {
   async findOrCreateAccount(profile: GoogleProfileDto): Promise<Account> {
     const account = await this.accountService.findOne({
       where: { email: profile.email },
-      relations: ['accountRoles', 'accountRoles.role']
+      relations: ['accountRoles', 'accountRoles.role', 'branch']
     });
 
     if (account) {
