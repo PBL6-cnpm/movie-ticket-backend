@@ -1,7 +1,6 @@
 import { BaseController } from '@bases/base-controller';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
-import PaginationHelper from '@common/utils/pagination.util';
 import {
   Body,
   Controller,
@@ -41,16 +40,8 @@ export class TypeSeatController extends BaseController {
   async getAllTypeSeats(
     @Query() dto: PaginationDto
   ): Promise<SuccessResponse<IPaginatedResponse<TypeSeatResponseDto>>> {
-    const { total, items } = await this.typeSeatService.getAllTypeSeats(dto);
-
-    const paginated = PaginationHelper.pagination({
-      limit: dto.limit,
-      offset: dto.offset,
-      totalItems: total,
-      items
-    });
-
-    return this.success(paginated);
+    const result = await this.typeSeatService.getAllTypeSeats(dto);
+    return this.success(result);
   }
 
   @Post()

@@ -1,7 +1,6 @@
 import { BaseService } from '@bases/base-service';
 import { RESPONSE_MESSAGES } from '@common/constants';
 import { BadRequest } from '@common/exceptions';
-import { FilterPaginationOutput, PaginationDto } from '@common/types/pagination-base.type';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TypeSeat } from '@shared/db/entities/type-seat.entity';
@@ -9,6 +8,9 @@ import { Repository } from 'typeorm';
 import { CreateTypeSeatDto } from './dto/create-type-seat.dto';
 import { TypeSeatResponseDto } from './dto/type-seat-response.dto';
 import { UpdateTypeSeatDto } from './dto/update-type-seat.dto';
+import PaginationHelper from '@common/utils/pagination.util';
+import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
+
 @Injectable()
 export class TypeSeatService extends BaseService<TypeSeat> {
   constructor(
@@ -26,7 +28,7 @@ export class TypeSeatService extends BaseService<TypeSeat> {
     return new TypeSeatResponseDto(typeSeat);
   }
 
-  async getAllTypeSeats(dto: PaginationDto): Promise<FilterPaginationOutput<TypeSeatResponseDto>> {
+  async getAllTypeSeats(dto: PaginationDto): Promise<IPaginatedResponse<TypeSeatResponseDto>> {
     const { limit, offset } = dto;
     const [typeSeats, total] = await this.findAndCount({
       skip: offset,
@@ -34,10 +36,15 @@ export class TypeSeatService extends BaseService<TypeSeat> {
     });
 
     const items = typeSeats.map((item) => new TypeSeatResponseDto(item));
-    return {
-      items,
-      total
-    };
+
+    const paginated = PaginationHelper.pagination({
+      limit: dto.limit,
+      offset: dto.offset,
+      totalItems: total,
+      items
+    });
+
+    return paginated;
   }
 
   async createTypeSeat(createTypeSeatDto: CreateTypeSeatDto): Promise<TypeSeatResponseDto> {
