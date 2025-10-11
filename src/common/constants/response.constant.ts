@@ -188,6 +188,16 @@ export const RESPONSE_MESSAGES = {
   INVALID_PRICE: {
     message: 'Price must be a positive number',
     code: 'INVALID_PRICE'
+  },
+
+  // Review
+  REVIEW_ALREADY_EXISTS: {
+    message: 'You have already reviewed this movie',
+    code: 'REVIEW_ALREADY_EXISTS'
+  },
+  REVIEW_NOT_FOUND: {
+    message: 'Review not found',
+    code: 'REVIEW_NOT_FOUND'
   }
 };
 
