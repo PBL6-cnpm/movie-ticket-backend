@@ -18,12 +18,17 @@ export class ShowTimeService {
       times: { id: string; time: string }[];
     }>
   > {
+    const now = new Date('2025-10-11 20:00:00');
+    const bufferMinutes = 15;
+    const bufferTime = new Date(now.getTime() + bufferMinutes * 60 * 1000);
+
     const queryBuilder = this.showTimeRepository
       .createQueryBuilder('showTime')
       .leftJoinAndSelect('showTime.movie', 'movie')
       .leftJoinAndSelect('showTime.room', 'room')
       .leftJoinAndSelect('room.branch', 'branch')
       .where('movie.id = :movieId', { movieId })
+      .andWhere('showTime.timeStart >= :bufferTime', { bufferTime })
       .orderBy('showTime.timeStart', 'ASC');
 
     const items = await queryBuilder.getMany();
