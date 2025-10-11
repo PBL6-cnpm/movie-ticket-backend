@@ -57,6 +57,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       status: account.status,
       avatarUrl: account?.avatarUrl ?? '',
       phoneNumber: account?.phoneNumber ?? '',
+      branchId: account?.branchId ?? null,
       roles: roleEntities.map((r) => r.name),
       permissions: permissions.map((p) => p.name)
     };

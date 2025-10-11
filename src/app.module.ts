@@ -10,6 +10,7 @@ import { MovieModule } from '@modules/movies/movie.module';
 import { PermissionModule } from '@modules/permissions/permission.module';
 import { RolePermissionModule } from '@modules/role-permission/role-permission.module';
 import { RoleModule } from '@modules/roles/role.module';
+import { RoomModule } from '@modules/room/room.module';
 import { ShowTimeModule } from '@modules/show-time/show-time.module';
 import { TestModule } from '@modules/test/test.module';
 import { TypeSeatModule } from '@modules/type-seat/typeSeat.module';
@@ -37,6 +38,7 @@ import { HealthController } from './health.controller';
     AuthModule,
     RoleModule,
     BranchModule,
+    RoomModule,
     MovieModule,
     ActorModule,
     TestModule,

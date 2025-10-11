@@ -21,6 +21,9 @@ export class ContextUser {
   @ApiProperty()
   phoneNumber: string;
 
+  @ApiProperty({ required: false })
+  branchId?: string;
+
   @ApiProperty({ isArray: true, type: String })
   roles?: string[];
 
@@ -34,5 +37,6 @@ export class ContextUser {
     this.avatarUrl = partial.avatarUrl;
     this.phoneNumber = partial.phoneNumber;
     this.status = partial.status;
+    this.branchId = partial.branchId;
   }
 }

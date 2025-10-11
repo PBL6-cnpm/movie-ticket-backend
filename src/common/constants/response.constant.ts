@@ -138,6 +138,24 @@ export const RESPONSE_MESSAGES = {
     code: 'BRANCH_NOT_FOUND'
   },
 
+  // Room
+  ROOM_NOT_FOUND: {
+    message: 'Room not found',
+    code: 'ROOM_NOT_FOUND'
+  },
+  ROOM_NAME_ALREADY_EXISTS_IN_BRANCH: {
+    message: 'Room name already exists in this branch',
+    code: 'ROOM_NAME_ALREADY_EXISTS_IN_BRANCH'
+  },
+  ROOM_HAS_SHOWTIMES_CANNOT_DELETE: {
+    message: 'Cannot delete room because it has showtimes',
+    code: 'ROOM_HAS_SHOWTIMES_CANNOT_DELETE'
+  },
+  USER_NO_BRANCH_ASSIGNED: {
+    message: 'User does not have branch assigned',
+    code: 'USER_NO_BRANCH_ASSIGNED'
+  },
+
   // Order
   FORMAT_ORDER_INCORRECT: {
     message: 'Format of order is incorrect',
