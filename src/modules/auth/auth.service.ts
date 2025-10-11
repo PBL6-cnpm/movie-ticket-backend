@@ -58,7 +58,7 @@ export class AuthService {
       throw new BadRequest(RESPONSE_MESSAGES.EMAIL_ALREADY_EXISTS);
     }
 
-    // // Create new account
+    // Create new account
     const [customerRole, hashedPassword] = await Promise.all([
       this.roleService.getRoleByName(RoleName.CUSTOMER),
       bcrypt.hash(registerDto.password, 10)
