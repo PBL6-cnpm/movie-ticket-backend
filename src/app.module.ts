@@ -10,7 +10,9 @@ import { MovieModule } from '@modules/movies/movie.module';
 import { PermissionModule } from '@modules/permissions/permission.module';
 import { RolePermissionModule } from '@modules/role-permission/role-permission.module';
 import { RoleModule } from '@modules/roles/role.module';
+import { ShowTimeModule } from '@modules/show-time/show-time.module';
 import { TestModule } from '@modules/test/test.module';
+import { TypeSeatModule } from '@modules/type-seat/typeSeat.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -20,7 +22,6 @@ import { RedisModuleCustom } from '@shared/modules/redis/redis.module';
 import { AppController } from './app.controller';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
 import { HealthController } from './health.controller';
-import { TypeSeatModule } from '@modules/type-seat/typeSeat.module';
 
 @Module({
   imports: [
@@ -42,7 +43,8 @@ import { TypeSeatModule } from '@modules/type-seat/typeSeat.module';
     SeederModule,
     PermissionModule,
     RolePermissionModule,
-    TypeSeatModule
+    TypeSeatModule,
+    ShowTimeModule
   ],
 
   controllers: [AppController, HealthController],

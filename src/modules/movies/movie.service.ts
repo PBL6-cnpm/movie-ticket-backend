@@ -1,11 +1,13 @@
 import { RESPONSE_MESSAGES } from '@common/constants';
 import { BadRequest } from '@common/exceptions/bad-request.exception';
-import { PaginationDto } from '@common/types/pagination-base.type';
+import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
+import PaginationHelper from '@common/utils/pagination.util';
 import { ActorResponseDto } from '@modules/actors/dto/actor-response.dto';
 import { ReviewResponseDto } from '@modules/reviews/dto/review-response.dto';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Actor } from '@shared/db/entities/actor.entity';
+import { Branch } from '@shared/db/entities/branch.entity';
 import { Genre } from '@shared/db/entities/genre.entity';
 import { MovieActor } from '@shared/db/entities/movie-actor.entity';
 import { MovieGenre } from '@shared/db/entities/movie-genre.entity';
@@ -29,7 +31,9 @@ export class MovieService {
     @InjectRepository(MovieActor)
     private readonly movieActorRepo: Repository<MovieActor>,
     @InjectRepository(MovieGenre)
-    private readonly movieGenreRepo: Repository<MovieGenre>
+    private readonly movieGenreRepo: Repository<MovieGenre>,
+    @InjectRepository(Branch)
+    private readonly branchRepo: Repository<Branch>
   ) {}
 
   parseDate = (value: unknown): Date | undefined => {
@@ -385,5 +389,32 @@ export class MovieService {
     }));
 
     return result;
+  }
+
+  async getMovieWithBranches(branchId: string): Promise<IPaginatedResponse<MovieResponseDto>> {
+    const now = new Date();
+    const sevenDaysLater = new Date(now);
+    sevenDaysLater.setDate(now.getDate() + 7);
+
+    const movies = await this.movieRepo
+      .createQueryBuilder('movie')
+      .innerJoin('movie.showTimes', 'showTime')
+      .innerJoin('showTime.room', 'room')
+      .innerJoin('room.branch', 'branch')
+      .where('branch.id = :branchId', { branchId })
+      .andWhere('showTime.timeStart BETWEEN :now AND :sevenDaysLater', { now, sevenDaysLater })
+      .distinct(true)
+      .getMany();
+
+    if (movies.length === 0) {
+      throw new BadRequest(RESPONSE_MESSAGES.MOVIE_NOT_FOUND);
+    }
+
+    return PaginationHelper.pagination({
+      limit: movies.length,
+      offset: 0,
+      totalItems: movies.length,
+      items: movies.map((movie) => new MovieResponseDto(movie))
+    });
   }
 }
