@@ -156,6 +156,20 @@ export const RESPONSE_MESSAGES = {
     code: 'USER_NO_BRANCH_ASSIGNED'
   },
 
+  // Seat
+  SEAT_NOT_FOUND: {
+    message: 'Seat not found',
+    code: 'SEAT_NOT_FOUND'
+  },
+  SEAT_NAME_ALREADY_EXISTS_IN_ROOM: {
+    message: 'Seat name already exists in room',
+    code: 'SEAT_NAME_ALREADY_EXISTS_IN_ROOM'
+  },
+  SEAT_HAS_BOOKSEAT_CANNOT_DELETE: {
+    message: 'Seat has book seat cannot delete',
+    code: 'SEAT_HAS_BOOKSEAT_CANNOT_DELETE'
+  },
+
   // Order
   FORMAT_ORDER_INCORRECT: {
     message: 'Format of order is incorrect',

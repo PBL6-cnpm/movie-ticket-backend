@@ -11,6 +11,7 @@ import { PermissionModule } from '@modules/permissions/permission.module';
 import { RolePermissionModule } from '@modules/role-permission/role-permission.module';
 import { RoleModule } from '@modules/roles/role.module';
 import { RoomModule } from '@modules/room/room.module';
+import { SeatModule } from '@modules/seat/seat.module';
 import { ShowTimeModule } from '@modules/show-time/show-time.module';
 import { TestModule } from '@modules/test/test.module';
 import { TypeSeatModule } from '@modules/type-seat/typeSeat.module';
@@ -46,7 +47,8 @@ import { HealthController } from './health.controller';
     PermissionModule,
     RolePermissionModule,
     TypeSeatModule,
-    ShowTimeModule
+    ShowTimeModule,
+    SeatModule
   ],
 
   controllers: [AppController, HealthController],

@@ -124,7 +124,7 @@ export class RoomService extends BaseService<Room> {
   }
 
   async getRoomsByBranchId(branchId: string): Promise<Room[]> {
-    return this.roomRepository.find({
+    return await this.roomRepository.find({
       where: { branchId },
       order: { name: 'ASC' }
     });
