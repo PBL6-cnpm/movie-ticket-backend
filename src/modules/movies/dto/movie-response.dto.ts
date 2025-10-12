@@ -13,6 +13,7 @@ export class MovieResponseDto {
   releaseDate: Date;
   screeningStart: Date;
   screeningEnd: Date;
+  averageRating?: number | null;
 
   genres: { id: string; name: string }[];
   actors: { id: string; name: string; picture: string }[];
@@ -55,6 +56,13 @@ export class MovieResponseDto {
 
     if (movie.reviews) {
       this.reviews = movie.reviews.map((r) => new ReviewResponseDto(r));
+
+      if (movie.reviews.length > 0) {
+        const sum = movie.reviews.reduce((s, r) => s + (r.rating ?? 0), 0);
+        this.averageRating = Number((sum / movie.reviews.length).toFixed(2));
+      } else {
+        this.averageRating = null;
+      }
     }
   }
 }

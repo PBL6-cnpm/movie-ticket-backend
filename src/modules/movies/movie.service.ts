@@ -144,7 +144,12 @@ export class MovieService {
 
     const dto = new MovieResponseDto(movie);
 
-    dto.reviews = movie.reviews ? movie.reviews.map((r) => new ReviewResponseDto(r)) : [];
+    // dto.reviews = movie.reviews ? movie.reviews.map((r) => new ReviewResponseDto(r)) : [];
+    dto.reviews = movie.reviews
+      ? movie.reviews
+          .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()) // DESC
+          .map((r) => new ReviewResponseDto(r))
+      : [];
 
     return dto;
   }
@@ -309,11 +314,22 @@ export class MovieService {
     const [movies, total] = await this.movieRepo.findAndCount({
       skip: offset,
       take: limit,
-      relations: ['movieGenres', 'movieGenres.genre', 'movieActors', 'movieActors.actor'],
+      relations: [
+        'movieGenres',
+        'movieGenres.genre',
+        'movieActors',
+        'movieActors.actor',
+        'reviews',
+        'reviews.account'
+      ],
       order: { releaseDate: 'DESC' }
     });
 
-    const items = movies.map((m) => new MovieResponseDto(m));
+    const items = movies.map((m) => {
+      const dto = new MovieResponseDto(m);
+      delete (dto as any).reviews; // remove reviews from returned DTO
+      return dto;
+    });
     return { items, total };
   }
 
