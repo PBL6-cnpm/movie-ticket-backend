@@ -20,6 +20,7 @@ import { GetReviewDto } from './dto/get-review.dto';
 import { ReviewResponseDto } from './dto/review-response.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewService } from './review.service';
+import { Public } from '@common/decorators/public.decorator';
 
 @Controller('reviews')
 @ApiBearerAuth()
@@ -51,6 +52,7 @@ export class ReviewController extends BaseController {
   }
 
   @Get('latest')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get latest reviews' })
   async getLatestReviews(): Promise<SuccessResponse<ReviewResponseDto[]>> {
