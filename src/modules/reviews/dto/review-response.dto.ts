@@ -15,7 +15,10 @@ export class ReviewResponseDto {
     id: string;
     name: string;
     poster: string;
-    genres: string[];
+    genres: {
+      id: string;
+      name: string;
+    }[];
   };
 
   constructor(review: Review, getMovieDetails = false) {
@@ -35,7 +38,8 @@ export class ReviewResponseDto {
         id: review.movie.id,
         name: review.movie.name,
         poster: review.movie.poster,
-        genres: review.movie.movieGenres?.map((mg) => mg.genre.name) || []
+        genres:
+          review.movie.movieGenres?.map((mg) => ({ id: mg.genre.id, name: mg.genre.name })) || []
       };
     } else {
       this.movieId = review.movieId;
