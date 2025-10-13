@@ -156,6 +156,20 @@ export const RESPONSE_MESSAGES = {
     code: 'USER_NO_BRANCH_ASSIGNED'
   },
 
+  // ShowTime
+  SHOW_DATE_CANNOT_BE_IN_PAST: {
+    message: 'Show date cannot be in the past',
+    code: 'SHOW_DATE_CANNOT_BE_IN_PAST'
+  },
+  SHOWTIME_HAS_BOOKINGS_CANNOT_DELETE: {
+    message: 'Cannot delete showtime because it has bookings',
+    code: 'SHOWTIME_HAS_BOOKINGS_CANNOT_DELETE'
+  },
+  SHOWTIME_TIME_CONFLICT: {
+    message: 'Showtime conflicts with existing showtime in the same room',
+    code: 'SHOWTIME_TIME_CONFLICT'
+  },
+
   // Seat
   SEAT_NOT_FOUND: {
     message: 'Seat not found',
@@ -198,6 +212,12 @@ export const RESPONSE_MESSAGES = {
   REVIEW_NOT_FOUND: {
     message: 'Review not found',
     code: 'REVIEW_NOT_FOUND'
+  },
+
+  // Show Time
+  SHOW_TIME_CREATE_SHOW_DATE_BEFORE_DATE_NOW: {
+    message: 'Show time create show date before date now',
+    code: 'SHOW_TIME_CREATE_SHOW_DATE_BEFORE_DATE_NOW'
   }
 };
 

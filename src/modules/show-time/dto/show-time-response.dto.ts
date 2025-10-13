@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ShowTime } from '@shared/db/entities/show-time.entity';
 
 export class DayOfWeekResponseDto {
   @ApiProperty({ type: String })
@@ -21,4 +22,38 @@ export class ShowTimeGroupedResponseDto {
     ]
   })
   times: { id: string; time: string }[];
+}
+
+export class ShowTimeResponseDto {
+  id: string;
+  timeStart: Date;
+  showDate: Date;
+  room: {
+    id: string;
+    name: string;
+  };
+  movie: {
+    id: string;
+    name: string;
+    poster: string;
+  };
+
+  constructor(showTime: ShowTime) {
+    this.id = showTime.id;
+    this.timeStart = showTime.timeStart;
+    this.showDate = showTime.showDate;
+    this.movie = showTime.movie
+      ? {
+          id: showTime.movie.id,
+          name: showTime.movie.name,
+          poster: showTime.movie.poster
+        }
+      : null;
+    this.room = showTime.room
+      ? {
+          id: showTime.room.id,
+          name: showTime.room.name
+        }
+      : null;
+  }
 }
