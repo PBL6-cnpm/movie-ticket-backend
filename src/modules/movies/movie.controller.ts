@@ -151,6 +151,24 @@ export class MovieController extends BaseController {
     });
   }
 
+  @Get('search/by-name-movie')
+  @ApiOperation({ summary: 'Search movies & actors by name' })
+  async searchByNameMovie(
+    @Query('name') name: string,
+    @Query() dto: PaginationDto
+  ): Promise<SuccessResponse<IPaginatedResponse<MovieResponseDto>>> {
+    const { movies, totalMovies } = await this.movieService.searchByName(name, dto);
+
+    const paginatedMovies = PaginationHelper.pagination({
+      limit: dto.limit,
+      offset: dto.offset,
+      totalItems: totalMovies,
+      items: movies
+    });
+
+    return this.success(paginatedMovies);
+  }
+
   @Get('genres/all')
   @ApiOperation({ summary: 'Get all movie genres' })
   async getAllGenres(): Promise<SuccessResponse<{ id: string; name: string }[]>> {
