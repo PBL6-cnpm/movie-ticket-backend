@@ -41,6 +41,7 @@ export class ReviewController extends BaseController {
   }
 
   @Get('all/movies/:movieId')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all reviews of a movie' })
   async getAllMovieReviews(
