@@ -1,11 +1,11 @@
 import { Entities } from '@common/enums';
 import { Min } from 'class-validator';
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { BaseAuditedEntity } from '../base-entities/base.entity';
+import { BaseEntityTime } from '../base-entities/base.entity';
 import { BookRefreshments } from './book-refreshments.entity';
 
 @Entity(Entities.REFRESHMENTS)
-export class Refreshments extends BaseAuditedEntity {
+export class Refreshments extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'refreshments_id' })
   id: string;
 
@@ -14,6 +14,9 @@ export class Refreshments extends BaseAuditedEntity {
     nullable: false
   })
   name: string;
+
+  @Column({ name: 'picture' })
+  picture: string;
 
   @Column({
     name: 'price',

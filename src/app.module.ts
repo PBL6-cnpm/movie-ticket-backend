@@ -9,6 +9,7 @@ import { BookingModule } from '@modules/booking/booking.module';
 import { BranchModule } from '@modules/branch/branch.module';
 import { MovieModule } from '@modules/movies/movie.module';
 import { PermissionModule } from '@modules/permissions/permission.module';
+import { RefreshmentModule } from '@modules/refreshments/refreshment.module';
 import { ReviewModule } from '@modules/reviews/review.module';
 import { RolePermissionModule } from '@modules/role-permission/role-permission.module';
 import { RoleModule } from '@modules/roles/role.module';
@@ -52,7 +53,8 @@ import { HealthController } from './health.controller';
     ShowTimeModule,
     SeatModule,
     ReviewModule,
-    BookingModule
+    BookingModule,
+    RefreshmentModule
   ],
 
   controllers: [AppController, HealthController],
