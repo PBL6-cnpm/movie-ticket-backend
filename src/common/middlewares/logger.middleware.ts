@@ -11,7 +11,12 @@ export class LoggerMiddleware implements NestMiddleware {
         ? JSON.parse(JSON.stringify(req.body))
         : {};
 
-      const sensitiveFields: string[] = ['password', 'newPassword', 'currentPassword'];
+      const sensitiveFields: string[] = [
+        'password',
+        'newPassword',
+        'currentPassword',
+        'confirmPassword'
+      ];
 
       sensitiveFields.forEach((field: string) => {
         if (obfuscateRequest[field] && typeof obfuscateRequest[field] === 'string') {

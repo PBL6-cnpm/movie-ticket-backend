@@ -17,7 +17,6 @@ import { RoleService } from '@modules/roles/role.service';
 import { InjectQueue } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { InjectRepository } from '@nestjs/typeorm';
 import { AccountRole } from '@shared/db/entities/account-role.entity';
 import { Account } from '@shared/db/entities/account.entity';
 import { RedisService } from '@shared/modules/redis/redis.service';
@@ -26,7 +25,6 @@ import { Queue } from 'bull';
 import { Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { ExtractJwt } from 'passport-jwt';
-import { Repository } from 'typeorm';
 import { GoogleProfileDto } from './dto/google-profile.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -40,8 +38,6 @@ export class AuthService {
   constructor(
     private readonly accountService: AccountService,
     private readonly roleService: RoleService,
-    @InjectRepository(AccountRole)
-    private readonly accountRoleRepository: Repository<AccountRole>,
 
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
@@ -207,16 +203,6 @@ export class AuthService {
     // Update new password
     const newHashedPassword = await bcrypt.hash(newPassword, 10);
     await this.accountService.updateById(account.id, { password: newHashedPassword });
-  }
-
-  async getProfile(accountId: string): Promise<AccountResponseDto> {
-    const account = await this.accountService.getAccountById(accountId);
-
-    if (!account) {
-      throw new NotFound(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
-    }
-
-    return new AccountResponseDto(account);
   }
 
   // Tokens

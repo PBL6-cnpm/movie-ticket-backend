@@ -142,18 +142,4 @@ export class AuthController extends BaseController {
     await this.authService.requestPasswordReset(sendEmailDto);
     return this.success(null);
   }
-
-  @Get('me')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Current user profile retrieved successfully'
-  })
-  async getProfile(
-    @CurrentAccount() account: ContextUser
-  ): Promise<SuccessResponse<AccountResponseDto>> {
-    const result = await this.authService.getProfile(account.id);
-    return this.success(result);
-  }
 }
