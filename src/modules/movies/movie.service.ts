@@ -172,7 +172,12 @@ export class MovieService {
 
     let cloudUrl = movie.poster;
     if (poster) {
+      const oldposter = cloudUrl;
       cloudUrl = await this.cloudinaryService.uploadFileBuffer(poster);
+
+      this.cloudinaryService
+        .deleteFileByUrl(oldposter)
+        .catch((err) => console.warn('Failed to delete old image:', err.message || err));
     }
 
     const preparedDto: Partial<Movie> = {

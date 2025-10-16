@@ -210,6 +210,20 @@ export const RESPONSE_MESSAGES = {
   SHOW_TIME_CREATE_SHOW_DATE_BEFORE_DATE_NOW: {
     message: 'Show time create show date before date now',
     code: 'SHOW_TIME_CREATE_SHOW_DATE_BEFORE_DATE_NOW'
+  },
+
+  //Refreshment
+  REFRESHMENT_NOT_FOUND: {
+    message: 'Refreshment not found',
+    code: 'REFRESHMENT_NOT_FOUND'
+  },
+  REFRESHMENT_NAME_EXISTS: {
+    message: 'Refreshment name already exists',
+    code: 'REFRESHMENT_NAME_EXISTS'
+  },
+  REFRESHMENT_ALREADY_USED_IN_BOOKING: {
+    message: 'Cannot delete this refreshment because it has been used in a booking',
+    code: 'REFRESHMENT_ALREADY_USED_IN_BOOKING'
   }
 };
 
