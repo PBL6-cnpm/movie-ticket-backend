@@ -66,7 +66,12 @@ export class ActorService {
 
     let cloudUrl = actor.picture;
     if (picture) {
+      const oldpicture = cloudUrl;
       cloudUrl = await this.cloudinaryService.uploadFileBuffer(picture);
+
+      this.cloudinaryService
+        .deleteFileByUrl(oldpicture)
+        .catch((err) => console.warn('Failed to delete old image:', err.message || err));
     }
 
     Object.assign(actor, updateDto, { picture: cloudUrl });

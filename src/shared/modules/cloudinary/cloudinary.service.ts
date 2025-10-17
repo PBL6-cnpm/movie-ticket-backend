@@ -38,4 +38,19 @@ export class CloudinaryService {
       uploadStream.end(file.buffer);
     });
   }
+
+  async deleteFileByUrl(fileUrl: string): Promise<void> {
+    if (!fileUrl) return;
+
+    try {
+      const parts = fileUrl.split('/');
+      const folderAndFile = parts.slice(parts.indexOf('upload') + 1).join('/');
+      const publicIdWithExt = folderAndFile.substring(folderAndFile.indexOf('/') + 1);
+      const publicId = publicIdWithExt.replace(/\.[^/.]+$/, '');
+
+      await cloudinary.uploader.destroy(publicId);
+    } catch (error) {
+      console.warn(' Failed to delete Cloudinary file:', error.message || error);
+    }
+  }
 }
