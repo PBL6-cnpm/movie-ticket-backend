@@ -1,5 +1,5 @@
 import { RESPONSE_MESSAGES } from '@common/constants';
-import { AccountStatus, RoleName } from '@common/enums';
+import { AccountStatus } from '@common/enums';
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
@@ -52,15 +52,6 @@ export class BaseAccountDto {
   @IsOptional()
   status?: AccountStatus;
 
-  @ApiProperty({
-    description: 'Role name of the account',
-    enum: RoleName,
-    required: true
-  })
-  @IsEnum(RoleName)
-  @IsNotEmpty()
-  roleName: RoleName;
-
   @ApiProperty({ description: 'Full name of the user' })
   @IsString()
   @IsNotEmpty()
@@ -71,17 +62,18 @@ export class BaseAccountDto {
   @IsOptional()
   phoneNumber?: string;
 
-  @ApiProperty({ description: 'Avatar URL of the user', required: false })
+  @ApiProperty({
+    description: 'Avatar URL of the user',
+    format: 'binary',
+    type: 'string',
+    required: false
+  })
   @IsString()
   @IsOptional()
   avatarUrl?: string;
 
-  @ApiProperty({
-    description: 'ID chi nhánh (tùy chọn cho admin)',
-    example: 'branch-uuid-here',
-    required: false
-  })
-  @IsOptional()
-  @IsUUID('4', { message: 'Branch ID phải là UUID hợp lệ' })
-  branchId?: string;
+  @ApiProperty({ description: 'Branch ID' })
+  @IsNotEmpty()
+  @IsUUID('4')
+  branchId: string;
 }

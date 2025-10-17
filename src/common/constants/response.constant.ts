@@ -63,27 +63,9 @@ export const RESPONSE_MESSAGES = {
     message: 'Invalid credentials',
     code: 'INVALID_CREDENTIALS'
   },
-
-  // Account
-  ACCOUNT_NOT_FOUND: {
-    message: 'Account not found',
-    code: 'ACCOUNT_NOT_FOUND'
-  },
-  ACCOUNT_DELETED: {
-    message: 'Account has been deleted',
-    code: 'ACCOUNT_DELETED'
-  },
   UNKNOWN_ACCOUNT_STATUS: {
     message: 'Unknown account status',
     code: 'UNKNOWN_ACCOUNT_STATUS'
-  },
-  INVALID_CODE_LENGTH: {
-    message: 'Code must be 6 characters long',
-    code: 'INVALID_CODE_LENGTH'
-  },
-  INVALID_CODE: {
-    message: 'Invalid code',
-    code: 'INVALID_CODE'
   },
   INVALID_OR_EXPIRED_TOKEN: {
     message: 'Invalid or expired token',
@@ -97,13 +79,23 @@ export const RESPONSE_MESSAGES = {
     message: 'Email not verified. Please verify your email to proceed.',
     code: 'EMAIL_NOT_VERIFIED'
   },
-  PASSWORD_CONFIRM_NOT_MATCH: {
-    message: 'Password confirmation does not match',
-    code: 'PASSWORD_CONFIRM_NOT_MATCH'
-  },
   INVALID_GOOGLE_TOKEN: {
     message: 'Invalid Google token',
     code: 'INVALID_GOOGLE_TOKEN'
+  },
+
+  // Account
+  ACCOUNT_NOT_FOUND: {
+    message: 'Account not found',
+    code: 'ACCOUNT_NOT_FOUND'
+  },
+  ACCOUNT_DELETED: {
+    message: 'Account has been deleted',
+    code: 'ACCOUNT_DELETED'
+  },
+  PASSWORD_CONFIRM_NOT_MATCH: {
+    message: 'Password confirmation does not match',
+    code: 'PASSWORD_CONFIRM_NOT_MATCH'
   },
 
   // Role

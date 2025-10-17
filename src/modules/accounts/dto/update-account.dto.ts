@@ -1,45 +1,49 @@
-import { ApiPropertyOptional, PickType } from '@nestjs/swagger';
-import { IsArray, IsOptional, IsString, IsUUID } from 'class-validator';
+import { RESPONSE_MESSAGES } from '@common/constants';
+import { ApiProperty, ApiPropertyOptional, PickType } from '@nestjs/swagger';
+import {
+  IsArray,
+  IsOptional,
+  IsString,
+  IsStrongPassword,
+  IsUUID,
+  MaxLength,
+  MinLength
+} from 'class-validator';
 import { BaseAccountDto } from './base-account.dto';
 
 export class UpdateAccountDto extends PickType(BaseAccountDto, [
-  'fullName',
   'email',
+  'fullName',
   'phoneNumber',
-  'status'
+  'status',
+  'branchId'
 ]) {
-  @ApiPropertyOptional({
-    description: 'Mật khẩu mới',
-    example: 'NewPassword123',
-    minLength: 6
-  })
+  @ApiPropertyOptional({ description: 'List of Role IDs to assign to the account' })
   @IsOptional()
-  @IsString({ message: 'Mật khẩu phải là chuỗi ký tự' })
-  password?: string;
-
-  @ApiPropertyOptional({
-    description: 'ID chi nhánh',
-    example: 'branch-uuid-here'
-  })
-  @IsOptional()
-  @IsUUID('4', { message: 'Branch ID phải là UUID hợp lệ' })
-  branchId: string;
-
-  @ApiPropertyOptional({
-    description: 'URL avatar',
-    example: 'https://example.com/avatar.jpg'
-  })
-  @IsOptional()
-  @IsString({ message: 'Avatar URL phải là chuỗi ký tự' })
-  avatarUrl?: string;
-
-  @ApiPropertyOptional({
-    description: 'Danh sách ID các role để gán cho tài khoản',
-    example: ['role-uuid-1', 'role-uuid-2'],
-    type: [String]
-  })
-  @IsOptional()
-  @IsArray({ message: 'Role IDs phải là một mảng' })
-  @IsUUID('4', { each: true, message: 'Mỗi Role ID phải là UUID hợp lệ' })
+  @IsArray()
+  @IsUUID('4', { each: true })
   roleIds?: string[];
+
+  @ApiProperty({
+    description:
+      'Password for the user account (minimum 8 characters, must contain at least one uppercase letter, one lowercase letter, one number, and one special character)',
+    minLength: 8
+  })
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  @IsStrongPassword(
+    {
+      minLength: 8,
+      minLowercase: 1,
+      minUppercase: 1,
+      minNumbers: 1,
+      minSymbols: 1
+    },
+    {
+      message: RESPONSE_MESSAGES.PASSWORD_MISSING_REQUIREMENTS.message
+    }
+  )
+  @IsOptional()
+  password?: string;
 }

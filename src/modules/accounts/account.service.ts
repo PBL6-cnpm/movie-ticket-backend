@@ -1,11 +1,10 @@
 import { BaseService } from '@bases/base-service';
 import { RESPONSE_MESSAGES } from '@common/constants';
 import { AccountStatus, RoleName } from '@common/enums';
-import { BadRequest } from '@common/exceptions';
+import { BadRequest, NotFound } from '@common/exceptions';
 import { IPaginatedResponse } from '@common/types/pagination-base.type';
 import PaginationHelper from '@common/utils/pagination.util';
 import { RoleService } from '@modules/roles/role.service';
-
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AccountRole } from '@shared/db/entities/account-role.entity';
@@ -13,9 +12,10 @@ import { Account } from '@shared/db/entities/account.entity';
 import * as bcrypt from 'bcryptjs';
 import { Not, Repository } from 'typeorm';
 import { CreateAccountDto } from './dto/create-account.dto';
-import { CreateAdminAccountDto } from './dto/create-admin-account.dto';
 import { SearchAccountDto } from './dto/search-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
+import { ResetPasswordDto, UpdateCustomerAccountDto } from './dto/update-customer-account.dto';
+import { CloudinaryService } from '@shared/modules/cloudinary/cloudinary.service';
 
 @Injectable()
 export class AccountService extends BaseService<Account> {
@@ -24,64 +24,36 @@ export class AccountService extends BaseService<Account> {
     private readonly accountRepo: Repository<Account>,
     @InjectRepository(AccountRole)
     private readonly accountRoleRepo: Repository<AccountRole>,
-    private readonly roleService: RoleService
+    private readonly roleService: RoleService,
+
+    private readonly cloudinaryService: CloudinaryService
   ) {
     super(accountRepo);
   }
 
-  async createAccount(createAccountDto: CreateAccountDto): Promise<Account> {
-    const existingAccount = await this.findOne({
-      where: { email: createAccountDto.email }
-    });
-    if (existingAccount) {
-      throw new BadRequest(RESPONSE_MESSAGES.EMAIL_ALREADY_EXISTS);
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(createAccountDto.password, 10);
-
-    // Create new account
-    const newAccount = await this.create({
-      ...createAccountDto,
-      password: hashedPassword,
-      status: createAccountDto.status || AccountStatus.PENDING
-    });
-
-    return newAccount;
-  }
-
-  async createAdminAccount(createAdminAccountDto: CreateAdminAccountDto): Promise<Account> {
-    // Kiểm tra email đã tồn tại
-    const existingAccount = await this.findOne({ where: { email: createAdminAccountDto.email } });
+  async createAccount(
+    createAccountDto: CreateAccountDto,
+    accountRole: AccountRole
+  ): Promise<Account> {
+    const existingAccount = await this.findOne({ where: { email: createAccountDto.email } });
     if (existingAccount) {
       throw new ConflictException(RESPONSE_MESSAGES.EMAIL_ALREADY_EXISTS);
     }
 
-    // Lấy ADMIN role
-    const adminRole = await this.roleService.getRoleByName(RoleName.ADMIN);
+    const hashedPassword = await bcrypt.hash(createAccountDto.password, 10);
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(createAdminAccountDto.password, 10);
-
-    // Tạo AccountRole object cho ADMIN
-    const adminAccountRole = new AccountRole();
-    adminAccountRole.roleId = adminRole.id;
-    adminAccountRole.role = adminRole;
-
-    // Tạo account mới với role ADMIN (cascade sẽ tự động save AccountRole)
     const newAccount = this.accountRepo.create({
-      email: createAdminAccountDto.email,
+      email: createAccountDto.email,
       password: hashedPassword,
-      fullName: createAdminAccountDto.fullName,
-      phoneNumber: createAdminAccountDto.phoneNumber,
-      branchId: createAdminAccountDto.branchId,
+      fullName: createAccountDto.fullName,
+      phoneNumber: createAccountDto.phoneNumber,
+      branchId: createAccountDto.branchId,
       status: AccountStatus.ACTIVE,
-      accountRoles: [adminAccountRole]
+      accountRoles: [accountRole]
     });
 
     const savedAccount = await this.accountRepo.save(newAccount);
 
-    // Load lại account với relations
     const accountWithRelations = await this.findOneById(savedAccount.id, {
       relations: ['branch', 'accountRoles', 'accountRoles.role']
     });
@@ -91,6 +63,19 @@ export class AccountService extends BaseService<Account> {
     }
 
     return accountWithRelations;
+  }
+
+  async createAdminAccount(createAccountDto: CreateAccountDto): Promise<Account> {
+    // Get ADMIN role
+    const adminRole = await this.roleService.getRoleByName(RoleName.ADMIN);
+
+    // Create AccountRole object for ADMIN
+    const adminAccountRole = new AccountRole();
+    adminAccountRole.roleId = adminRole.id;
+    adminAccountRole.role = adminRole;
+
+    const newAdminAccount = await this.createAccount(createAccountDto, adminAccountRole);
+    return newAdminAccount;
   }
 
   async getAccountById(accountId: string): Promise<Account | null> {
@@ -150,13 +135,13 @@ export class AccountService extends BaseService<Account> {
   }
 
   async updateAccount(accountId: string, updateAccountDto: UpdateAccountDto): Promise<Account> {
-    // Kiểm tra account có tồn tại không
+    // Check if account exists
     const existingAccount = await this.findOneById(accountId);
     if (!existingAccount) {
       throw new BadRequest(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
     }
 
-    // Kiểm tra email đã tồn tại (nếu có update email)
+    // Check if email exists (if updating email)
     if (updateAccountDto.email && updateAccountDto.email !== existingAccount.email) {
       const emailExists = await this.findOne({ where: { email: updateAccountDto.email } });
       if (emailExists) {
@@ -164,23 +149,23 @@ export class AccountService extends BaseService<Account> {
       }
     }
 
-    // Hash password nếu có cập nhật password
+    // Hash password (if updating password)
     const updateData = { ...updateAccountDto };
-    delete updateData.roleIds; // Loại bỏ roleIds khỏi updateData vì sẽ xử lý riêng
+    delete updateData.roleIds; // remove roleIds from updateData because it will be handled after
 
     if (updateAccountDto.password) {
       updateData.password = await bcrypt.hash(updateAccountDto.password, 10);
     }
 
-    // Cập nhật account
+    // Update account
     await this.updateById(accountId, updateData);
 
-    // Cập nhật roles nếu có
+    // Update roles
     if (updateAccountDto.roleIds && updateAccountDto.roleIds.length > 0) {
-      // Xóa tất cả roles hiện tại của account
+      // Remove all current roles of the account
       await this.accountRoleRepo.delete({ accountId: accountId });
 
-      // Gán roles mới
+      // Assign new roles
       const newAccountRoles = updateAccountDto.roleIds.map((roleId) => {
         const accountRole = new AccountRole();
         accountRole.accountId = accountId;
@@ -191,7 +176,7 @@ export class AccountService extends BaseService<Account> {
       await this.accountRoleRepo.save(newAccountRoles);
     }
 
-    // Load lại account với relations
+    // Return updated account with relations
     const updatedAccount = await this.findOneById(accountId, {
       relations: ['branch', 'accountRoles', 'accountRoles.role']
     });
@@ -249,5 +234,72 @@ export class AccountService extends BaseService<Account> {
       limit,
       offset
     });
+  }
+
+  async getProfile(accountId: string): Promise<Account> {
+    const account = await this.getAccountById(accountId);
+
+    if (!account) {
+      throw new NotFound(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
+    }
+
+    return account;
+  }
+
+  async updateCustomerAccount(
+    accountId: string,
+    updateCustomerAccountDto: UpdateCustomerAccountDto,
+    avatarUrl?: Express.Multer.File
+  ): Promise<Account> {
+    const existingAccount = await this.findOneById(accountId);
+    if (!existingAccount) {
+      throw new BadRequest(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
+    }
+
+    // Check if email exists (if updating email)
+    if (
+      updateCustomerAccountDto.email &&
+      updateCustomerAccountDto.email !== existingAccount.email
+    ) {
+      const emailExists = await this.findOne({ where: { email: updateCustomerAccountDto.email } });
+      if (emailExists) {
+        throw new ConflictException(RESPONSE_MESSAGES.EMAIL_ALREADY_EXISTS);
+      }
+    }
+
+    // Upload avatar to Cloudinary (if provided)
+    let cloudUrl = '';
+    if (avatarUrl) {
+      cloudUrl = await this.cloudinaryService.uploadFileBuffer(avatarUrl);
+    }
+
+    await this.accountRepo.update(accountId, {
+      ...updateCustomerAccountDto,
+      ...(cloudUrl && { avatarUrl: cloudUrl })
+    });
+
+    const updatedAccount = await this.findOneById(accountId);
+
+    return updatedAccount;
+  }
+
+  async resetPassword(accountId: string, resetPasswordDto: ResetPasswordDto): Promise<void> {
+    const existingAccount = await this.findOneById(accountId);
+    if (!existingAccount) {
+      throw new BadRequest(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(
+      resetPasswordDto.currentPassword,
+      existingAccount.password
+    );
+
+    if (!isCurrentPasswordValid) {
+      throw new BadRequest(RESPONSE_MESSAGES.INVALID_CREDENTIALS);
+    }
+
+    // Hash new password and update account
+    const hashedNewPassword = await bcrypt.hash(resetPasswordDto.newPassword, 10);
+    await this.accountRepo.update(accountId, { password: hashedNewPassword });
   }
 }
