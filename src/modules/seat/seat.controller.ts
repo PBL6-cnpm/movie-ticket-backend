@@ -1,4 +1,5 @@
 import { BaseController } from '@bases/base-controller';
+import { Public } from '@common/decorators/public.decorator';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import {
   Body,
@@ -11,8 +12,9 @@ import {
   Post,
   Put
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateSeatDto } from './dto/create-seat.dto';
+import { SeatByRoomResponseDto } from './dto/seat-by-room.dto';
 import { SeatResponseDto } from './dto/seat-response.dto';
 import { UpdateSeatDto } from './dto/update-seat.dto';
 import { SeatService } from './seat.service';
@@ -74,5 +76,33 @@ export class SeatController extends BaseController {
   async deleteSeat(@Param('id') id: string): Promise<SuccessResponse<null>> {
     await this.seatService.deleteSeat(id);
     return this.success(null);
+  }
+
+  @Get('get-with-showtime/:showTimeId')
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @ApiOperation({
+    summary: 'Get seats by showtime',
+    description: 'Retrieves all seats in a room for a specific showtime with booking status'
+  })
+  @ApiParam({
+    name: 'showTimeId',
+    description: 'The UUID of the showtime',
+    example: '2199934e-4db7-4f6c-ba7a-aca3947647c2'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Seats retrieved successfully',
+    type: SeatByRoomResponseDto
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Showtime not found or room has no seats'
+  })
+  async getSeatsByShowTime(
+    @Param('showTimeId') showTimeId: string
+  ): Promise<SuccessResponse<SeatByRoomResponseDto>> {
+    const seats = await this.seatService.getSeatsByShowTime(showTimeId);
+    return this.success(seats);
   }
 }

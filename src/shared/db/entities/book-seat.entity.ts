@@ -15,11 +15,11 @@ export class BookSeat extends BaseEntityTime {
   @PrimaryColumn({ name: 'seat_id' })
   seatId: string;
 
-  @Column({ name: 'type_day_id' })
-  typeDayId: string;
+  @Column({ name: 'type_day_id', nullable: true })
+  typeDayId: string | null;
 
-  @Column({ name: 'special_date_id' })
-  specialDateId: string;
+  @Column({ name: 'special_date_id', nullable: true })
+  specialDateId: string | null;
 
   @Column({
     name: 'status',

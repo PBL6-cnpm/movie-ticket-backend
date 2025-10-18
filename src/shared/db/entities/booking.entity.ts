@@ -1,14 +1,7 @@
 import { Entities } from '@common/enums';
+import { BookingStatus } from '@common/enums/booking.enum';
 import { Min } from 'class-validator';
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  Unique
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { Account } from './account.entity';
 import { BookRefreshments } from './book-refreshments.entity';
@@ -17,7 +10,6 @@ import { ShowTime } from './show-time.entity';
 import { Voucher } from './voucher.entity';
 
 @Entity(Entities.BOOKING)
-@Unique(['accountId', 'voucherId'])
 export class Booking extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'booking_id' })
   id: string;
@@ -25,11 +17,17 @@ export class Booking extends BaseEntityTime {
   @Column({ name: 'account_id' })
   accountId: string;
 
-  @Column({ name: 'voucher_id' })
-  voucherId: string;
+  @Column({ name: 'voucher_id', nullable: true })
+  voucherId: string | null;
 
   @Column({ name: 'show_time_id', nullable: false })
   showTimeId: string;
+  @Column({
+    type: 'enum',
+    enum: BookingStatus,
+    default: BookingStatus.PENDING
+  })
+  status: BookingStatus;
 
   @Column({
     name: 'total_booking_price',
@@ -54,9 +52,9 @@ export class Booking extends BaseEntityTime {
   @JoinColumn({ name: 'account_id' })
   account: Account;
 
-  @ManyToOne(() => Voucher, (voucher) => voucher.bookings)
+  @ManyToOne(() => Voucher, (voucher) => voucher.bookings, { nullable: true })
   @JoinColumn({ name: 'voucher_id' })
-  voucher: Voucher;
+  voucher: Voucher | null;
 
   @ManyToOne(() => ShowTime, (showTime) => showTime.bookings, {
     nullable: false
