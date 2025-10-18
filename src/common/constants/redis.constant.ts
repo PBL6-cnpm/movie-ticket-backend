@@ -6,5 +6,7 @@ export const REDIS_KEYS = {
 
   EMAIL_VERIFICATION: (accountId: string) => `account:${accountId}:email_verification`,
 
-  ACCOUNT_CONTEXT: (accountId: string) => `account:${accountId}:context`
+  ACCOUNT_CONTEXT: (accountId: string) => `account:${accountId}:context`,
+
+  LOCK_SEAT: (showtimeId: string, seatId: string) => `lock:seat:${showtimeId}:${seatId}`
 };

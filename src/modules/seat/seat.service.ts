@@ -1,25 +1,32 @@
 import { BaseService } from '@bases/base-service';
 import { RESPONSE_MESSAGES } from '@common/constants';
+import { BookingStatus } from '@common/enums/booking.enum';
 import { BadRequest } from '@common/exceptions';
-import { ConflictException } from '@nestjs/common';
+import { getTypeSeatColor } from '@common/utils/seat.util';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Room } from '@shared/db/entities/room.entity';
 import { Seat } from '@shared/db/entities/seat.entity';
+import { ShowTime } from '@shared/db/entities/show-time.entity';
 import { TypeSeat } from '@shared/db/entities/type-seat.entity';
+import { RedisService } from '@shared/modules/redis/redis.service';
 import { Not, Repository } from 'typeorm';
 import { CreateSeatDto } from './dto/create-seat.dto';
+import { SeatByRoomResponseDto, SeatInfoDto, TypeSeatInfo } from './dto/seat-by-room.dto';
 import { UpdateSeatDto } from './dto/update-seat.dto';
 
+@Injectable()
 export class SeatService extends BaseService<Seat> {
   constructor(
     @InjectRepository(Seat)
     private readonly seatRepository: Repository<Seat>,
-
     @InjectRepository(Room)
     private readonly roomRepository: Repository<Room>,
-
     @InjectRepository(TypeSeat)
-    private readonly typeSeatRepository: Repository<TypeSeat>
+    private readonly typeSeatRepository: Repository<TypeSeat>,
+    @InjectRepository(ShowTime)
+    private readonly showTimeRepository: Repository<ShowTime>,
+    private readonly redisService: RedisService
   ) {
     super(seatRepository);
   }
@@ -52,7 +59,6 @@ export class SeatService extends BaseService<Seat> {
       throw new ConflictException(RESPONSE_MESSAGES.TYPE_SEAT_NOT_FOUND);
     }
 
-    // Tạo seat mới
     const newSeat = await this.create({
       roomId: createSeatDto.roomId,
       typeSeatId: createSeatDto.typeSeatId,
@@ -144,5 +150,99 @@ export class SeatService extends BaseService<Seat> {
     }
 
     await this.deleteById(seatId);
+  }
+
+  async getSeatsByRoom(roomId: string, showTimeId?: string): Promise<SeatByRoomResponseDto> {
+    const seats = await this.seatRepository
+      .createQueryBuilder('seat')
+      .leftJoinAndSelect('seat.typeSeat', 'typeSeat')
+      .leftJoinAndSelect('seat.room', 'room')
+      .where('seat.roomId = :roomId', { roomId })
+      .orderBy('seat.name', 'ASC')
+      .getMany();
+
+    if (!seats || seats.length === 0) {
+      throw new NotFoundException(`Room with ID ${roomId} not found or has no seats.`);
+    }
+
+    const allSeatsInfo: SeatInfoDto[] = [];
+
+    const typeSeatMap = new Map<string, TypeSeatInfo>();
+    const rowSet = new Set<string>();
+    let maxCols = 0;
+
+    seats.forEach((seat) => {
+      const seatInfo: SeatInfoDto = {
+        id: seat.id,
+        name: seat.name,
+        type: {
+          id: seat.typeSeat.id,
+          name: seat.typeSeat.name,
+          price: seat.typeSeat.price,
+          color: getTypeSeatColor(seat.typeSeat.name)
+        }
+      };
+      allSeatsInfo.push(seatInfo);
+
+      if (!typeSeatMap.has(seat.typeSeat.id)) {
+        typeSeatMap.set(seat.typeSeat.id, seatInfo.type);
+      }
+
+      const rowMatch = seat.name.match(/^([A-Z]+)/);
+      const colMatch = seat.name.match(/(\d+)$/);
+      if (rowMatch) rowSet.add(rowMatch[1]);
+      if (colMatch) maxCols = Math.max(maxCols, parseInt(colMatch[1]));
+    });
+
+    const occupiedSeatEntities = showTimeId ? await this.getOccupiedSeats(showTimeId) : [];
+    const occupiedSeatsResponse = occupiedSeatEntities.map((seat) => ({
+      id: seat.id,
+      name: seat.name
+    }));
+
+    const room = seats[0].room;
+    const totalSeats = seats.length;
+    const occupiedCount = occupiedSeatsResponse.length;
+    const availableSeats = totalSeats - occupiedCount;
+
+    return {
+      roomId: room.id,
+      roomName: room.name,
+      seatLayout: {
+        rows: Array.from(rowSet).sort(),
+        cols: maxCols,
+        occupiedSeats: occupiedSeatsResponse,
+        seats: allSeatsInfo
+      },
+      totalSeats,
+      availableSeats,
+      occupiedSeats: occupiedCount,
+      typeSeatList: Array.from(typeSeatMap.values())
+    };
+  }
+
+  private async getOccupiedSeats(showTimeId: string): Promise<Seat[]> {
+    return this.seatRepository
+      .createQueryBuilder('seat')
+      .innerJoin('seat.bookSeats', 'bookSeat')
+      .innerJoin('bookSeat.booking', 'booking')
+      .leftJoinAndSelect('seat.typeSeat', 'typeSeat')
+      .where('booking.showTimeId = :showTimeId', { showTimeId })
+      .andWhere('booking.status IN (:...statuses)', {
+        statuses: [BookingStatus.PENDING, BookingStatus.CONFIRMED]
+      })
+      .getMany();
+  }
+
+  async getSeatsByShowTime(showTimeId: string): Promise<SeatByRoomResponseDto> {
+    const showTime = await this.showTimeRepository.findOne({
+      where: { id: showTimeId }
+    });
+
+    if (!showTime) {
+      throw new Error('ShowTime not found');
+    }
+
+    return this.getSeatsByRoom(showTime.roomId, showTimeId);
   }
 }

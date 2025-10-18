@@ -5,15 +5,18 @@ import { AccountModule } from '@modules/accounts/account.module';
 import { ActorModule } from '@modules/actors/actor.module';
 import { AuthModule } from '@modules/auth/auth.module';
 import { JwtGuard } from '@modules/auth/guards/jwt.guard';
+import { BookingModule } from '@modules/booking/booking.module';
 import { BranchModule } from '@modules/branch/branch.module';
 import { MovieModule } from '@modules/movies/movie.module';
 import { PermissionModule } from '@modules/permissions/permission.module';
+import { ReviewModule } from '@modules/reviews/review.module';
 import { RolePermissionModule } from '@modules/role-permission/role-permission.module';
 import { RoleModule } from '@modules/roles/role.module';
 import { RoomModule } from '@modules/room/room.module';
 import { SeatModule } from '@modules/seat/seat.module';
 import { ShowTimeModule } from '@modules/show-time/show-time.module';
 import { TestModule } from '@modules/test/test.module';
+import { TypeSeatModule } from '@modules/type-seat/typeSeat.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -23,8 +26,6 @@ import { RedisModuleCustom } from '@shared/modules/redis/redis.module';
 import { AppController } from './app.controller';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
 import { HealthController } from './health.controller';
-import { TypeSeatModule } from '@modules/type-seat/typeSeat.module';
-import { ReviewModule } from '@modules/reviews/review.module';
 
 @Module({
   imports: [
@@ -50,7 +51,8 @@ import { ReviewModule } from '@modules/reviews/review.module';
     TypeSeatModule,
     ShowTimeModule,
     SeatModule,
-    ReviewModule
+    ReviewModule,
+    BookingModule
   ],
 
   controllers: [AppController, HealthController],

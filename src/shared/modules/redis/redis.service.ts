@@ -120,4 +120,13 @@ export class RedisService {
       throw error;
     }
   }
+
+  async trySetNx(key: string, value: string, ttl: number): Promise<boolean> {
+    try {
+      return (await this.redis.set(key, value, 'EX', ttl, 'NX')) === 'OK';
+    } catch (error) {
+      this.logger.error('Redis set NX failed', error.stack);
+      throw error;
+    }
+  }
 }
