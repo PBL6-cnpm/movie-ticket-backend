@@ -65,8 +65,8 @@ export class SeederService {
     // this.seedBranches(),
     // await this.seedRooms();
     // await this.seedTypeSeats();
-    // await this.seedSeats();
-    await this.seedShowTimes();
+    await this.seedSeats();
+    // await this.seedShowTimes();
   }
   private async seedRooms() {
     this.logger.log('Seeding rooms...');
@@ -100,31 +100,72 @@ export class SeederService {
   }
 
   private async seedSeats() {
-    this.logger.log('Seeding seats...');
+    this.logger.log('Seeding seats with fully randomized layouts...');
     const rooms = await this.roomRepo.find();
-    const typeSeats = await this.typeSeatRepo.find(); // Standard, VIP, Couple, Deluxe
-    const seatsToSeed = [];
 
-    // Define rows A-J
-    const rows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+    const typeSeats = await this.typeSeatRepo.find();
+    const typeSeatMap = typeSeats.reduce(
+      (map, type) => {
+        map[type.name.toUpperCase()] = type;
+        return map;
+      },
+      {} as Record<string, TypeSeat>
+    );
+
+    if (!typeSeatMap.STANDARD || !typeSeatMap.VIP || !typeSeatMap.COUPLE) {
+      this.logger.error(
+        'Required seat types (Standard, VIP, Couple) not found. Aborting seat seeding.'
+      );
+      return;
+    }
+
+    const seatsToSeed = [];
+    const allPossibleRows = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
 
     for (const room of rooms) {
-      for (const row of rows) {
-        // Randomize seat count per row (12-20)
-        const seatCount = Math.floor(Math.random() * 9) + 12; // 12-20 seats
+      // 1. Random số lượng hàng cho mỗi phòng (ví dụ từ 8-10 hàng)
+      const numberOfRowsInRoom = Math.floor(Math.random() * 3) + 8;
 
-        for (let i = 1; i <= seatCount; i++) {
-          // Assign typeSeat based on row or seat number (you can adjust rules)
-          let typeSeat = typeSeats[0]; // Standard
-          if (row >= 'H') typeSeat = typeSeats[1]; // VIP for back rows
-          if (row === 'G') typeSeat = typeSeats[2]; // Couple row
-          if (row === 'J') typeSeat = typeSeats[3]; // Deluxe row
+      // 2. Random chọn ra các hàng sẽ có trong phòng này
+      const roomRows = [...allPossibleRows]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, numberOfRowsInRoom)
+        .sort();
 
-          seatsToSeed.push({
-            roomId: room.id,
-            typeSeatId: typeSeat.id,
-            name: `${row}${i}`
-          });
+      const lastRow = roomRows[roomRows.length - 1];
+      const vipRows = roomRows.slice(-3, -1); // 2 hàng gần cuối là VIP
+
+      for (const row of roomRows) {
+        // 3. Random số lượng ghế cho mỗi hàng (tối đa 12)
+        const seatCountInThisRow = Math.floor(Math.random() * 5) + 8; // 8-12 ghế
+
+        // HÀNG GHẾ ĐÔI (Hàng cuối)
+        if (row === lastRow) {
+          let i = 1;
+          // Số lượng ghế đôi cũng ngẫu nhiên
+          while (i < seatCountInThisRow) {
+            seatsToSeed.push({
+              roomId: room.id,
+              typeSeatId: typeSeatMap.COUPLE.id,
+              name: `${row}${i}`
+            });
+            i += 2; // Bước nhảy 2 cho ghế đôi
+          }
+        }
+        // CÁC HÀNG GHẾ KHÁC
+        else {
+          for (let i = 1; i <= seatCountInThisRow; i++) {
+            let typeSeat = typeSeatMap.STANDARD;
+            if (vipRows.includes(row)) {
+              typeSeat = typeSeatMap.VIP;
+            }
+
+            seatsToSeed.push({
+              roomId: room.id,
+              typeSeatId: typeSeat.id,
+              name: `${row}${i}`
+            });
+          }
         }
       }
     }
