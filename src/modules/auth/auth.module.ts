@@ -1,3 +1,4 @@
+import { parseTtlToSeconds } from '@common/utils';
 import { GOOGLE, JWT } from '@configs/env.config';
 import { AccountRoleModule } from '@modules/account-role/account-role.module';
 import { AccountModule } from '@modules/accounts/account.module';
@@ -19,7 +20,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       useFactory: () => ({
         secret: JWT.secret,
         signOptions: {
-          expiresIn: JWT.accessTokenTtl
+          expiresIn: parseTtlToSeconds(JWT.accessTokenTtl)
         }
       })
     }),

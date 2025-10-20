@@ -18,6 +18,7 @@ import { SeatModule } from '@modules/seat/seat.module';
 import { ShowTimeModule } from '@modules/show-time/show-time.module';
 import { TestModule } from '@modules/test/test.module';
 import { TypeSeatModule } from '@modules/type-seat/typeSeat.module';
+import { VouncherModule } from '@modules/voucher/voucher.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -54,7 +55,8 @@ import { HealthController } from './health.controller';
     SeatModule,
     ReviewModule,
     BookingModule,
-    RefreshmentModule
+    RefreshmentModule,
+    VouncherModule
   ],
 
   controllers: [AppController, HealthController],

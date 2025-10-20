@@ -16,9 +16,9 @@ import { Room } from '@shared/db/entities/room.entity';
 import { Seat } from '@shared/db/entities/seat.entity';
 import { ShowTime } from '@shared/db/entities/show-time.entity';
 import { TypeSeat } from '@shared/db/entities/type-seat.entity';
+import { Voucher } from '@shared/db/entities/voucher.entity';
 import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
-
 @Injectable()
 export class SeederService {
   private readonly logger = new Logger(SeederService.name);
@@ -64,7 +64,10 @@ export class SeederService {
     private bookSeatRepo: Repository<BookSeat>,
 
     @InjectRepository(BookRefreshments)
-    private bookRefreshmentsRepo: Repository<BookRefreshments>
+    private bookRefreshmentsRepo: Repository<BookRefreshments>,
+
+    @InjectRepository(Voucher)
+    private voucherRepo: Repository<Voucher>
   ) {}
 
   async seed() {
@@ -77,12 +80,174 @@ export class SeederService {
     // this.seedBranches(),
     // await this.seedRooms();
     // await this.seedTypeSeats();
+    // await this.seedSeats();
+    await this.seedVouchers();
     // await this.seedShowTimes();
     // await this.seedSeats();
     try {
       await this.seedShowTimes();
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  private async seedVouchers() {
+    this.logger.log('💰 Seeding vouchers...');
+    try {
+      const now = new Date(); // Current date for reference
+      const yesterday = new Date(now);
+      yesterday.setDate(now.getDate() - 1);
+      const tomorrow = new Date(now);
+      tomorrow.setDate(now.getDate() + 1);
+      const nextWeek = new Date(now);
+      nextWeek.setDate(now.getDate() + 7);
+      const nextMonth = new Date(now);
+      nextMonth.setMonth(now.getMonth() + 1);
+      const lastMonth = new Date(now);
+      lastMonth.setMonth(now.getMonth() - 1);
+
+      const vouchersToSeed: Partial<Voucher>[] = [
+        // 1. Public, % off, Limited Time (This week only)
+        {
+          name: 'This Week 15% Off',
+          code: 'WEEK15OFF',
+          number: 500,
+          discountPercent: 15,
+          maxDiscountValue: 60000,
+          discountValue: null,
+          minimumOrderValue: 120000,
+          isPrivate: false,
+          validFrom: now,
+          validTo: nextWeek
+        },
+        // 2. Public, Fixed Amount off, Always Valid
+        {
+          name: '20k Off Any Order',
+          code: 'GET20K',
+          number: 10000,
+          discountPercent: null,
+          maxDiscountValue: null,
+          discountValue: 20000,
+          minimumOrderValue: null,
+          isPrivate: false,
+          validFrom: null,
+          validTo: null
+        },
+        // 3. Public, % off, Starts Future (Next month)
+        {
+          name: 'Next Month Special 20%',
+          code: 'NOV20',
+          number: 800,
+          discountPercent: 20,
+          maxDiscountValue: 70000,
+          discountValue: null,
+          minimumOrderValue: 150000,
+          isPrivate: false,
+          validFrom: nextMonth,
+          validTo: null
+        },
+        // 4. Public, Fixed Amount off, Ends Future (End of next week)
+        {
+          name: '50k Off - Ends Soon!',
+          code: 'HURRY50K',
+          number: 300,
+          discountPercent: null,
+          maxDiscountValue: null,
+          discountValue: 50000,
+          minimumOrderValue: 250000,
+          isPrivate: false,
+          validFrom: null,
+          validTo: nextWeek
+        },
+        // 5. Public, % off, High Min Order, High Max Discount
+        {
+          name: 'Bulk Discount 25% (Max 150k)',
+          code: 'BULK25',
+          number: 100,
+          discountPercent: 25,
+          maxDiscountValue: 150000,
+          discountValue: null,
+          minimumOrderValue: 600000,
+          isPrivate: false,
+          validFrom: null,
+          validTo: null
+        },
+        // 6. Public, Fixed Amount off, Low Stock (Urgency)
+        {
+          name: 'Limited Time 40k Off',
+          code: 'LIMITED40K',
+          number: 50, // Only 50 available
+          discountPercent: null,
+          maxDiscountValue: null,
+          discountValue: 40000,
+          minimumOrderValue: null,
+          isPrivate: false,
+          validFrom: now,
+          validTo: nextMonth
+        },
+        // 7. Private, % off, Very Generous
+        {
+          name: 'VIP Customer 50% Off',
+          code: 'VIPGOLD50',
+          number: 20,
+          discountPercent: 50,
+          maxDiscountValue: 200000,
+          discountValue: null,
+          minimumOrderValue: null,
+          isPrivate: true,
+          validFrom: null,
+          validTo: null
+        },
+        // 8. Private, Fixed Amount off, Specific Timeframe
+        {
+          name: 'Employee Discount 75k',
+          code: 'STAFF75K',
+          number: 100,
+          discountPercent: null,
+          maxDiscountValue: null,
+          discountValue: 75000,
+          minimumOrderValue: null,
+          isPrivate: true,
+          validFrom: now,
+          validTo: nextMonth
+        },
+        // 9. Expired (For Testing)
+        {
+          name: 'Last Month Offer (Expired)',
+          code: 'EXPIREDSEP',
+          number: 100, // Still has uses, but expired
+          discountPercent: 10,
+          maxDiscountValue: null,
+          discountValue: null,
+          minimumOrderValue: null,
+          isPrivate: false,
+          validFrom: lastMonth,
+          validTo: yesterday // Expired yesterday
+        },
+        // 10. Used Up (For Testing)
+        {
+          name: 'Welcome Bonus (Used)',
+          code: 'WELCOMEBONUS',
+          number: 0, // No uses left
+          discountPercent: null,
+          maxDiscountValue: null,
+          discountValue: 10000,
+          minimumOrderValue: null,
+          isPrivate: false,
+          validFrom: null,
+          validTo: null
+        }
+      ];
+
+      this.logger.log('Inserting new vouchers...');
+      // Use save directly since the table is empty
+      await this.voucherRepo.save(vouchersToSeed);
+
+      this.logger.log(
+        `✅ Seeding vouchers completed. Total vouchers inserted: ${vouchersToSeed.length}`
+      );
+    } catch (error) {
+      this.logger.error('Error seeding vouchers:', error);
     }
   }
   private async seedRooms() {
