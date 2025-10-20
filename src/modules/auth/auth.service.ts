@@ -222,7 +222,7 @@ export class AuthService {
       iat: Math.floor(Date.now() / 1000)
     };
 
-    return this.jwtService.signAsync(payload, { secret, expiresIn: ttl });
+    return this.jwtService.signAsync(payload, { secret, expiresIn: parseTtlToSeconds(ttl) });
   }
 
   private async generateAndStoreAuthTokens(

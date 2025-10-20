@@ -2,6 +2,7 @@ import { Entities } from '@common/enums';
 import {
   Column,
   Entity,
+  Index, // Import Index
   JoinColumn,
   ManyToOne,
   OneToMany,
@@ -15,6 +16,7 @@ import { Room } from './room.entity';
 
 @Entity(Entities.SHOW_TIME)
 @Unique(['roomId', 'timeStart', 'showDate'])
+@Index('idx_showtime_movie_time', ['movieId', 'timeStart'])
 export class ShowTime extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'show_time_id' })
   id: string;
