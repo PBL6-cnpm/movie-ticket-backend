@@ -15,14 +15,30 @@ import {
   HttpStatus,
   Param,
   Post,
-  Put
+  Put,
+  Query
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
+import { IsUUID } from 'class-validator';
 import { CreateShowTimeDto } from './dto/create-show-time.dto';
 import { ShowTimeGroupedResponseDto, ShowTimeResponseDto } from './dto/show-time-response.dto';
 import { UpdateShowTimeDto } from './dto/update-show-time.dto';
 import { ShowTimeService } from './show-time.service';
+export class GetShowtimesQueryDto {
+  @ApiPropertyOptional({
+    description: 'ID movie',
+    required: true
+  })
+  @IsUUID()
+  movieId: string;
 
+  @ApiPropertyOptional({
+    description: 'ID branch',
+    required: true
+  })
+  @IsUUID()
+  branchId: string;
+}
 @Controller('show-time')
 @ApiBearerAuth()
 @ApiTags('Show Times')
@@ -120,5 +136,12 @@ export class ShowTimeController extends BaseController {
 
     await this.showTimeService.deleteShowTime(id, account.branchId);
     return this.success(null);
+  }
+  @Get('get-with-branch')
+  async getShowTimesWithBranch(
+    @Query() query: GetShowtimesQueryDto
+  ): Promise<SuccessResponse<IPaginatedResponse<ShowTimeGroupedResponseDto>>> {
+    const result = await this.showTimeService.getShowTimesWithBranch(query);
+    return this.success(result);
   }
 }

@@ -4,6 +4,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AccountRole } from '@shared/db/entities/account-role.entity';
 import { Account } from '@shared/db/entities/account.entity';
+import { BookRefreshments } from '@shared/db/entities/book-refreshments.entity';
+import { BookSeat } from '@shared/db/entities/book-seat.entity';
+import { Booking } from '@shared/db/entities/booking.entity';
 import { Branch } from '@shared/db/entities/branch.entity';
 import { Movie } from '@shared/db/entities/movie.entity';
 import { Permission } from '@shared/db/entities/permission.entity';
@@ -52,7 +55,16 @@ export class SeederService {
     private showTimeRepo: Repository<ShowTime>,
 
     @InjectRepository(Movie)
-    private movieRepo: Repository<Movie>
+    private movieRepo: Repository<Movie>,
+
+    @InjectRepository(Booking)
+    private bookingRepo: Repository<Booking>,
+
+    @InjectRepository(BookSeat)
+    private bookSeatRepo: Repository<BookSeat>,
+
+    @InjectRepository(BookRefreshments)
+    private bookRefreshmentsRepo: Repository<BookRefreshments>
   ) {}
 
   async seed() {
@@ -65,8 +77,13 @@ export class SeederService {
     // this.seedBranches(),
     // await this.seedRooms();
     // await this.seedTypeSeats();
-    await this.seedSeats();
     // await this.seedShowTimes();
+    // await this.seedSeats();
+    try {
+      await this.seedShowTimes();
+    } catch (error) {
+      console.log(error);
+    }
   }
   private async seedRooms() {
     this.logger.log('Seeding rooms...');
@@ -177,73 +194,140 @@ export class SeederService {
     this.logger.log('Seeding seats completed.');
   }
 
+  // private async seedShowTimes() {
+  //   this.logger.log('🎬 Seeding show_times...');
+
+  //   const movies = await this.movieRepo.find();
+  //   const rooms = await this.roomRepo.find();
+
+  //   const MAX_SHOWTIMES = 14000;
+  //   const HOURS_BETWEEN_SHOWS = 3;
+  //   const START_HOUR = 8;
+  //   const END_HOUR = 22;
+
+  //   const showTimes: any[] = [];
+
+  //   // Đảm bảo mỗi phòng có ít nhất 1 suất chiếu
+  //   for (const room of rooms) {
+  //     const randomMovie = movies[Math.floor(Math.random() * movies.length)];
+  //     if (!randomMovie.screeningStart || !randomMovie.screeningEnd) continue;
+
+  //     const startDate = new Date(randomMovie.screeningStart);
+  //     const timeStart = new Date(startDate);
+  //     timeStart.setHours(START_HOUR, 0, 0, 0);
+
+  //     showTimes.push({
+  //       movieId: randomMovie.id,
+  //       roomId: room.id,
+  //       timeStart,
+  //       showDate: new Date(timeStart)
+  //     });
+  //   }
+
+  //   // Sinh thêm các suất ngẫu nhiên cho đến khi đạt tối đa 1500
+  //   while (showTimes.length < MAX_SHOWTIMES) {
+  //     const movie = movies[Math.floor(Math.random() * movies.length)];
+  //     if (!movie.screeningStart || !movie.screeningEnd) continue;
+
+  //     const room = rooms[Math.floor(Math.random() * rooms.length)];
+
+  //     const startDate = new Date(movie.screeningStart);
+  //     const endDate = new Date(movie.screeningEnd);
+  //     const diffDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+  //     const randomDayOffset = Math.floor(Math.random() * diffDays);
+  //     const showDate = new Date(startDate);
+  //     showDate.setDate(showDate.getDate() + randomDayOffset);
+
+  //     const randomHour =
+  //       START_HOUR +
+  //       HOURS_BETWEEN_SHOWS *
+  //         Math.floor(Math.random() * ((END_HOUR - START_HOUR) / HOURS_BETWEEN_SHOWS));
+  //     const timeStart = new Date(showDate);
+  //     timeStart.setHours(randomHour, 0, 0, 0);
+
+  //     showTimes.push({
+  //       movieId: movie.id,
+  //       roomId: room.id,
+  //       timeStart,
+  //       showDate
+  //     });
+  //   }
+
+  //   await this.showTimeRepo.upsert(showTimes, {
+  //     skipUpdateIfNoValuesChanged: true,
+  //     conflictPaths: ['movieId', 'roomId', 'timeStart', 'showDate']
+  //   });
+
+  //   this.logger.log(`✅ Seeding completed. Total show_times inserted: ${showTimes.length}`);
+  // }
   private async seedShowTimes() {
-    this.logger.log('🎬 Seeding show_times...');
+    this.logger.log('🎬 Seeding realistic and unique show times by room...');
 
     const movies = await this.movieRepo.find();
-    const rooms = await this.roomRepo.find();
+    const branches = await this.branchRepo.find({ relations: ['rooms'] });
 
-    const MAX_SHOWTIMES = 14000;
-    const HOURS_BETWEEN_SHOWS = 3;
-    const START_HOUR = 8;
-    const END_HOUR = 22;
-
-    const showTimes: any[] = [];
-
-    // Đảm bảo mỗi phòng có ít nhất 1 suất chiếu
-    for (const room of rooms) {
-      const randomMovie = movies[Math.floor(Math.random() * movies.length)];
-      if (!randomMovie.screeningStart || !randomMovie.screeningEnd) continue;
-
-      const startDate = new Date(randomMovie.screeningStart);
-      const timeStart = new Date(startDate);
-      timeStart.setHours(START_HOUR, 0, 0, 0);
-
-      showTimes.push({
-        movieId: randomMovie.id,
-        roomId: room.id,
-        timeStart,
-        showDate: new Date(timeStart)
-      });
+    if (movies.length === 0 || branches.length === 0) {
+      this.logger.warn('No movies or branches found, skipping show time seeding.');
+      return;
     }
 
-    // Sinh thêm các suất ngẫu nhiên cho đến khi đạt tối đa 1500
-    while (showTimes.length < MAX_SHOWTIMES) {
-      const movie = movies[Math.floor(Math.random() * movies.length)];
-      if (!movie.screeningStart || !movie.screeningEnd) continue;
+    // Clear old data first
+    this.logger.log('Clearing old data...');
+    await this.showTimeRepo.query('SET FOREIGN_KEY_CHECKS = 0');
+    await this.showTimeRepo.query('TRUNCATE TABLE book_seat');
+    await this.showTimeRepo.query('TRUNCATE TABLE book_refreshments');
+    await this.showTimeRepo.query('TRUNCATE TABLE booking');
+    await this.showTimeRepo.query('TRUNCATE TABLE show_time');
+    await this.showTimeRepo.query('SET FOREIGN_KEY_CHECKS = 1');
 
-      const room = rooms[Math.floor(Math.random() * rooms.length)];
+    // Generate và insert bằng raw SQL
+    const startDate = new Date('2025-10-20T00:00:00.000Z');
+    const endDate = new Date('2025-11-10T23:59:59.000Z');
 
-      const startDate = new Date(movie.screeningStart);
-      const endDate = new Date(movie.screeningEnd);
-      const diffDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-      const randomDayOffset = Math.floor(Math.random() * diffDays);
-      const showDate = new Date(startDate);
-      showDate.setDate(showDate.getDate() + randomDayOffset);
+    const timeSlots = [
+      { hour: 9, minute: 0 },
+      { hour: 10, minute: 30 },
+      { hour: 12, minute: 0 },
+      { hour: 13, minute: 30 },
+      { hour: 15, minute: 0 },
+      { hour: 16, minute: 30 },
+      { hour: 18, minute: 0 },
+      { hour: 19, minute: 30 },
+      { hour: 21, minute: 0 },
+      { hour: 22, minute: 30 }
+    ];
 
-      const randomHour =
-        START_HOUR +
-        HOURS_BETWEEN_SHOWS *
-          Math.floor(Math.random() * ((END_HOUR - START_HOUR) / HOURS_BETWEEN_SHOWS));
-      const timeStart = new Date(showDate);
-      timeStart.setHours(randomHour, 0, 0, 0);
+    const values: string[] = [];
 
-      showTimes.push({
-        movieId: movie.id,
-        roomId: room.id,
-        timeStart,
-        showDate
-      });
+    for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
+      for (const branch of branches) {
+        if (!branch.rooms || branch.rooms.length === 0) continue;
+
+        for (const room of branch.rooms) {
+          const numShowtimes = Math.floor(Math.random() * 4) + 5;
+          const shuffled = [...timeSlots].sort(() => 0.5 - Math.random());
+
+          for (let i = 0; i < numShowtimes; i++) {
+            const slot = shuffled[i];
+            const movie = movies[Math.floor(Math.random() * movies.length)];
+
+            const timeStart = new Date(day);
+            timeStart.setUTCHours(slot.hour, slot.minute, 0, 0);
+
+            values.push(
+              `(UUID(), '${movie.id}', '${room.id}', '${timeStart.toISOString().slice(0, 19).replace('T', ' ')}', '${timeStart.toISOString().slice(0, 19).replace('T', ' ')}', NOW(), NOW())`
+            );
+          }
+        }
+      }
     }
 
-    await this.showTimeRepo.upsert(showTimes, {
-      skipUpdateIfNoValuesChanged: true,
-      conflictPaths: ['movieId', 'roomId', 'timeStart', 'showDate']
-    });
+    // SỬA: Sử dụng show_time_id thay vì id
+    const sql = `INSERT INTO show_time (show_time_id, movie_id, room_id, time_start, show_date, created_at, updated_at) VALUES ${values.join(', ')}`;
+    await this.showTimeRepo.query(sql);
 
-    this.logger.log(`✅ Seeding completed. Total show_times inserted: ${showTimes.length}`);
+    this.logger.log(`✅ Seeding completed. Total showtimes inserted: ${values.length}`);
   }
-
   private async seedBranches() {
     this.logger.log('Seeding branches...');
     try {
