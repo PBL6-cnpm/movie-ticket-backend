@@ -10,6 +10,7 @@ import { ShowTime } from '@shared/db/entities/show-time.entity';
 import { Repository } from 'typeorm';
 import { CreateShowTimeDto } from './dto/create-show-time.dto';
 import { UpdateShowTimeDto } from './dto/update-show-time.dto';
+import { GetShowtimesQueryDto } from './show-time.controller';
 
 @Injectable()
 export class ShowTimeService {
@@ -27,13 +28,15 @@ export class ShowTimeService {
     private readonly roomRepository: Repository<Room>
   ) {}
 
+  // Trong file show-time.service.ts
+
   async getShowTimesWithMovie(movieId: string): Promise<
     IPaginatedResponse<{
       dayOfWeek: { name: string; value: Date };
       times: { id: string; time: string }[];
     }>
   > {
-    const now = new Date('2025-10-11 20:00:00');
+    const now = new Date();
     const bufferMinutes = 15;
     const bufferTime = new Date(now.getTime() + bufferMinutes * 60 * 1000);
 
@@ -47,7 +50,6 @@ export class ShowTimeService {
       .orderBy('showTime.timeStart', 'ASC');
 
     const items = await queryBuilder.getMany();
-
     const grouped: Record<
       string,
       { name: string; value: Date; times: { id: string; time: string }[] }
@@ -55,7 +57,11 @@ export class ShowTimeService {
 
     for (const item of items) {
       const showDate = new Date(item.showDate ?? item.timeStart);
-      const dayKey = showDate.toISOString().split('T')[0]; // YYYY-MM-DD
+
+      const year = showDate.getFullYear();
+      const month = String(showDate.getMonth() + 1).padStart(2, '0');
+      const day = String(showDate.getDate()).padStart(2, '0');
+      const localDayKey = `${year}-${month}-${day}`;
 
       const weekdayName = showDate.toLocaleDateString('en-US', { weekday: 'long' });
       const timeFormatted = new Date(item.timeStart).toLocaleTimeString('en-US', {
@@ -64,16 +70,93 @@ export class ShowTimeService {
         hour12: true
       });
 
-      if (!grouped[dayKey]) {
-        grouped[dayKey] = {
+      if (!grouped[localDayKey]) {
+        grouped[localDayKey] = {
           name: weekdayName,
           value: showDate,
           times: []
         };
       }
 
-      if (!grouped[dayKey].times.some((t) => t.time === timeFormatted)) {
-        grouped[dayKey].times.push({
+      if (!grouped[localDayKey].times.some((t) => t.time === timeFormatted)) {
+        grouped[localDayKey].times.push({
+          id: item.id,
+          time: timeFormatted
+        });
+      }
+    }
+
+    const groupedData = Object.values(grouped).sort(
+      (a, b) => a.value.getTime() - b.value.getTime()
+    );
+
+    const total = groupedData.length;
+
+    return PaginationHelper.pagination({
+      limit: total,
+      offset: 0,
+      totalItems: total,
+      items: groupedData.map((group) => ({
+        dayOfWeek: {
+          name: group.name,
+          value: group.value
+        },
+        times: group.times
+      }))
+    });
+  }
+
+  async getShowTimesWithBranch(query: GetShowtimesQueryDto): Promise<
+    IPaginatedResponse<{
+      dayOfWeek: { name: string; value: Date };
+      times: { id: string; time: string }[];
+    }>
+  > {
+    const now = new Date();
+    const bufferMinutes = 15;
+    const bufferTime = new Date(now.getTime() + bufferMinutes * 60 * 1000);
+
+    const queryBuilder = this.showTimeRepository
+      .createQueryBuilder('showTime')
+      .leftJoinAndSelect('showTime.movie', 'movie')
+      .leftJoinAndSelect('showTime.room', 'room')
+      .leftJoinAndSelect('room.branch', 'branch')
+      .where('branch.id = :branchId', { branchId: query.branchId })
+      .andWhere('movie.id = :movieId', { movieId: query.movieId })
+      .andWhere('showTime.timeStart >= :bufferTime', { bufferTime })
+      .orderBy('showTime.timeStart', 'ASC');
+
+    const items = await queryBuilder.getMany();
+    const grouped: Record<
+      string,
+      { name: string; value: Date; times: { id: string; time: string }[] }
+    > = {};
+
+    for (const item of items) {
+      const showDate = new Date(item.showDate ?? item.timeStart);
+
+      const year = showDate.getFullYear();
+      const month = String(showDate.getMonth() + 1).padStart(2, '0');
+      const day = String(showDate.getDate()).padStart(2, '0');
+      const localDayKey = `${year}-${month}-${day}`;
+
+      const weekdayName = showDate.toLocaleDateString('en-US', { weekday: 'long' });
+      const timeFormatted = new Date(item.timeStart).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+
+      if (!grouped[localDayKey]) {
+        grouped[localDayKey] = {
+          name: weekdayName,
+          value: showDate,
+          times: []
+        };
+      }
+
+      if (!grouped[localDayKey].times.some((t) => t.time === timeFormatted)) {
+        grouped[localDayKey].times.push({
           id: item.id,
           time: timeFormatted
         });
