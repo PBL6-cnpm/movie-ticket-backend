@@ -9,13 +9,13 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AccountRole } from '@shared/db/entities/account-role.entity';
 import { Account } from '@shared/db/entities/account.entity';
+import { CloudinaryService } from '@shared/modules/cloudinary/cloudinary.service';
 import * as bcrypt from 'bcryptjs';
 import { Not, Repository } from 'typeorm';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { SearchAccountDto } from './dto/search-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { ResetPasswordDto, UpdateCustomerAccountDto } from './dto/update-customer-account.dto';
-import { CloudinaryService } from '@shared/modules/cloudinary/cloudinary.service';
 
 @Injectable()
 export class AccountService extends BaseService<Account> {
@@ -31,10 +31,19 @@ export class AccountService extends BaseService<Account> {
     super(accountRepo);
   }
 
-  async createAccount(
-    createAccountDto: CreateAccountDto,
-    accountRole: AccountRole
-  ): Promise<Account> {
+  async createAccount(createAccountDto: CreateAccountDto, roleName: RoleName): Promise<Account> {
+    // Get role
+    const role = await this.roleService.getRoleByName(roleName);
+
+    if (!role) {
+      throw new BadRequest(RESPONSE_MESSAGES.ROLE_NOT_FOUND);
+    }
+
+    // Create AccountRole by role name
+    const accountRole = new AccountRole();
+    accountRole.roleId = role.id;
+    accountRole.role = role;
+
     const existingAccount = await this.findOne({ where: { email: createAccountDto.email } });
     if (existingAccount) {
       throw new ConflictException(RESPONSE_MESSAGES.EMAIL_ALREADY_EXISTS);
@@ -65,19 +74,6 @@ export class AccountService extends BaseService<Account> {
     return accountWithRelations;
   }
 
-  async createAdminAccount(createAccountDto: CreateAccountDto): Promise<Account> {
-    // Get ADMIN role
-    const adminRole = await this.roleService.getRoleByName(RoleName.ADMIN);
-
-    // Create AccountRole object for ADMIN
-    const adminAccountRole = new AccountRole();
-    adminAccountRole.roleId = adminRole.id;
-    adminAccountRole.role = adminRole;
-
-    const newAdminAccount = await this.createAccount(createAccountDto, adminAccountRole);
-    return newAdminAccount;
-  }
-
   async getAccountById(accountId: string): Promise<Account | null> {
     return this.findOne({
       where: {
@@ -88,25 +84,29 @@ export class AccountService extends BaseService<Account> {
     });
   }
 
-  async getAllAdminAccounts(adminAccountDto: {
-    limit: number;
-    offset: number;
-    search?: string;
-  }): Promise<IPaginatedResponse<Account>> {
+  async getAllAccountByRoleName(
+    adminAccountDto: {
+      limit: number;
+      offset: number;
+      search?: string;
+    },
+    roleName: RoleName,
+    branchId?: string
+  ): Promise<IPaginatedResponse<Account>> {
     const { limit, offset, search } = adminAccountDto;
 
     const queryBuilder = this.accountRepo
       .createQueryBuilder('account')
       .innerJoin('account.accountRoles', 'accountRole')
       .innerJoin('accountRole.role', 'role', 'role.name = :roleName', {
-        roleName: RoleName.ADMIN
+        roleName: roleName
       })
       .leftJoinAndSelect('account.branch', 'branch')
       .leftJoinAndSelect('account.accountRoles', 'allAccountRoles')
-      .leftJoinAndSelect('allAccountRoles.role', 'allRoles')
-      .where('account.status != :deletedStatus', {
-        deletedStatus: AccountStatus.DELETED
-      });
+      .leftJoinAndSelect('allAccountRoles.role', 'allRoles');
+    // .where('account.status != :deletedStatus', {
+    //   deletedStatus: AccountStatus.DELETED
+    // });
 
     // Thêm điều kiện tìm kiếm nếu có
     if (search && search.trim()) {
@@ -114,6 +114,12 @@ export class AccountService extends BaseService<Account> {
         '(LOWER(account.fullName) LIKE LOWER(:search) OR LOWER(account.email) LIKE LOWER(:search))',
         { search: `%${search.trim()}%` }
       );
+    }
+
+    if (branchId && branchId.trim()) {
+      queryBuilder.andWhere('account.branchId = :branchId', {
+        branchId: branchId.trim()
+      });
     }
 
     // Đếm tổng số records

@@ -1,5 +1,6 @@
 import { BaseController } from '@bases/base-controller';
 import { CurrentAccount } from '@common/decorators/current-account.decorator';
+import { RoleName } from '@common/enums';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { IPaginatedResponse } from '@common/types/pagination-base.type';
 import { ContextUser } from '@common/types/user.type';
@@ -16,15 +17,17 @@ import {
   UploadedFile,
   UseInterceptors
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AccountService } from './account.service';
 import { AccountResponseDto } from './dto/account-response.dto';
 import { AdminAccountDto } from './dto/admin-account.dto';
 import { CreateAccountDto } from './dto/create-account.dto';
+import { CreateStaffAccountDto } from './dto/create-staff-account.dto';
 import { SearchAccountDto } from './dto/search-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { ResetPasswordDto, UpdateCustomerAccountDto } from './dto/update-customer-account.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { UpdateStaffAccountDto } from './dto/update-staff-account.dto';
 
 @Controller('accounts')
 @ApiTags('Accounts')
@@ -90,8 +93,34 @@ export class AccountController extends BaseController {
   async createAdminAccount(
     @Body() createAdminAccountDto: CreateAccountDto
   ): Promise<SuccessResponse<AccountResponseDto>> {
-    const newAdminAccount = await this.accountService.createAdminAccount(createAdminAccountDto);
+    const newAdminAccount = await this.accountService.createAccount(
+      createAdminAccountDto,
+      RoleName.ADMIN
+    );
     const response = new AccountResponseDto(newAdminAccount);
+    return this.created(response);
+  }
+
+  @Post('staff')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Create a new staff account'
+  })
+  async createStaffAccount(
+    @Body() createStaffAccountDto: CreateStaffAccountDto,
+    @CurrentAccount() account: ContextUser
+  ): Promise<SuccessResponse<AccountResponseDto>> {
+    const newStaffAccount = await this.accountService.createAccount(
+      {
+        email: createStaffAccountDto.email,
+        password: createStaffAccountDto.password,
+        branchId: account.branchId,
+        phoneNumber: createStaffAccountDto.phoneNumber,
+        fullName: createStaffAccountDto.fullName
+      },
+      RoleName.STAFF
+    );
+    const response = new AccountResponseDto(newStaffAccount);
     return this.created(response);
   }
 
@@ -132,7 +161,39 @@ export class AccountController extends BaseController {
   async getAllAdminAccounts(
     @Query() adminAccountDto: AdminAccountDto
   ): Promise<SuccessResponse<IPaginatedResponse<AccountResponseDto>>> {
-    const paginatedResult = await this.accountService.getAllAdminAccounts(adminAccountDto);
+    const paginatedResult = await this.accountService.getAllAccountByRoleName(
+      adminAccountDto,
+      RoleName.ADMIN
+    );
+
+    const response: IPaginatedResponse<AccountResponseDto> = {
+      items: paginatedResult.items.map((account) => new AccountResponseDto(account)),
+      meta: paginatedResult.meta
+    };
+
+    return this.success(response);
+  }
+
+  @Get('staff')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get all staff accounts',
+    description: 'Retrieve all accounts that have staff role with pagination'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of staff accounts retrieved successfully with pagination',
+    type: IPaginatedResponse<AccountResponseDto>
+  })
+  async getAllStaffAccounts(
+    @Query() staffAccountDto: AdminAccountDto,
+    @CurrentAccount() account: ContextUser
+  ): Promise<SuccessResponse<IPaginatedResponse<AccountResponseDto>>> {
+    const paginatedResult = await this.accountService.getAllAccountByRoleName(
+      staffAccountDto,
+      RoleName.STAFF,
+      account.branchId
+    );
 
     const response: IPaginatedResponse<AccountResponseDto> = {
       items: paginatedResult.items.map((account) => new AccountResponseDto(account)),
@@ -153,6 +214,25 @@ export class AccountController extends BaseController {
     @Body() updateAccountDto: UpdateAccountDto
   ): Promise<SuccessResponse<AccountResponseDto>> {
     const updatedAccount = await this.accountService.updateAccount(id, updateAccountDto);
+    const response = new AccountResponseDto(updatedAccount);
+    return this.success(response);
+  }
+
+  @Put('/staff/:id')
+  @HttpCode(HttpStatus.OK)
+  async updateStaffAccount(
+    @Param('id') id: string,
+    @Body() updateStaffAccountDto: UpdateStaffAccountDto,
+    @CurrentAccount() account: ContextUser
+  ): Promise<SuccessResponse<AccountResponseDto>> {
+    const updatedAccount = await this.accountService.updateAccount(id, {
+      email: updateStaffAccountDto.email,
+      fullName: updateStaffAccountDto.fullName,
+      phoneNumber: updateStaffAccountDto.phoneNumber,
+      branchId: account.branchId,
+      status: updateStaffAccountDto.status,
+      password: updateStaffAccountDto.password
+    });
     const response = new AccountResponseDto(updatedAccount);
     return this.success(response);
   }
