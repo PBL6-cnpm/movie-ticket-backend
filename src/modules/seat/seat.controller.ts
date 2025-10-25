@@ -88,7 +88,7 @@ export class SeatController extends BaseController {
   @ApiParam({
     name: 'showTimeId',
     description: 'The UUID of the showtime',
-    example: '2199934e-4db7-4f6c-ba7a-aca3947647c2'
+    example: 'c2cc6179-b0fc-11f0-bea0-42010a940003'
   })
   @ApiResponse({
     status: HttpStatus.OK,
