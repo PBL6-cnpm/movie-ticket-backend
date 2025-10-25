@@ -26,5 +26,5 @@ export enum Entities {
   REFRESHMENTS = 'refreshments',
 
   TYPE_DAY = 'type_day',
-  SPECIAL_DATE = 'special_day'
+  SPECIAL_DATE = 'special_date'
 }

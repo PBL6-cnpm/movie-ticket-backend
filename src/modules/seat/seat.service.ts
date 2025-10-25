@@ -1,16 +1,20 @@
 import { BaseService } from '@bases/base-service';
 import { RESPONSE_MESSAGES } from '@common/constants';
+import { DayOfWeek } from '@common/enums';
 import { BookingStatus } from '@common/enums/booking.enum';
 import { BadRequest } from '@common/exceptions';
+import { dayjsObjectWithTimezone, getStartAndEndOfDay } from '@common/utils/date.util';
 import { getTypeSeatColor } from '@common/utils/seat.util';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Room } from '@shared/db/entities/room.entity';
 import { Seat } from '@shared/db/entities/seat.entity';
 import { ShowTime } from '@shared/db/entities/show-time.entity';
+import { SpecialDate } from '@shared/db/entities/special-date.entity';
+import { TypeDay } from '@shared/db/entities/type-day.entity';
 import { TypeSeat } from '@shared/db/entities/type-seat.entity';
 import { RedisService } from '@shared/modules/redis/redis.service';
-import { Not, Repository } from 'typeorm';
+import { Between, Not, Repository } from 'typeorm';
 import { CreateSeatDto } from './dto/create-seat.dto';
 import { SeatByRoomResponseDto, SeatInfoDto, TypeSeatInfo } from './dto/seat-by-room.dto';
 import { UpdateSeatDto } from './dto/update-seat.dto';
@@ -26,6 +30,10 @@ export class SeatService extends BaseService<Seat> {
     private readonly typeSeatRepository: Repository<TypeSeat>,
     @InjectRepository(ShowTime)
     private readonly showTimeRepository: Repository<ShowTime>,
+    @InjectRepository(TypeDay)
+    private readonly typeDayRepository: Repository<TypeDay>,
+    @InjectRepository(SpecialDate)
+    private readonly specialDateRepository: Repository<SpecialDate>,
     private readonly redisService: RedisService
   ) {
     super(seatRepository);
@@ -152,7 +160,9 @@ export class SeatService extends BaseService<Seat> {
     await this.deleteById(seatId);
   }
 
-  async getSeatsByRoom(roomId: string, showTimeId?: string): Promise<SeatByRoomResponseDto> {
+  async getSeatsByRoom(roomId: string, showTime?: ShowTime): Promise<SeatByRoomResponseDto> {
+    const showDate = dayjsObjectWithTimezone(showTime.timeStart).format('YYYY-MM-DD');
+    console.log('Show Date (YYYY-MM-DD):', showDate);
     const seats = await this.seatRepository
       .createQueryBuilder('seat')
       .leftJoinAndSelect('seat.typeSeat', 'typeSeat')
@@ -165,36 +175,74 @@ export class SeatService extends BaseService<Seat> {
       throw new NotFoundException(`Room with ID ${roomId} not found or has no seats.`);
     }
 
-    const allSeatsInfo: SeatInfoDto[] = [];
+    let additionalPrice = 0;
 
-    const typeSeatMap = new Map<string, TypeSeatInfo>();
+    if (showTime) {
+      const { startOfDay, endOfDay } = getStartAndEndOfDay(showTime.timeStart);
+
+      const specialDate = await this.specialDateRepository.findOne({
+        where: { date: Between(new Date(startOfDay), new Date(endOfDay)) }
+      });
+
+      if (specialDate) {
+        additionalPrice = specialDate.additionalPrice;
+      } else {
+        const dayOfWeekIndex = dayjsObjectWithTimezone(showTime.timeStart).day();
+        const dayMap = {
+          [DayOfWeek.MONDAY]: DayOfWeek.MONDAY,
+          [DayOfWeek.TUESDAY]: DayOfWeek.TUESDAY,
+          [DayOfWeek.WEDNESDAY]: DayOfWeek.WEDNESDAY,
+          [DayOfWeek.THURSDAY]: DayOfWeek.THURSDAY,
+          [DayOfWeek.FRIDAY]: DayOfWeek.FRIDAY,
+          [DayOfWeek.SATURDAY]: DayOfWeek.SATURDAY,
+          [DayOfWeek.SUNDAY]: DayOfWeek.SUNDAY
+        };
+
+        const dayOfWeekName = dayMap[dayOfWeekIndex];
+        console.log(dayOfWeekName);
+        if (dayOfWeekName) {
+          const typeDay = await this.typeDayRepository.findOne({
+            where: { dayOfWeek: dayOfWeekName }
+          });
+
+          if (typeDay) {
+            additionalPrice = typeDay.additionalPrice;
+          }
+        }
+      }
+    }
+
+    const allSeatsInfo: SeatInfoDto[] = seats.map((seat) => ({
+      id: seat.id,
+      name: seat.name,
+      type: {
+        id: seat.typeSeat.id,
+        name: seat.typeSeat.name,
+        price: seat.typeSeat.price + additionalPrice,
+        color: getTypeSeatColor(seat.typeSeat.name)
+      }
+    }));
+
     const rowSet = new Set<string>();
     let maxCols = 0;
-
     seats.forEach((seat) => {
-      const seatInfo: SeatInfoDto = {
-        id: seat.id,
-        name: seat.name,
-        type: {
-          id: seat.typeSeat.id,
-          name: seat.typeSeat.name,
-          price: seat.typeSeat.price,
-          color: getTypeSeatColor(seat.typeSeat.name)
-        }
-      };
-      allSeatsInfo.push(seatInfo);
-
-      if (!typeSeatMap.has(seat.typeSeat.id)) {
-        typeSeatMap.set(seat.typeSeat.id, seatInfo.type);
-      }
-
       const rowMatch = seat.name.match(/^([A-Z]+)/);
       const colMatch = seat.name.match(/(\d+)$/);
       if (rowMatch) rowSet.add(rowMatch[1]);
       if (colMatch) maxCols = Math.max(maxCols, parseInt(colMatch[1]));
     });
 
-    const occupiedSeatEntities = showTimeId ? await this.getOccupiedSeats(showTimeId) : [];
+    const uniqueTypeSeats = [
+      ...new Map(seats.map((seat) => [seat.typeSeat.id, seat.typeSeat])).values()
+    ];
+    const typeSeatList: TypeSeatInfo[] = uniqueTypeSeats.map((ts) => ({
+      id: ts.id,
+      name: ts.name,
+      price: ts.price + additionalPrice,
+      color: getTypeSeatColor(ts.name)
+    }));
+
+    const occupiedSeatEntities = showTime ? await this.getOccupiedSeats(showTime.id) : [];
     const occupiedSeatsResponse = occupiedSeatEntities.map((seat) => ({
       id: seat.id,
       name: seat.name
@@ -217,7 +265,7 @@ export class SeatService extends BaseService<Seat> {
       totalSeats,
       availableSeats,
       occupiedSeats: occupiedCount,
-      typeSeatList: Array.from(typeSeatMap.values())
+      typeSeatList: typeSeatList
     };
   }
 
@@ -240,9 +288,9 @@ export class SeatService extends BaseService<Seat> {
     });
 
     if (!showTime) {
-      throw new Error('ShowTime not found');
+      throw new NotFoundException('ShowTime not found');
     }
 
-    return this.getSeatsByRoom(showTime.roomId, showTimeId);
+    return this.getSeatsByRoom(showTime.roomId, showTime);
   }
 }

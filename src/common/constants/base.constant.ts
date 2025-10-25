@@ -12,3 +12,5 @@ export const MESSAGE_KEY = {
   USER_IS_DISABLED: 'User is disabled',
   USER_IS_BLOCKED: 'User is blocked'
 };
+
+export const defaultTimezone = 'Asia/Ho_Chi_Minh';

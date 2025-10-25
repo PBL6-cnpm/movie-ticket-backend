@@ -1,5 +1,5 @@
 import { RolePermissionSeed } from '@common/constants';
-import { AccountStatus, PermissionName, RoleName } from '@common/enums';
+import { AccountStatus, DayOfWeek, PermissionName, RoleName } from '@common/enums';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AccountRole } from '@shared/db/entities/account-role.entity';
@@ -15,6 +15,8 @@ import { Role } from '@shared/db/entities/role.entity';
 import { Room } from '@shared/db/entities/room.entity';
 import { Seat } from '@shared/db/entities/seat.entity';
 import { ShowTime } from '@shared/db/entities/show-time.entity';
+import { SpecialDate } from '@shared/db/entities/special-date.entity';
+import { TypeDay } from '@shared/db/entities/type-day.entity';
 import { TypeSeat } from '@shared/db/entities/type-seat.entity';
 import { Voucher } from '@shared/db/entities/voucher.entity';
 import * as bcrypt from 'bcryptjs';
@@ -67,7 +69,13 @@ export class SeederService {
     private bookRefreshmentsRepo: Repository<BookRefreshments>,
 
     @InjectRepository(Voucher)
-    private voucherRepo: Repository<Voucher>
+    private voucherRepo: Repository<Voucher>,
+
+    @InjectRepository(TypeDay)
+    private typeDayRepo: Repository<TypeDay>,
+
+    @InjectRepository(SpecialDate)
+    private specialDateRepo: Repository<SpecialDate>
   ) {}
 
   async seed() {
@@ -79,13 +87,16 @@ export class SeederService {
     // this.seedRolePermissions(),
     // this.seedBranches(),
     // await this.seedRooms();
-    // await this.seedTypeSeats();
+
     // await this.seedSeats();
-    await this.seedVouchers();
+    // await this.seedVouchers();
     // await this.seedShowTimes();
     // await this.seedSeats();
     try {
-      await this.seedShowTimes();
+      // await this.seedRooms();
+      await this.seedSeats();
+      // await this.seedTypeSeats();
+      // await this.seedShowTimes();
     } catch (error) {
       console.log(error);
     }
@@ -269,10 +280,10 @@ export class SeederService {
   private async seedTypeSeats() {
     this.logger.log('Seeding type seats...');
     const typeSeatsToSeed = [
-      { name: 'Standard', price: 80000, is_current: true },
-      { name: 'VIP', price: 130000, is_current: true },
-      { name: 'Couple', price: 160000, is_current: true },
-      { name: 'Deluxe', price: 200000, is_current: true }
+      { name: 'Standard', price: 45000, is_current: true },
+      { name: 'VIP', price: 60000, is_current: true },
+      { name: 'Couple', price: 100000, is_current: true },
+      { name: 'Deluxe', price: 120000, is_current: true }
     ];
     await this.typeSeatRepo.upsert(typeSeatsToSeed, {
       skipUpdateIfNoValuesChanged: true,
@@ -493,6 +504,61 @@ export class SeederService {
 
     this.logger.log(`✅ Seeding completed. Total showtimes inserted: ${values.length}`);
   }
+
+  private async seedTypeDays() {
+    this.logger.log('Seeding type days...');
+    try {
+      const typeDaysToSeed = [
+        { dayOfWeek: DayOfWeek.MONDAY, additionalPrice: 0, isCurrent: true },
+        { dayOfWeek: DayOfWeek.TUESDAY, additionalPrice: 0, isCurrent: true },
+        { dayOfWeek: DayOfWeek.WEDNESDAY, additionalPrice: 0, isCurrent: true },
+        { dayOfWeek: DayOfWeek.THURSDAY, additionalPrice: 0, isCurrent: true },
+        { dayOfWeek: DayOfWeek.FRIDAY, additionalPrice: 30000, isCurrent: true },
+        { dayOfWeek: DayOfWeek.SATURDAY, additionalPrice: 30000, isCurrent: true },
+        { dayOfWeek: DayOfWeek.SUNDAY, additionalPrice: 30000, isCurrent: true }
+      ];
+
+      await this.typeDayRepo.upsert(typeDaysToSeed, {
+        skipUpdateIfNoValuesChanged: true,
+        conflictPaths: ['dayOfWeek']
+      });
+      this.logger.log('Seeding type days completed.');
+    } catch (error) {
+      this.logger.error('Error seeding type days:', error);
+    }
+  }
+
+  private async seedSpecialDates() {
+    this.logger.log('Seeding special dates...');
+    try {
+      const specialDatesToSeed = [
+        // Vietnamese Women's Day 2025
+        {
+          date: new Date('2025-10-20T00:00:00.000Z'),
+          additionalPrice: 20000
+        },
+        // Christmas Day 2025
+        {
+          date: new Date('2025-12-25T00:00:00.000Z'),
+          additionalPrice: 40000
+        },
+        // New Year's Day 2026
+        {
+          date: new Date('2026-01-01T00:00:00.000Z'),
+          additionalPrice: 40000
+        }
+      ];
+
+      await this.specialDateRepo.upsert(specialDatesToSeed, {
+        skipUpdateIfNoValuesChanged: true,
+        conflictPaths: ['date']
+      });
+      this.logger.log('Seeding special dates completed.');
+    } catch (error) {
+      this.logger.error('Error seeding special dates:', error);
+    }
+  }
+
   private async seedBranches() {
     this.logger.log('Seeding branches...');
     try {
