@@ -224,6 +224,12 @@ export const RESPONSE_MESSAGES = {
   REFRESHMENT_ALREADY_USED_IN_BOOKING: {
     message: 'Cannot delete this refreshment because it has been used in a booking',
     code: 'REFRESHMENT_ALREADY_USED_IN_BOOKING'
+  },
+
+  // Type Day
+  TYPE_DAY_NOT_FOUND: {
+    message: 'Type day not found',
+    code: 'TYPE DAY NOT FOUND'
   }
 };
 

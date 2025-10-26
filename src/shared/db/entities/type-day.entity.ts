@@ -12,8 +12,7 @@ export class TypeDay extends BaseEntityTime {
   @Column({
     name: 'day_of_week',
     type: 'enum',
-    enum: DayOfWeek,
-    unique: true
+    enum: DayOfWeek
   })
   dayOfWeek: DayOfWeek;
 
@@ -33,5 +32,5 @@ export class TypeDay extends BaseEntityTime {
   isCurrent: boolean;
 
   @OneToMany(() => BookSeat, (bookSeat) => bookSeat.typeDay, { cascade: true })
-  bookSeats: BookSeat;
+  bookSeats: BookSeat[];
 }
