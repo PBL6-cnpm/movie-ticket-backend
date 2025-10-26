@@ -69,8 +69,8 @@ const entities = [
         database: DB.database,
         entities: entities,
         logging: false,
-        timezone: 'Z',
-        synchronize: true
+        timezone: 'Z'
+        // synchronize: true
       }),
       inject: [ConfigService],
       dataSourceFactory: async (options) => {
