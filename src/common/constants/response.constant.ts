@@ -230,6 +230,24 @@ export const RESPONSE_MESSAGES = {
   TYPE_DAY_NOT_FOUND: {
     message: 'Type day not found',
     code: 'TYPE DAY NOT FOUND'
+  },
+
+  // Special Date
+  SPECIAL_DATE_NOT_FOUND: {
+    message: 'Special date not found',
+    code: 'SPECIAL DATE NOT FOUND'
+  },
+  SPECIAL_DATE_ALREADY_EXISTS: {
+    message: 'Special date already exists for this date',
+    code: 'SPECIAL_DATE_ALREADY_EXISTS'
+  },
+  SPECIAL_DATE_CANT_UPDATE_BE_USED: {
+    message: 'Special date cant update be used',
+    code: 'SPECIAL_DATE_CANT_UPDATE_BE_USED'
+  },
+  SPECIAL_DATE_CANT_UPDATE_OVERTIME: {
+    message: 'Special date cant update overtime',
+    code: '  SPECIAL_DATE_CANT_UPDATE_OVERTIME'
   }
 };
 
