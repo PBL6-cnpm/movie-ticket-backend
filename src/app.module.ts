@@ -16,7 +16,9 @@ import { RoleModule } from '@modules/roles/role.module';
 import { RoomModule } from '@modules/room/room.module';
 import { SeatModule } from '@modules/seat/seat.module';
 import { ShowTimeModule } from '@modules/show-time/show-time.module';
+import { SpecialDateModule } from '@modules/special-date/special-date.module';
 import { TestModule } from '@modules/test/test.module';
+import { TypeDayModule } from '@modules/type-day/type-day.module';
 import { TypeSeatModule } from '@modules/type-seat/typeSeat.module';
 import { VouncherModule } from '@modules/voucher/voucher.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
@@ -56,7 +58,9 @@ import { HealthController } from './health.controller';
     ReviewModule,
     BookingModule,
     RefreshmentModule,
-    VouncherModule
+    VouncherModule,
+    TypeDayModule,
+    SpecialDateModule
   ],
 
   controllers: [AppController, HealthController],
