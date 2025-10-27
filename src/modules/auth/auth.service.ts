@@ -157,14 +157,19 @@ export class AuthService {
     };
   }
 
-  async refreshToken(res: Response, account: ContextUser): Promise<AuthTokens> {
+  async refreshToken(req: Request, res: Response, account: ContextUser): Promise<AuthTokens> {
+    // Invalidate refresh token
+    const refreshToken = req.refreshToken;
+    await this.redisService.removeKeyFromSet(REDIS_KEYS.USER_SESSIONS(account.id), refreshToken);
+
+    // Generate new tokens
     const authTokens = await this.generateAndStoreAuthTokens(res, account as Account);
     return authTokens;
   }
 
   async logout(req: Request, res: Response, accountId: string): Promise<void> {
     const accessToken = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
-    const refreshToken = req.cookies[COOKIE_NAMES.REFRESH_TOKEN] as string;
+    const refreshToken = req.refreshToken;
 
     this.delRefreshTokenFromCookie(res);
 
@@ -364,12 +369,12 @@ export class AuthService {
 
     const account = await this.findOrCreateAccount(googleProfile);
 
-    const { accessToken } = await this.generateAndStoreAuthTokens(res, account);
+    const authTokens = await this.generateAndStoreAuthTokens(res, account);
 
     await this.setContextUserToCache(this.convertAccountToContextUser(account));
 
     return {
-      accessToken,
+      ...authTokens,
       account: new AccountResponseDto(account)
     };
   }
