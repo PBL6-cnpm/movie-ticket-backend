@@ -26,7 +26,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SendEmailDto } from './dto/send-email.dto';
 import { SocialLoginDto } from './dto/social-login.dto';
-import { LoginResponse, RefreshTokenResponse } from './interfaces/authResponse.interface';
+import { AuthTokens, LoginResponse } from './interfaces/authResponse.interface';
 
 @Controller('auth')
 @ApiTags('Authentication')
@@ -113,7 +113,7 @@ export class AuthController extends BaseController {
   async refreshToken(
     @Res({ passthrough: true }) res: Response,
     @CurrentAccount() account: ContextUser
-  ): Promise<SuccessResponse<RefreshTokenResponse>> {
+  ): Promise<SuccessResponse<AuthTokens>> {
     const result = await this.authService.refreshToken(res, account);
     return this.success(result);
   }

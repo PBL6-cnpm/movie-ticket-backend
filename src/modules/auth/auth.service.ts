@@ -30,7 +30,7 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { SendEmailDto } from './dto/send-email.dto';
 import { SocialLoginDto } from './dto/social-login.dto';
-import { LoginResponse, RefreshTokenResponse } from './interfaces/authResponse.interface';
+import { AuthTokens, LoginResponse } from './interfaces/authResponse.interface';
 import { JwtPayload } from './interfaces/jwt.interface';
 
 @Injectable()
@@ -147,20 +147,19 @@ export class AuthService {
       };
     }
 
-    const { accessToken } = await this.generateAndStoreAuthTokens(res, account);
+    const authTokens = await this.generateAndStoreAuthTokens(res, account);
 
     await this.setContextUserToCache(this.convertAccountToContextUser(account));
 
     return {
-      accessToken,
+      ...authTokens,
       account: new AccountResponseDto(account)
     };
   }
 
-  async refreshToken(res: Response, account: ContextUser): Promise<RefreshTokenResponse> {
-    const { accessToken } = await this.generateAndStoreAuthTokens(res, account as Account);
-
-    return { accessToken };
+  async refreshToken(res: Response, account: ContextUser): Promise<AuthTokens> {
+    const authTokens = await this.generateAndStoreAuthTokens(res, account as Account);
+    return authTokens;
   }
 
   async logout(req: Request, res: Response, accountId: string): Promise<void> {
@@ -225,10 +224,7 @@ export class AuthService {
     return this.jwtService.signAsync(payload, { secret, expiresIn: parseTtlToSeconds(ttl) });
   }
 
-  private async generateAndStoreAuthTokens(
-    res: Response,
-    account: Account
-  ): Promise<{ accessToken: string }> {
+  private async generateAndStoreAuthTokens(res: Response, account: Account): Promise<AuthTokens> {
     const [accessToken, refreshToken] = await Promise.all([
       this.generateToken(
         JWT.secret,
@@ -253,7 +249,7 @@ export class AuthService {
     // Store refresh token in redis
     await this.redisService.addToSet(REDIS_KEYS.USER_SESSIONS(account.id), refreshToken);
 
-    return { accessToken };
+    return { accessToken, refreshToken };
   }
 
   private async verifyToken(token: string, secret: string): Promise<JwtPayload> {
