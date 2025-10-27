@@ -111,10 +111,11 @@ export class AuthController extends BaseController {
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({ status: HttpStatus.OK, description: 'Token refreshed successfully' })
   async refreshToken(
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
     @CurrentAccount() account: ContextUser
   ): Promise<SuccessResponse<AuthTokens>> {
-    const result = await this.authService.refreshToken(res, account);
+    const result = await this.authService.refreshToken(req, res, account);
     return this.success(result);
   }
 

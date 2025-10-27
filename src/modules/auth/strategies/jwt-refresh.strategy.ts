@@ -24,7 +24,15 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         (req: Request) => {
-          return req.cookies[COOKIE_NAMES.REFRESH_TOKEN] as string;
+          const token =
+            (req.body?.refreshToken as string) ||
+            (req.cookies[COOKIE_NAMES.REFRESH_TOKEN] as string);
+
+          if (token) {
+            req.refreshToken = token;
+          }
+
+          return token;
         }
       ]),
       secretOrKey: JWT.secret,
@@ -33,7 +41,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
   }
 
   async validate(req: Request, payload: JwtPayload) {
-    const refreshToken = req.cookies[COOKIE_NAMES.REFRESH_TOKEN] as string;
+    const refreshToken = req.refreshToken;
 
     const isMember = await this.redisService.isMemberOfSet(
       REDIS_KEYS.USER_SESSIONS(payload.accountId),
