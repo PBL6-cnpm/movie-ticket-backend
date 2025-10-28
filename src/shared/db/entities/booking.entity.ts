@@ -22,6 +22,10 @@ export class Booking extends BaseEntityTime {
 
   @Column({ name: 'show_time_id', nullable: false })
   showTimeId: string;
+
+  @Column({ name: 'payment_intent_id', nullable: true })
+  paymentIntentId: string;
+
   @Column({
     type: 'enum',
     enum: BookingStatus,

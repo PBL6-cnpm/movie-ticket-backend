@@ -2,12 +2,12 @@ import { QUEUE_KEY } from '@common/constants';
 import { IEmailQueue } from '@common/interfaces/email.interface';
 import { Process, Processor } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
-import { Job } from 'bull';
 import { MailService } from '@shared/modules/send-mail/send-mail.service';
+import { Job } from 'bull';
 
 @Injectable()
 @Processor(QUEUE_KEY.sendEmail)
-export class EmailService {
+export class EmailProcessor {
   constructor(private readonly mailerService: MailService) {}
   @Process()
   async transcode(job: Job<unknown>) {

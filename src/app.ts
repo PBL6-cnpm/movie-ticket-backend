@@ -1,9 +1,7 @@
-import { URL } from '@configs/env.config';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { SwaggerModule } from '@nestjs/swagger';
-import * as bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import * as express from 'express';
 import { join } from 'path';
@@ -12,13 +10,16 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { swaggerConfig } from './configs/swagger.config';
+import { URL } from '@configs/env.config';
 
 export async function createApp(): Promise<NestExpressApplication> {
   // Transaction
   initializeTransactionalContext();
 
   // Create Nest Application
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    rawBody: true
+  });
 
   // Enable CORS
   app.enableCors({
@@ -50,8 +51,6 @@ export async function createApp(): Promise<NestExpressApplication> {
   );
 
   // Middlewares
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
   app.use(cookieParser());
 
   // Exception filters

@@ -20,7 +20,7 @@ import { SpecialDateModule } from '@modules/special-date/special-date.module';
 import { TestModule } from '@modules/test/test.module';
 import { TypeDayModule } from '@modules/type-day/type-day.module';
 import { TypeSeatModule } from '@modules/type-seat/typeSeat.module';
-import { VouncherModule } from '@modules/voucher/voucher.module';
+import { VoucherModule } from '@modules/voucher/voucher.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -30,12 +30,16 @@ import { RedisModuleCustom } from '@shared/modules/redis/redis.module';
 import { AppController } from './app.controller';
 import { LoggerMiddleware } from './common/middlewares/logger.middleware';
 import { HealthController } from './health.controller';
+import { PaymentModule } from '@shared/modules/bull-queue/queue-process/payment/payment.module';
+import { StripeModule } from '@shared/modules/stripe/stripe.module';
 
 @Module({
   imports: [
     DatabaseModule,
     RedisModuleCustom,
+    StripeModule,
     EmailModule,
+    PaymentModule,
     BullQueueModule,
     ThrottlerModule.forRoot([{ limit: 10, ttl: 60000 }]), // 10 requests per minute
 
@@ -58,7 +62,7 @@ import { HealthController } from './health.controller';
     ReviewModule,
     BookingModule,
     RefreshmentModule,
-    VouncherModule,
+    VoucherModule,
     TypeDayModule,
     SpecialDateModule
   ],

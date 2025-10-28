@@ -52,6 +52,11 @@ export const DB = {
   database: process.env.DATABASE_NAME
 };
 
+export const STRIPE = {
+  secretKey: process.env.STRIPE_SECRET_KEY,
+  webhookSecret: process.env.STRIPE_WEBHOOK_SECRET
+};
+
 export const APP = {
   nodeEnv: process.env.NODE_ENV || 'development'
 };

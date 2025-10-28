@@ -14,8 +14,13 @@ import { Global, Module } from '@nestjs/common';
         db: REDIS.db
       }
     }),
+
     BullModule.registerQueue({
       name: QUEUE_KEY.sendEmail,
+      defaultJobOptions: BULL_OPTS
+    }),
+    BullModule.registerQueue({
+      name: QUEUE_KEY.cancelExpiredPayment,
       defaultJobOptions: BULL_OPTS
     })
   ],
