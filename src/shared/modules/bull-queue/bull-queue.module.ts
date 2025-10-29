@@ -15,14 +15,16 @@ import { Global, Module } from '@nestjs/common';
       }
     }),
 
-    BullModule.registerQueue({
-      name: QUEUE_KEY.sendEmail,
-      defaultJobOptions: BULL_OPTS
-    }),
-    BullModule.registerQueue({
-      name: QUEUE_KEY.cancelExpiredPayment,
-      defaultJobOptions: BULL_OPTS
-    })
+    BullModule.registerQueue(
+      {
+        name: QUEUE_KEY.sendEmail,
+        defaultJobOptions: BULL_OPTS
+      },
+      {
+        name: QUEUE_KEY.cancelExpiredPayment,
+        defaultJobOptions: BULL_OPTS
+      }
+    )
   ],
   providers: [],
   exports: [BullModule]

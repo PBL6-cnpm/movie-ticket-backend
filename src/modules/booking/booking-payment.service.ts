@@ -27,7 +27,7 @@ export class BookingPaymentService {
   ): Promise<PaymentIntentDto> {
     const bookingId = createPaymentIntentDto.bookingId;
     const booking = await this.bookingRepo.findOne({
-      where: { id: bookingId, accountId },
+      where: { id: bookingId },
       select: ['id', 'totalBookingPrice', 'paymentIntentId']
     });
 
@@ -109,7 +109,7 @@ export class BookingPaymentService {
     await this.removeCancelExpiredPaymentJob(bookingId);
 
     // Delete the booking
-    await this.bookingRepo.delete({ id: bookingId, paymentIntentId: booking.paymentIntentId });
+    await this.bookingRepo.delete({ id: bookingId });
   }
 
   async cancelPayment(bookingId: string) {
@@ -137,6 +137,6 @@ export class BookingPaymentService {
     await this.removeCancelExpiredPaymentJob(bookingId);
 
     // Delete the booking
-    await this.bookingRepo.delete({ id: bookingId, paymentIntentId: booking.paymentIntentId });
+    await this.bookingRepo.delete({ id: bookingId });
   }
 }

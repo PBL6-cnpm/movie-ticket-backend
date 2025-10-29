@@ -7,6 +7,7 @@ import { Booking } from '@shared/db/entities/booking.entity';
 import { StripeService } from '@shared/modules/stripe/stripe.service';
 import { Job } from 'bull';
 import { Repository } from 'typeorm';
+import { CancelExpiredPaymentJobData } from './payment-job.interface';
 
 @Injectable()
 @Processor(QUEUE_KEY.cancelExpiredPayment)
@@ -17,8 +18,8 @@ export class PaymentProcessor {
   ) {}
 
   @Process()
-  async handleCancelExpiredPayment(job: Job<{ bookingId: string; paymentIntentId: string }>) {
-    const { bookingId, paymentIntentId } = job.data;
+  async handleCancelExpiredPayment(job: Job<unknown>) {
+    const { bookingId, paymentIntentId } = job.data as CancelExpiredPaymentJobData;
     try {
       const booking = await this.bookingRepo.findOne({
         where: { id: bookingId },
