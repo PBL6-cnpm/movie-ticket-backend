@@ -438,4 +438,29 @@ export class MovieService {
       items: movies.map((movie) => new MovieResponseDto(movie))
     });
   }
+
+  async deleteMovie(id: string): Promise<void> {
+    const movie = await this.movieRepo.findOne({
+      where: { id },
+      relations: ['showTimes']
+    });
+    if (!movie) {
+      throw new BadRequest(RESPONSE_MESSAGES.MOVIE_NOT_FOUND);
+    }
+
+    if (movie.showTimes && movie.showTimes.length > 0) {
+      throw new BadRequest(RESPONSE_MESSAGES.MOVIE_CANNOT_DELETE_WITH_EXISTING_SHOWTIMES);
+    }
+
+    // Xóa ảnh poster
+    if (movie.poster) {
+      try {
+        await this.cloudinaryService.deleteFileByUrl(movie.poster);
+      } catch (error) {
+        console.warn('Failed to delete movie poster:', error?.message);
+      }
+    }
+
+    await this.movieRepo.delete(id);
+  }
 }

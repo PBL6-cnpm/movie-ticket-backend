@@ -7,6 +7,7 @@ import { ActorResponseDto } from '@modules/actors/dto/actor-response.dto';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -228,5 +229,13 @@ export class MovieController extends BaseController {
   ): Promise<SuccessResponse<IPaginatedResponse<MovieResponseDto>>> {
     const result = await this.movieService.getMovieWithBranches(id);
     return this.success(result);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete movie by ID' })
+  async deleteMovie(@Param('id') id: string): Promise<SuccessResponse<null>> {
+    await this.movieService.deleteMovie(id);
+    return this.deleted();
   }
 }

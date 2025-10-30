@@ -41,15 +41,24 @@ export class Movie extends BaseEntityTime {
   @Column({ name: 'screening_end', type: 'timestamp', nullable: true })
   screeningEnd: Date;
 
-  @OneToMany(() => MovieActor, (movieActor) => movieActor.movie)
+  @OneToMany(() => MovieActor, (movieActor) => movieActor.movie, {
+    cascade: true,
+    onDelete: 'CASCADE'
+  })
   movieActors: MovieActor[];
 
-  @OneToMany(() => Review, (review) => review.movie, { cascade: true })
+  @OneToMany(() => Review, (review) => review.movie, {
+    cascade: true,
+    onDelete: 'CASCADE'
+  })
   reviews: Review[];
 
   @OneToMany(() => ShowTime, (showTime) => showTime.movie, { cascade: true })
   showTimes: ShowTime[];
 
-  @OneToMany(() => MovieGenre, (movieGenre) => movieGenre.movie, { cascade: true })
+  @OneToMany(() => MovieGenre, (movieGenre) => movieGenre.movie, {
+    cascade: true,
+    onDelete: 'CASCADE'
+  })
   movieGenres: MovieGenre[];
 }
