@@ -117,6 +117,10 @@ export const RESPONSE_MESSAGES = {
     message: 'screeningEnd must be after or equal to screeningStart',
     code: 'MOVIE_INVALID_SCREENING_DATES'
   },
+  MOVIE_CANNOT_DELETE_WITH_EXISTING_SHOWTIMES: {
+    message: 'Cannot delete movie with existing showtimes',
+    code: 'MOVIE_CANNOT_DELETE_WITH_EXISTING_SHOWTIMES'
+  },
 
   //Actor
   ACTOR_NOT_FOUND: {
