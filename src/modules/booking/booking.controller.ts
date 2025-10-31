@@ -18,6 +18,7 @@ import { PaymentIntentDto } from '@shared/modules/stripe/dto/payment-intent.dto'
 import { Request, Response } from 'express';
 import { BookingPaymentService } from './booking-payment.service';
 import { BookingService } from './booking.service';
+import { CancelPaymentDto } from './dto/cancel-payment.dto';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { QueryHoldBookingDto } from './dto/query-hold-booking.dto';
 
@@ -74,8 +75,10 @@ export class BookingController extends BaseController {
     status: HttpStatus.OK,
     description: 'Payment intent cancelled successfully'
   })
-  async cancelPayment(@Body('bookingId') bookingId: string): Promise<SuccessResponse<void>> {
-    await this.paymentService.cancelPayment(bookingId);
+  async cancelPayment(
+    @Body('bookingId') cancelPaymentDto: CancelPaymentDto
+  ): Promise<SuccessResponse<void>> {
+    await this.paymentService.cancelPayment(cancelPaymentDto.bookingId);
     return this.success(null);
   }
 }

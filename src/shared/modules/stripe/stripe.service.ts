@@ -82,25 +82,42 @@ export class StripeService {
   private async getStripeCustomer(accountId: string): Promise<string> {
     const account = await this.accountRepo.findOne({
       where: { id: accountId },
-      select: ['email', 'fullName']
+      select: ['email', 'fullName', 'stripeCustomerId']
     });
 
     if (!account) {
       throw new BadRequest(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
     }
 
-    const existingStripeCustomer = await this.stripe.customers.list({
+    // If we already have a Stripe customer ID saved, return it
+    if (account.stripeCustomerId) {
+      return account.stripeCustomerId;
+    }
+
+    // Check if a Stripe customer already exists with this email
+    const existingCustomers = await this.stripe.customers.list({
       email: account.email,
       limit: 1
     });
 
-    if (existingStripeCustomer.data.length) {
-      return existingStripeCustomer.data[0].id;
+    let stripeCustomer: Stripe.Customer;
+
+    if (existingCustomers.data.length > 0) {
+      // Use existing customer
+      stripeCustomer = existingCustomers.data[0];
+      console.log(`Existing Stripe customer found: ${stripeCustomer.id}`);
+    } else {
+      // Create new customer
+      stripeCustomer = await this.stripe.customers.create({
+        email: account.email,
+        name: account.fullName
+      });
+      console.log(`Created new Stripe customer: ${stripeCustomer.id}`);
     }
 
-    const stripeCustomer = await this.stripe.customers.create({
-      email: account.email,
-      name: account.fullName
+    // Save the Stripe customer ID to our database
+    await this.accountRepo.update(accountId, {
+      stripeCustomerId: stripeCustomer.id
     });
 
     return stripeCustomer.id;

@@ -51,6 +51,9 @@ export class Account extends BaseEntityTime {
   })
   status: AccountStatus;
 
+  @Column({ name: 'stripe_customer_id', nullable: true })
+  stripeCustomerId: string;
+
   @OneToMany(() => AccountRole, (accountRole) => accountRole.account, { cascade: true })
   accountRoles: AccountRole[];
 
