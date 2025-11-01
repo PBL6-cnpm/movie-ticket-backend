@@ -49,7 +49,7 @@ export class Booking extends BaseEntityTime {
   })
   dateTimeBooking: Date;
 
-  @OneToMany(() => BookSeat, (bookSeat) => bookSeat.booking, { cascade: true })
+  @OneToMany(() => BookSeat, (bookSeat) => bookSeat.booking, { cascade: true, onDelete: 'CASCADE' })
   bookSeats: BookSeat[];
 
   @ManyToOne(() => Account, (account) => account.bookings)
@@ -67,7 +67,8 @@ export class Booking extends BaseEntityTime {
   showTime: ShowTime;
 
   @OneToMany(() => BookRefreshments, (bookRefreshments) => bookRefreshments.booking, {
-    cascade: true
+    cascade: true,
+    onDelete: 'CASCADE'
   })
   bookRefreshmentss: BookRefreshments[];
 }
