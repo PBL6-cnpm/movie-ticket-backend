@@ -252,6 +252,24 @@ export const RESPONSE_MESSAGES = {
   SPECIAL_DATE_CANT_UPDATE_OVERTIME: {
     message: 'Special date cant update overtime',
     code: '  SPECIAL_DATE_CANT_UPDATE_OVERTIME'
+  },
+
+  // Booking
+  BOOKING_NOT_FOUND: {
+    message: 'Booking not found',
+    code: 'BOOKING_NOT_FOUND'
+  },
+  BOOKING_CANNOT_CANCEL: {
+    message: 'Booking cannot be canceled',
+    code: 'BOOKING_CANNOT_CANCEL'
+  },
+  INVALID_PAYMENT_DETAILS: {
+    message: 'Invalid payment details',
+    code: 'INVALID_PAYMENT_DETAILS'
+  },
+  STRIPE_WEBHOOK_INVALID: {
+    message: 'Invalid Stripe webhook signature',
+    code: 'STRIPE_WEBHOOK_INVALID'
   }
 };
 

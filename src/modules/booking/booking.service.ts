@@ -8,12 +8,13 @@ import { Booking } from '@shared/db/entities/booking.entity';
 import { Seat } from '@shared/db/entities/seat.entity';
 import { RedisService } from '@shared/modules/redis/redis.service';
 import { EntityManager } from 'typeorm';
-import { QueryHoldBookingDto } from './dto/querry-hold-booking.dto';
+import { QueryHoldBookingDto } from './dto/query-hold-booking.dto';
 
 @Injectable()
 export class BookingService {
   constructor(
     @InjectEntityManager() private readonly entityManager: EntityManager,
+
     private readonly redisService: RedisService
   ) {}
 

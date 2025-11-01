@@ -6,4 +6,4 @@ import { VoucherService } from './voucher.service';
   controllers: [VoucherController],
   providers: [VoucherService]
 })
-export class VouncherModule {}
+export class VoucherModule {}
