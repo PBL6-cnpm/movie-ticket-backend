@@ -68,8 +68,9 @@ jobs:
 
             cd /tmp/movie-ticket-backend
 
-            # Copy .env có sẵn từ /resource vào thư mục project
             cp /resource/.env .env
+
+            cp /resource/firebase-sdk.json .
 
             docker compose up -d --build
 

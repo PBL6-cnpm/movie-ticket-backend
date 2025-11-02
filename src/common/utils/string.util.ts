@@ -22,3 +22,16 @@ export function parseTtlToSeconds(ttl: string | number): number {
 
   throw new Error(`Unsupported TTL type: ${typeof ttl}`);
 }
+
+export const convertValuesToStrings = (obj: { [key: string]: any }): { [key: string]: string } => {
+  const result: { [key: string]: string } = {};
+
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, 'key')) {
+      const value = obj[key];
+      result[key] = typeof value === 'string' ? value : String(value);
+    }
+  }
+
+  return result;
+};
