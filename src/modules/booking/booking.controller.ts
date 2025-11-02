@@ -1,10 +1,12 @@
 import { BaseController } from '@bases/base-controller';
 import { CurrentAccount } from '@common/decorators/current-account.decorator';
+import { Public } from '@common/decorators/public.decorator';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { ContextUser } from '@common/types/user.type';
 import {
   Body,
   Controller,
+  Get,
   Headers,
   HttpCode,
   HttpStatus,
@@ -14,6 +16,7 @@ import {
   Res
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { FirestoreService } from '@shared/modules/firebase/firestore.service';
 import { PaymentIntentDto } from '@shared/modules/stripe/dto/payment-intent.dto';
 import { Request, Response } from 'express';
 import { BookingPaymentService } from './booking-payment.service';
@@ -27,7 +30,8 @@ import { QueryHoldBookingDto } from './dto/query-hold-booking.dto';
 export class BookingController extends BaseController {
   constructor(
     private readonly bookingService: BookingService,
-    private readonly paymentService: BookingPaymentService
+    private readonly paymentService: BookingPaymentService,
+    private readonly firestoreService: FirestoreService
   ) {
     super();
   }
@@ -80,5 +84,26 @@ export class BookingController extends BaseController {
   ): Promise<SuccessResponse<void>> {
     await this.paymentService.cancelPayment(cancelPaymentDto.bookingId);
     return this.success(null);
+  }
+
+  @Get('test-firestore')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Test writing to Firestore' })
+  // @ApiExcludeEndpoint()
+  @Public()
+  async testFirestore() {
+    try {
+      await this.firestoreService.setDoc('test_collection', 'test_doc_from_controller', {
+        message: 'Firestore test from BookingController',
+        timestamp: new Date()
+      });
+      return this.success({
+        status: 'OK',
+        docId: 'test_doc_from_controller'
+      });
+    } catch (error) {
+      console.error('Error writing to Firestore:', error);
+      throw new Error('Failed to write to Firestore');
+    }
   }
 }

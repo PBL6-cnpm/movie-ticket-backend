@@ -8,6 +8,8 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "target": "ES2023",
+    "resolveJsonModule": true,
+
     "sourceMap": true,
 
     "outDir": "./dist",

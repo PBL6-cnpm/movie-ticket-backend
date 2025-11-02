@@ -14,3 +14,8 @@ export const MESSAGE_KEY = {
 };
 
 export const defaultTimezone = 'Asia/Ho_Chi_Minh';
+
+export const FIREBASE_APP: string = 'FIREBASE_APP';
+export const FIREBASE_DB_NAME: string = 'movie-tickets';
+
+export const DEFAULT_APP_NAME = 'MovieTicketApp';
