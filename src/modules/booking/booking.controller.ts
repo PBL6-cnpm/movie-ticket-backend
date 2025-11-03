@@ -13,7 +13,7 @@ import {
   Req,
   Res
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { PaymentIntentDto } from '@shared/modules/stripe/dto/payment-intent.dto';
 import { Request, Response } from 'express';
 import { BookingPaymentService } from './booking-payment.service';
@@ -21,9 +21,11 @@ import { BookingService } from './booking.service';
 import { CancelPaymentDto } from './dto/cancel-payment.dto';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { QueryHoldBookingDto } from './dto/query-hold-booking.dto';
+import { Public } from '@common/decorators/public.decorator';
 
 @Controller('bookings')
 @ApiBearerAuth()
+@ApiTags('Bookings')
 export class BookingController extends BaseController {
   constructor(
     private readonly bookingService: BookingService,
@@ -59,6 +61,7 @@ export class BookingController extends BaseController {
   }
 
   @Post('webhook')
+  @Public()
   async handleWebhook(
     @Headers('stripe-signature') sig: string,
     @Req() req: RawBodyRequest<Request>,
