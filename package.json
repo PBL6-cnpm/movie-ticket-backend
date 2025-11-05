@@ -64,6 +64,7 @@
     "os": "^0.1.2",
     "parse-duration": "^2.1.4",
     "passport": "^0.7.0",
+    "qrcode": "^1.5.4",
     "redis": "5.8.2",
     "reflect-metadata": "^0.2.2",
     "rimraf": "^6.0.1",

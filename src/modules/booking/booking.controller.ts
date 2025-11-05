@@ -1,5 +1,6 @@
 import { BaseController } from '@bases/base-controller';
 import { CurrentAccount } from '@common/decorators/current-account.decorator';
+import { Public } from '@common/decorators/public.decorator';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { ContextUser } from '@common/types/user.type';
 import {
@@ -21,7 +22,6 @@ import { BookingService } from './booking.service';
 import { CancelPaymentDto } from './dto/cancel-payment.dto';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { QueryHoldBookingDto } from './dto/query-hold-booking.dto';
-import { Public } from '@common/decorators/public.decorator';
 
 @Controller('bookings')
 @ApiBearerAuth()
@@ -83,5 +83,18 @@ export class BookingController extends BaseController {
   ): Promise<SuccessResponse<void>> {
     await this.paymentService.cancelPayment(cancelPaymentDto.bookingId);
     return this.success(null);
+  }
+
+  @Public()
+  @Post('ticket-qr')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get ticket QR code for a booking' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Ticket QR code retrieved successfully'
+  })
+  async getTicketQrCode(): Promise<SuccessResponse<string>> {
+    const result = await this.bookingService.getTicketQrCode();
+    return this.success(result);
   }
 }

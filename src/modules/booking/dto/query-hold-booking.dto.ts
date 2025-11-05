@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsString, IsUUID, Min, ValidateNested } from 'class-validator';
+import { IsInt, IsOptional, IsString, IsUUID, Min, ValidateNested } from 'class-validator';
 export class RefreshmentItemDto {
   @ApiProperty({
     type: String,
@@ -64,6 +64,7 @@ export class QueryHoldBookingDto {
     description: 'Optional voucher code for discounts'
   })
   @IsString()
+  @IsOptional()
   voucherCode?: string;
 
   @ApiPropertyOptional({
@@ -73,5 +74,6 @@ export class QueryHoldBookingDto {
   })
   @ValidateNested({ each: true })
   @Type(() => RefreshmentItemDto)
+  @IsOptional()
   refreshmentsOption?: RefreshmentItemDto[];
 }

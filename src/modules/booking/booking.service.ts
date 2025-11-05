@@ -2,6 +2,7 @@ import { HOLD_DURATION_SECONDS } from '@common/constants/booking.constant';
 import { DayOfWeek } from '@common/enums';
 import { BookingStatus } from '@common/enums/booking.enum';
 import { dayjsObjectWithTimezone, getStartAndEndOfDay } from '@common/utils/date.util';
+import { generateQRCodeAsMulterFile } from '@common/utils/generate-qr-code';
 import { generateSeatLockKey } from '@common/utils/redis.util';
 import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
@@ -14,6 +15,7 @@ import { ShowTime } from '@shared/db/entities/show-time.entity';
 import { SpecialDate } from '@shared/db/entities/special-day.entity';
 import { TypeDay } from '@shared/db/entities/type-day.entity';
 import { Voucher } from '@shared/db/entities/voucher.entity';
+import { CloudinaryService } from '@shared/modules/cloudinary/cloudinary.service';
 import { RedisService } from '@shared/modules/redis/redis.service';
 import { Between, EntityManager, In } from 'typeorm';
 import { AdditionalPriceDto, QueryHoldBookingDto } from './dto/query-hold-booking.dto';
@@ -23,9 +25,22 @@ export class BookingService {
   constructor(
     @InjectEntityManager() private readonly entityManager: EntityManager,
 
-    private readonly redisService: RedisService
+    private readonly redisService: RedisService,
+
+    private readonly cloudinaryService: CloudinaryService
   ) {}
 
+  async getTicketQrCode() {
+    try {
+      const qrBuffer = await generateQRCodeAsMulterFile('Thanh Thanh Va Va');
+
+      const qrUrl = await this.cloudinaryService.uploadFileBuffer(qrBuffer);
+      return qrUrl;
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      throw new InternalServerErrorException('Failed to generate QR code');
+    }
+  }
   async holdBooking(dto: QueryHoldBookingDto, accountId: string) {
     const { seatIds, showTimeId, refreshmentsOption } = dto;
     const lockedKeys: string[] = [];
