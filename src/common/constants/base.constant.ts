@@ -14,3 +14,10 @@ export const MESSAGE_KEY = {
 };
 
 export const defaultTimezone = 'Asia/Ho_Chi_Minh';
+
+export const QR_IMAGE_TYPE = 'png';
+export const QR_COLOR = {
+  dark: '#000000',
+  light: '#ffffff'
+};
+export const QR_SIZE = 500;
