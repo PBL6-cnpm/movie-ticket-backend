@@ -21,7 +21,12 @@ import { BookingPaymentService } from './booking-payment.service';
 import { BookingService } from './booking.service';
 import { CancelPaymentDto } from './dto/cancel-payment.dto';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
-import { QueryHoldBookingDto } from './dto/query-hold-booking.dto';
+import {
+  ApplyRefreshmentsDto,
+  ApplyVoucherDto,
+  QueryHoldBookingAndroidPlatformDto,
+  QueryHoldBookingDto
+} from './dto/query-hold-booking.dto';
 
 @Controller('bookings')
 @ApiBearerAuth()
@@ -83,6 +88,41 @@ export class BookingController extends BaseController {
   ): Promise<SuccessResponse<void>> {
     await this.paymentService.cancelPayment(cancelPaymentDto.bookingId);
     return this.success(null);
+  }
+
+  @Post('hold/android-platform')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Hold booking for selected seats on Android platform' })
+  async holdBookingAndroid(
+    @Body() body: QueryHoldBookingAndroidPlatformDto,
+    @CurrentAccount() user: ContextUser
+  ) {
+    const result = await this.bookingService.holdBookingForAndroid(body, user.id);
+    return this.success(result);
+  }
+
+  @Post('apply-refreshments')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Apply refreshments to a pending booking' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Refreshments added successfully, booking total updated.'
+  })
+  async applyRefreshments(@Body() body: ApplyRefreshmentsDto, @CurrentAccount() user: ContextUser) {
+    const result = await this.bookingService.addRefreshmentsToBooking(body, user.id);
+    return this.success(result);
+  }
+
+  @Post('apply-voucher')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Apply a voucher to a pending booking' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Voucher applied successfully, booking total updated.'
+  })
+  async applyVoucher(@Body() body: ApplyVoucherDto, @CurrentAccount() user: ContextUser) {
+    const result = await this.bookingService.applyVoucherToBooking(body, user.id);
+    return this.success(result);
   }
 
   @Public()

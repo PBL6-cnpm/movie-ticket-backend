@@ -4,7 +4,12 @@ import { BookingStatus } from '@common/enums/booking.enum';
 import { dayjsObjectWithTimezone, getStartAndEndOfDay } from '@common/utils/date.util';
 import { generateQRCodeAsMulterFile } from '@common/utils/generate-qr-code';
 import { generateSeatLockKey } from '@common/utils/redis.util';
-import { ConflictException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException
+} from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { BookRefreshments } from '@shared/db/entities/book-refreshments.entity';
 import { BookSeat } from '@shared/db/entities/book-seat.entity';
@@ -18,7 +23,14 @@ import { Voucher } from '@shared/db/entities/voucher.entity';
 import { CloudinaryService } from '@shared/modules/cloudinary/cloudinary.service';
 import { RedisService } from '@shared/modules/redis/redis.service';
 import { Between, EntityManager, In } from 'typeorm';
-import { AdditionalPriceDto, QueryHoldBookingDto } from './dto/query-hold-booking.dto';
+import {
+  AdditionalPriceDto,
+  ApplyRefreshmentsDto,
+  ApplyVoucherDto,
+  QueryHoldBookingAndroidPlatformDto,
+  QueryHoldBookingDto,
+  RefreshmentItemDto
+} from './dto/query-hold-booking.dto';
 
 @Injectable()
 export class BookingService {
@@ -41,6 +53,7 @@ export class BookingService {
       throw new InternalServerErrorException('Failed to generate QR code');
     }
   }
+
   async holdBooking(dto: QueryHoldBookingDto, accountId: string) {
     const { seatIds, showTimeId, refreshmentsOption } = dto;
     const lockedKeys: string[] = [];
@@ -66,8 +79,7 @@ export class BookingService {
       const dbResult = await this.entityManager.transaction(async (transactionalEntityManager) => {
         const seats = await transactionalEntityManager.getRepository(Seat).find({
           where: seatIds.map((id) => ({ id })),
-          relations: ['typeSeat'],
-          select: ['id', 'typeSeat']
+          relations: ['typeSeat']
         });
 
         if (seats.length !== seatIds.length) {
@@ -117,45 +129,14 @@ export class BookingService {
             })
           );
         }
+        let totalRefreshmentPrice = 0;
+        let bookRefreshmentsToCreate: BookRefreshments[] = [];
 
-        const bookRefreshmentsToCreate: BookRefreshments[] = [];
-        if (refreshmentsOption && refreshmentsOption.length > 0) {
-          const uniqueIds = refreshmentsOption.map((item) => item.refreshmentId);
-          const refreshmentList = await transactionalEntityManager
-            .getRepository(Refreshments)
-            .find({
-              where: {
-                id: In(uniqueIds),
-                isCurrent: true
-              }
-            });
-
-          const priceMap = new Map<string, number>();
-          refreshmentList.forEach((item) => priceMap.set(item.id, item.price));
-
-          let totalRefreshmentPrice = 0;
-          for (const item of refreshmentsOption) {
-            const price = priceMap.get(item.refreshmentId);
-
-            if (price === undefined) {
-              throw new ConflictException(
-                `Refreshment with ID ${item.refreshmentId} not found or is not available.`
-              );
-            }
-
-            const itemTotalPrice = price * item.quantity;
-            totalRefreshmentPrice += itemTotalPrice;
-
-            bookRefreshmentsToCreate.push(
-              transactionalEntityManager.create(BookRefreshments, {
-                refreshmentsId: item.refreshmentId,
-                quantity: item.quantity,
-                totalPrice: itemTotalPrice
-              })
-            );
-          }
-          calculatedTotalBookingPrice += totalRefreshmentPrice;
-        }
+        ({ totalRefreshmentPrice, bookRefreshmentsToCreate } = await this._calculateRefreshments(
+          transactionalEntityManager,
+          refreshmentsOption
+        ));
+        calculatedTotalBookingPrice += totalRefreshmentPrice;
 
         let finalBookingPrice = calculatedTotalBookingPrice;
         let voucherId: string | null = null;
@@ -305,5 +286,224 @@ export class BookingService {
     }
 
     return discountAmount;
+  }
+
+  async holdBookingForAndroid(dto: QueryHoldBookingAndroidPlatformDto, accountId: string) {
+    const { seatIds, showTimeId } = dto;
+    const lockedKeys: string[] = [];
+    try {
+      for (const seatId of seatIds) {
+        const key = generateSeatLockKey(showTimeId, seatId);
+        const result = await this.redisService.trySetNx(key, accountId, HOLD_DURATION_SECONDS);
+        if (!result) {
+          const takenSeatId = seatId;
+          throw new ConflictException(`Seat ${takenSeatId} is already locked or booked.`);
+        }
+
+        lockedKeys.push(key);
+      }
+      // get showtime to calculate additional price
+      const showTime = await this.entityManager.getRepository(ShowTime).findOne({
+        where: { id: showTimeId }
+      });
+      if (!showTime) {
+        throw new InternalServerErrorException('Showtime not found');
+      }
+
+      const dbResult = await this.entityManager.transaction(async (transactionalEntityManager) => {
+        const seats = await transactionalEntityManager.getRepository(Seat).find({
+          where: seatIds.map((id) => ({ id })),
+          relations: ['typeSeat']
+        });
+
+        if (seats.length !== seatIds.length) {
+          const notFoundSeats = seatIds.filter((id) => !seats.find((s) => s.id === id));
+          throw new InternalServerErrorException(
+            `Some seats not found: ${notFoundSeats.join(', ')}`
+          );
+        }
+
+        const existingBookSeats = await transactionalEntityManager
+          .getRepository(BookSeat)
+          .createQueryBuilder('bookSeat')
+          .innerJoin(Booking, 'booking', 'booking.id = bookSeat.bookingId')
+          .where('booking.showTimeId = :showTimeId', { showTimeId })
+          .andWhere('bookSeat.seatId IN (:...actualSeatIds)', { actualSeatIds: seatIds })
+          .getMany();
+        if (existingBookSeats.length > 0) {
+          throw new InternalServerErrorException(
+            'Some seats are already booked. Please try again.'
+          );
+        }
+        let calculatedTotalBookingPrice = 0;
+        const bookSeatsToCreate: BookSeat[] = [];
+
+        //calculate additional price with special date and type day
+        const additionalResult = await this._getAdditionalPrice(
+          this.entityManager,
+          showTime.timeStart
+        );
+
+        for (const seat of seats) {
+          if (!seat.typeSeat) {
+            throw new InternalServerErrorException(`Seat ${seat.id} is missing TypeSeat relation.`);
+          }
+
+          const seatPrice = seat.typeSeat.price + additionalResult.additionalPrice;
+
+          calculatedTotalBookingPrice += seatPrice;
+
+          bookSeatsToCreate.push(
+            transactionalEntityManager.create(BookSeat, {
+              seatId: seat.id,
+              status: false,
+              typeDayId: additionalResult.additionalTypeDayId || null,
+              specialDateId: additionalResult.additionalSpecialDateId || null,
+              totalSeatPrice: seatPrice
+            })
+          );
+        }
+
+        const finalBookingPrice = calculatedTotalBookingPrice;
+        const voucherId: string | null = null;
+
+        const newBooking = transactionalEntityManager.create(Booking, {
+          accountId,
+          showTimeId,
+          status: BookingStatus.PENDING,
+          expiresAt: new Date(Date.now() + HOLD_DURATION_SECONDS * 1000),
+          dateTimeBooking: new Date(),
+          totalBookingPrice: finalBookingPrice,
+          voucherId: voucherId
+        });
+        const savedBooking = await transactionalEntityManager.save(newBooking);
+
+        bookSeatsToCreate.forEach((bookSeat) => {
+          bookSeat.bookingId = savedBooking.id;
+        });
+        await transactionalEntityManager.save(bookSeatsToCreate);
+
+        return {
+          bookingId: savedBooking.id,
+          totalPrice: savedBooking.totalBookingPrice
+        };
+      });
+      return { ...dbResult, message: 'Seats successfully held.' };
+    } catch (error) {
+      console.error('Transaction failed:', error);
+      if (lockedKeys.length > 0) {
+        await this.redisService.del(lockedKeys);
+      }
+      throw error;
+    }
+  }
+  private async _calculateRefreshments(
+    tx: EntityManager,
+    refreshmentsOption: RefreshmentItemDto[]
+  ): Promise<{ totalRefreshmentPrice: number; bookRefreshmentsToCreate: BookRefreshments[] }> {
+    const bookRefreshmentsToCreate: BookRefreshments[] = [];
+    let totalRefreshmentPrice = 0;
+
+    if (refreshmentsOption && refreshmentsOption.length > 0) {
+      const uniqueIds = refreshmentsOption.map((item) => item.refreshmentId);
+      const refreshmentList = await tx.getRepository(Refreshments).find({
+        where: {
+          id: In(uniqueIds),
+          isCurrent: true
+        }
+      });
+
+      const priceMap = new Map<string, number>();
+      refreshmentList.forEach((item) => priceMap.set(item.id, item.price));
+
+      for (const item of refreshmentsOption) {
+        const price = priceMap.get(item.refreshmentId);
+        if (price === undefined) {
+          throw new ConflictException(
+            `Refreshment with ID ${item.refreshmentId} not found or is not available.`
+          );
+        }
+        const itemTotalPrice = price * item.quantity;
+        totalRefreshmentPrice += itemTotalPrice;
+
+        bookRefreshmentsToCreate.push(
+          tx.create(BookRefreshments, {
+            refreshmentsId: item.refreshmentId,
+            quantity: item.quantity,
+            totalPrice: itemTotalPrice
+          })
+        );
+      }
+    }
+    return { totalRefreshmentPrice, bookRefreshmentsToCreate };
+  }
+  async addRefreshmentsToBooking(dto: ApplyRefreshmentsDto, accountId: string) {
+    return this.entityManager.transaction(async (transactionalEntityManager) => {
+      const booking = await transactionalEntityManager.findOne(Booking, {
+        where: { id: dto.bookingId, accountId: accountId, status: BookingStatus.PENDING }
+      });
+      if (!booking) {
+        throw new NotFoundException('Pending booking not found for this account.');
+      }
+
+      if (booking.voucherId) {
+        throw new ConflictException('Cannot add refreshments after a voucher has been applied.');
+      }
+
+      const { totalRefreshmentPrice, bookRefreshmentsToCreate } = await this._calculateRefreshments(
+        transactionalEntityManager,
+        dto.refreshmentsOption
+      );
+
+      if (totalRefreshmentPrice === 0) {
+        return booking;
+      }
+
+      booking.totalBookingPrice += totalRefreshmentPrice;
+
+      bookRefreshmentsToCreate.forEach((bookRef) => (bookRef.bookingId = booking.id));
+      await transactionalEntityManager.save(BookRefreshments, bookRefreshmentsToCreate);
+
+      await transactionalEntityManager.save(Booking, booking);
+
+      return booking;
+    });
+  }
+
+  async applyVoucherToBooking(dto: ApplyVoucherDto, accountId: string) {
+    return this.entityManager.transaction(async (transactionalEntityManager) => {
+      const booking = await transactionalEntityManager.findOne(Booking, {
+        where: { id: dto.bookingId, accountId: accountId, status: BookingStatus.PENDING },
+        relations: ['bookSeats', 'bookRefreshmentss'] // Load các mục đã thêm
+      });
+
+      if (!booking) {
+        throw new NotFoundException('Pending booking not found for this account.');
+      }
+
+      if (booking.voucherId) {
+        throw new ConflictException('A voucher has already been applied to this booking.');
+      }
+
+      const grossSeatPrice = booking.bookSeats.reduce((sum, seat) => sum + seat.totalSeatPrice, 0);
+      const grossRefreshmentPrice = booking.bookRefreshmentss.reduce(
+        (sum, ref) => sum + (ref.totalPrice || 0),
+        0
+      );
+      const grossTotalPrice = grossSeatPrice + grossRefreshmentPrice;
+
+      const voucherResult = await this._processVoucher(
+        transactionalEntityManager,
+        dto.voucherCode,
+        grossTotalPrice
+      );
+
+      booking.totalBookingPrice = voucherResult.finalPrice;
+      booking.voucherId = voucherResult.voucherId;
+
+      await transactionalEntityManager.save(Booking, booking);
+
+      return booking;
+    });
   }
 }
