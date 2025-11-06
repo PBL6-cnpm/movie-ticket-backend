@@ -1,6 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, IsUUID, Min, ValidateNested } from 'class-validator';
+import {
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+  ValidateNested
+} from 'class-validator';
 export class RefreshmentItemDto {
   @ApiProperty({
     type: String,
@@ -76,4 +84,54 @@ export class QueryHoldBookingDto {
   @Type(() => RefreshmentItemDto)
   @IsOptional()
   refreshmentsOption?: RefreshmentItemDto[];
+}
+
+export class QueryHoldBookingAndroidPlatformDto {
+  @ApiProperty({
+    type: String
+  })
+  @IsUUID()
+  showTimeId: string;
+
+  @ApiProperty({
+    type: String,
+    isArray: true,
+    description: 'List of seat IDs to hold'
+  })
+  @IsUUID('4', { each: true })
+  seatIds: string[];
+}
+
+export class ApplyRefreshmentsDto {
+  @ApiProperty({
+    type: String,
+    description: 'ID of the pending booking'
+  })
+  @IsUUID()
+  bookingId: string;
+
+  @ApiProperty({
+    type: [RefreshmentItemDto],
+    description: 'List of refreshments items to add'
+  })
+  @ValidateNested({ each: true })
+  @Type(() => RefreshmentItemDto)
+  refreshmentsOption: RefreshmentItemDto[];
+}
+
+export class ApplyVoucherDto {
+  @ApiProperty({
+    type: String,
+    description: 'ID of the pending booking'
+  })
+  @IsUUID()
+  bookingId: string;
+
+  @ApiProperty({
+    type: String,
+    description: 'The voucher code to apply'
+  })
+  @IsString()
+  @IsNotEmpty()
+  voucherCode: string;
 }

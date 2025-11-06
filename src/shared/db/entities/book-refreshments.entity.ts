@@ -25,6 +25,15 @@ export class BookRefreshments extends BaseEntityTime {
   @Min(1)
   quantity: number;
 
+  @Column({
+    name: 'total_price',
+    type: 'int',
+    nullable: false,
+    default: 0
+  })
+  @Min(0)
+  totalPrice: number;
+
   @ManyToOne(() => Booking, (booking) => booking.bookRefreshmentss)
   @JoinColumn({ name: 'booking_id' })
   booking: Booking;
