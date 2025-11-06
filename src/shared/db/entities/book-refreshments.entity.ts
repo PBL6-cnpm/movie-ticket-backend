@@ -34,7 +34,7 @@ export class BookRefreshments extends BaseEntityTime {
   @Min(0)
   totalPrice: number;
 
-  @ManyToOne(() => Booking, (booking) => booking.bookRefreshmentss)
+  @ManyToOne(() => Booking, (booking) => booking.bookRefreshmentss, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'booking_id' })
   booking: Booking;
 
