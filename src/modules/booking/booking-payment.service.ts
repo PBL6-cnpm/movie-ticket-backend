@@ -95,7 +95,7 @@ export class BookingPaymentService {
   private async handlePaymentSuccess(bookingId: string) {
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId },
-      relations: ['account', 'showTime', 'showTime.movie', 'showTime.room', 'showTime.room.cinema']
+      relations: ['account', 'showTime', 'showTime.movie', 'showTime.room', 'showTime.room.branch']
     });
 
     if (!booking) {
