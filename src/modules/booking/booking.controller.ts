@@ -6,10 +6,12 @@ import { ContextUser } from '@common/types/user.type';
 import {
   Body,
   Controller,
+  Get,
   Headers,
   HttpCode,
   HttpStatus,
   Post,
+  Query,
   RawBodyRequest,
   Req,
   Res
@@ -19,6 +21,7 @@ import { PaymentIntentDto } from '@shared/modules/stripe/dto/payment-intent.dto'
 import { Request, Response } from 'express';
 import { BookingPaymentService } from './booking-payment.service';
 import { BookingService } from './booking.service';
+import { BookingResponseDto } from './dto/booking-response.dto';
 import { CancelPaymentDto } from './dto/cancel-payment.dto';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import {
@@ -27,6 +30,7 @@ import {
   QueryHoldBookingAndroidPlatformDto,
   QueryHoldBookingDto
 } from './dto/query-hold-booking.dto';
+import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 
 @Controller('bookings')
 @ApiBearerAuth()
@@ -37,6 +41,21 @@ export class BookingController extends BaseController {
     private readonly paymentService: BookingPaymentService
   ) {
     super();
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get all bookings for the current user' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of bookings retrieved successfully'
+  })
+  async getUserBookings(
+    @Query() dto: PaginationDto,
+    @CurrentAccount() account: ContextUser
+  ): Promise<SuccessResponse<IPaginatedResponse<BookingResponseDto>>> {
+    const result = await this.bookingService.getBookingsByAccountId(account.id, dto);
+    return this.success(result);
   }
 
   @Post('hold')

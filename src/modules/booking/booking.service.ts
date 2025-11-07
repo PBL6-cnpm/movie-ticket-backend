@@ -31,6 +31,9 @@ import {
   QueryHoldBookingDto,
   RefreshmentItemDto
 } from './dto/query-hold-booking.dto';
+import { BookingResponseDto } from './dto/booking-response.dto';
+import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
+import PaginationHelper from '@common/utils/pagination.util';
 
 @Injectable()
 export class BookingService {
@@ -41,6 +44,43 @@ export class BookingService {
 
     private readonly cloudinaryService: CloudinaryService
   ) {}
+
+  async getBookingsByAccountId(
+    accountId: string,
+    dto: PaginationDto
+  ): Promise<IPaginatedResponse<BookingResponseDto>> {
+    const { limit, offset } = dto;
+    const [bookings, total] = await this.entityManager.getRepository(Booking).findAndCount({
+      where: {
+        accountId: accountId,
+        status: BookingStatus.CONFIRMED
+      },
+      relations: [
+        'showTime',
+        'showTime.movie',
+        'showTime.room',
+        'bookSeats',
+        'bookSeats.seat',
+        'bookSeats.seat.typeSeat',
+        'bookSeats.seat.room',
+        'bookRefreshmentss',
+        'bookRefreshmentss.refreshments'
+      ],
+      skip: offset,
+      take: limit
+    });
+
+    const items = bookings.map((booking) => new BookingResponseDto(booking));
+
+    const paginated = PaginationHelper.pagination({
+      limit: dto.limit,
+      offset: dto.offset,
+      totalItems: total,
+      items
+    });
+
+    return paginated;
+  }
 
   async getTicketQrCode() {
     try {
