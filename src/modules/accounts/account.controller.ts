@@ -18,7 +18,7 @@ import {
   UseInterceptors
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AccountService } from './account.service';
 import { AccountResponseDto } from './dto/account-response.dto';
 import { AdminAccountDto } from './dto/admin-account.dto';
@@ -31,6 +31,7 @@ import { UpdateStaffAccountDto } from './dto/update-staff-account.dto';
 
 @Controller('accounts')
 @ApiTags('Accounts')
+@ApiBearerAuth()
 export class AccountController extends BaseController {
   constructor(private readonly accountService: AccountService) {
     super();
