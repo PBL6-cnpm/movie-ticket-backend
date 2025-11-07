@@ -10,5 +10,9 @@ export const MAIL_TEMPLATE = {
   RESET_PASSWORD_REQUEST: {
     template: 'reset-password-request',
     subject: 'Reset your password'
+  },
+  BOOKING_CONFIRMATION: {
+    template: 'booking-confirmation',
+    subject: 'Your booking is confirmed'
   }
 };

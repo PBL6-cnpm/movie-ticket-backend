@@ -20,6 +20,9 @@ export class Booking extends BaseEntityTime {
   @Column({ name: 'voucher_id', nullable: true })
   voucherId: string | null;
 
+  @Column({ name: 'qr_url', nullable: true })
+  qrUrl: string | null;
+
   @Column({ name: 'show_time_id', nullable: false })
   showTimeId: string;
 
