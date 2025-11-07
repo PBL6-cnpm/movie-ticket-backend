@@ -38,7 +38,7 @@ export class ShowTimeResponseDto {
     poster: string;
   };
 
-  constructor(showTime: ShowTime) {
+  constructor(showTime: ShowTime, roomInfo: boolean = true) {
     this.id = showTime.id;
     this.timeStart = showTime.timeStart;
     this.showDate = showTime.showDate;
@@ -49,11 +49,13 @@ export class ShowTimeResponseDto {
           poster: showTime.movie.poster
         }
       : null;
-    this.room = showTime.room
-      ? {
-          id: showTime.room.id,
-          name: showTime.room.name
-        }
-      : null;
+    if (roomInfo) {
+      this.room = showTime.room
+        ? {
+            id: showTime.room.id,
+            name: showTime.room.name
+          }
+        : null;
+    }
   }
 }

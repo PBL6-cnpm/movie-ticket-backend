@@ -9,13 +9,16 @@ export class RefreshmentResponseDto {
   createdAt: Date;
   updatedAt: Date;
 
-  constructor(refreshment: Refreshments) {
+  constructor(refreshment: Refreshments, detailInfo: boolean = true) {
     this.id = refreshment.id;
     this.name = refreshment.name;
-    this.picture = refreshment.picture;
     this.price = refreshment.price;
-    this.isCurrent = refreshment.isCurrent;
-    this.createdAt = refreshment.createdAt;
-    this.updatedAt = refreshment.updatedAt;
+
+    if (detailInfo) {
+      this.picture = refreshment.picture;
+      this.isCurrent = refreshment.isCurrent;
+      this.createdAt = refreshment.createdAt;
+      this.updatedAt = refreshment.updatedAt;
+    }
   }
 }
