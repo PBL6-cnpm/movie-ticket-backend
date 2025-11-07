@@ -277,7 +277,7 @@ export class SeatService extends BaseService<Seat> {
       .leftJoinAndSelect('seat.typeSeat', 'typeSeat')
       .where('booking.showTimeId = :showTimeId', { showTimeId })
       .andWhere('booking.status IN (:...statuses)', {
-        statuses: [BookingStatus.PENDING, BookingStatus.CONFIRMED]
+        statuses: [BookingStatus.PENDING_PAYMENT, BookingStatus.CONFIRMED, BookingStatus.PENDING]
       })
       .getMany();
   }
