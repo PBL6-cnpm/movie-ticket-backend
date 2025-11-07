@@ -56,6 +56,27 @@ export class ShowTimeController extends BaseController {
     return this.success(result);
   }
 
+  @Get('date/:date/movie/:movieId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get showtimes by date and movie ID for current user branch' })
+  async getShowTimeByDateAndMovieId(
+    @Param('date') date: string,
+    @Param('movieId') movieId: string,
+    @CurrentAccount() account: ContextUser
+  ): Promise<SuccessResponse<ShowTimeResponseDto[]>> {
+    if (!account.branchId) {
+      throw new BadRequest(RESPONSE_MESSAGES.USER_NO_BRANCH_ASSIGNED);
+    }
+
+    const showTimes = await this.showTimeService.getShowTimeByDateAndMovieId(
+      date,
+      movieId,
+      account.branchId
+    );
+    const response = showTimes.map((showTime) => new ShowTimeResponseDto(showTime));
+    return this.success(response);
+  }
+
   @Get('show-date/:date')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get show time by date' })

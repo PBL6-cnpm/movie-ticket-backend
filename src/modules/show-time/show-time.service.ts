@@ -213,6 +213,53 @@ export class ShowTimeService {
     return showTimes;
   }
 
+  async getShowTimeByDateAndMovieId(
+    date: string,
+    movieId: string,
+    branchId: string
+  ): Promise<ShowTime[]> {
+    // Validate movie exists
+    const movie = await this.movieRepository.findOne({
+      where: { id: movieId }
+    });
+
+    if (!movie) {
+      throw new ConflictException(RESPONSE_MESSAGES.MOVIE_NOT_FOUND);
+    }
+
+    // Validate branch exists
+    const branch = await this.branchRepository.findOne({
+      where: { id: branchId }
+    });
+
+    if (!branch) {
+      throw new ConflictException(RESPONSE_MESSAGES.BRANCH_NOT_FOUND);
+    }
+
+    // Parse date string (YYYY-MM-DD) and create date range
+    const targetDate = new Date(date);
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Query showtimes for the movie on the specific date and branch
+    const showTimes = await this.showTimeRepository
+      .createQueryBuilder('showTime')
+      .leftJoinAndSelect('showTime.movie', 'movie')
+      .leftJoinAndSelect('showTime.room', 'room')
+      .leftJoinAndSelect('room.branch', 'branch')
+      .where('movie.id = :movieId', { movieId })
+      .andWhere('branch.id = :branchId', { branchId })
+      .andWhere('showTime.showDate >= :startOfDay', { startOfDay })
+      .andWhere('showTime.showDate <= :endOfDay', { endOfDay })
+      .orderBy('showTime.timeStart', 'ASC')
+      .getMany();
+
+    return showTimes;
+  }
+
   async createShowTime(
     branchIdOfAccount: string,
     createShowTimeDto: CreateShowTimeDto

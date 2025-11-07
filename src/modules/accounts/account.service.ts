@@ -147,21 +147,9 @@ export class AccountService extends BaseService<Account> {
       throw new BadRequest(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
     }
 
-    // Check if email exists (if updating email)
-    if (updateAccountDto.email && updateAccountDto.email !== existingAccount.email) {
-      const emailExists = await this.findOne({ where: { email: updateAccountDto.email } });
-      if (emailExists) {
-        throw new ConflictException(RESPONSE_MESSAGES.EMAIL_ALREADY_EXISTS);
-      }
-    }
-
     // Hash password (if updating password)
     const updateData = { ...updateAccountDto };
     delete updateData.roleIds; // remove roleIds from updateData because it will be handled after
-
-    if (updateAccountDto.password) {
-      updateData.password = await bcrypt.hash(updateAccountDto.password, 10);
-    }
 
     // Update account
     await this.updateById(accountId, updateData);

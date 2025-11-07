@@ -222,16 +222,10 @@ export class AccountController extends BaseController {
   @HttpCode(HttpStatus.OK)
   async updateStaffAccount(
     @Param('id') id: string,
-    @Body() updateStaffAccountDto: UpdateStaffAccountDto,
-    @CurrentAccount() account: ContextUser
+    @Body() updateStaffAccountDto: UpdateStaffAccountDto
   ): Promise<SuccessResponse<AccountResponseDto>> {
     const updatedAccount = await this.accountService.updateAccount(id, {
-      email: updateStaffAccountDto.email,
-      fullName: updateStaffAccountDto.fullName,
-      phoneNumber: updateStaffAccountDto.phoneNumber,
-      branchId: account.branchId,
-      status: updateStaffAccountDto.status,
-      password: updateStaffAccountDto.password
+      status: updateStaffAccountDto.status
     });
     const response = new AccountResponseDto(updatedAccount);
     return this.success(response);
