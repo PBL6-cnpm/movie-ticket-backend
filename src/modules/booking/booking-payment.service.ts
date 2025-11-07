@@ -6,6 +6,7 @@ import { InjectQueue } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Booking } from '@shared/db/entities/booking.entity';
+import { Voucher } from '@shared/db/entities/voucher.entity';
 import { PaymentIntentDto } from '@shared/modules/stripe/dto/payment-intent.dto';
 import { StripeService } from '@shared/modules/stripe/stripe.service';
 import { Queue } from 'bull';
@@ -17,6 +18,7 @@ export class BookingPaymentService {
   constructor(
     @InjectQueue(QUEUE_KEY.cancelExpiredPayment) private readonly cancelExpiredPaymentQueue: Queue,
     @InjectRepository(Booking) private readonly bookingRepo: Repository<Booking>,
+    @InjectRepository(Voucher) private readonly voucherRepo: Repository<Voucher>,
 
     private readonly stripeService: StripeService
   ) {}
@@ -63,7 +65,11 @@ export class BookingPaymentService {
   }
 
   private async addCancelExpiredPaymentJob(bookingId: string, paymentIntentId: string) {
+    console.log(
+      `Scheduling cancel job for booking ${bookingId} in ${PAYMENT_EXPIRATION_MILLISECONDS} ms`
+    );
     await this.cancelExpiredPaymentQueue.add(
+      'cancel-payment',
       { bookingId, paymentIntentId },
       {
         jobId: JOB_TYPES.cancelPayment(bookingId),
@@ -105,11 +111,11 @@ export class BookingPaymentService {
       throw new BadRequest(RESPONSE_MESSAGES.BOOKING_NOT_FOUND);
     }
 
-    // Remove the cancel payment job
-    await this.removeCancelExpiredPaymentJob(bookingId);
+    // // Remove the cancel payment job
+    // await this.removeCancelExpiredPaymentJob(bookingId);
 
-    // Delete the booking
-    await this.bookingRepo.delete({ id: bookingId });
+    // // Delete the booking
+    // await this.bookingRepo.delete({ id: bookingId });
   }
 
   async cancelPayment(bookingId: string) {
@@ -135,6 +141,11 @@ export class BookingPaymentService {
 
     // Remove the cancel payment job
     await this.removeCancelExpiredPaymentJob(bookingId);
+
+    // Refresh voucher if used
+    if (booking.voucherId) {
+      await this.voucherRepo.increment({ id: booking.voucherId }, 'number', 1);
+    }
 
     // Delete the booking
     await this.bookingRepo.delete({ id: bookingId });
