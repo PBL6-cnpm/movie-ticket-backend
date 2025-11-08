@@ -158,6 +158,7 @@ export class ShowTimeController extends BaseController {
     await this.showTimeService.deleteShowTime(id, account.branchId);
     return this.success(null);
   }
+
   @Get('get-with-branch')
   async getShowTimesWithBranch(
     @Query() query: GetShowtimesQueryDto

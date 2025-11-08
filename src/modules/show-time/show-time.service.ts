@@ -1,6 +1,7 @@
 import { RESPONSE_MESSAGES } from '@common/constants';
 import { IPaginatedResponse } from '@common/types/pagination-base.type';
 import PaginationHelper from '@common/utils/pagination.util';
+import { SeatService } from '@modules/seat/seat.service';
 import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Branch } from '@shared/db/entities/branch.entity';
@@ -9,6 +10,7 @@ import { Room } from '@shared/db/entities/room.entity';
 import { ShowTime } from '@shared/db/entities/show-time.entity';
 import { Repository } from 'typeorm';
 import { CreateShowTimeDto } from './dto/create-show-time.dto';
+import { ShowTimeGroupedResponseDto } from './dto/show-time-response.dto';
 import { UpdateShowTimeDto } from './dto/update-show-time.dto';
 import { GetShowtimesQueryDto } from './show-time.controller';
 
@@ -25,17 +27,14 @@ export class ShowTimeService {
     private readonly movieRepository: Repository<Movie>,
 
     @InjectRepository(Room)
-    private readonly roomRepository: Repository<Room>
+    private readonly roomRepository: Repository<Room>,
+
+    private readonly seatService: SeatService
   ) {}
 
-  // Trong file show-time.service.ts
-
-  async getShowTimesWithMovie(movieId: string): Promise<
-    IPaginatedResponse<{
-      dayOfWeek: { name: string; value: Date };
-      times: { id: string; time: string }[];
-    }>
-  > {
+  async getShowTimesWithMovie(
+    movieId: string
+  ): Promise<IPaginatedResponse<ShowTimeGroupedResponseDto>> {
     const now = new Date();
     const bufferMinutes = 15;
     const bufferTime = new Date(now.getTime() + bufferMinutes * 60 * 1000);
@@ -50,9 +49,10 @@ export class ShowTimeService {
       .orderBy('showTime.timeStart', 'ASC');
 
     const items = await queryBuilder.getMany();
+    const seatSummaryMap = await this.buildSeatSummaryMap(items);
     const grouped: Record<
       string,
-      { name: string; value: Date; times: { id: string; time: string }[] }
+      { name: string; value: Date; times: ShowTimeGroupedResponseDto['times'] }
     > = {};
 
     for (const item of items) {
@@ -78,10 +78,19 @@ export class ShowTimeService {
         };
       }
 
-      if (!grouped[localDayKey].times.some((t) => t.time === timeFormatted)) {
+      if (!grouped[localDayKey].times.some((t) => t.id === item.id)) {
+        const summary = seatSummaryMap.get(item.id) ?? {
+          totalSeats: 0,
+          availableSeats: 0,
+          occupiedSeats: 0
+        };
+
         grouped[localDayKey].times.push({
           id: item.id,
-          time: timeFormatted
+          time: timeFormatted,
+          totalSeats: summary.totalSeats,
+          availableSeats: summary.availableSeats,
+          occupiedSeats: summary.occupiedSeats
         });
       }
     }
@@ -106,12 +115,9 @@ export class ShowTimeService {
     });
   }
 
-  async getShowTimesWithBranch(query: GetShowtimesQueryDto): Promise<
-    IPaginatedResponse<{
-      dayOfWeek: { name: string; value: Date };
-      times: { id: string; time: string }[];
-    }>
-  > {
+  async getShowTimesWithBranch(
+    query: GetShowtimesQueryDto
+  ): Promise<IPaginatedResponse<ShowTimeGroupedResponseDto>> {
     const now = new Date();
     const bufferMinutes = 15;
     const bufferTime = new Date(now.getTime() + bufferMinutes * 60 * 1000);
@@ -127,9 +133,10 @@ export class ShowTimeService {
       .orderBy('showTime.timeStart', 'ASC');
 
     const items = await queryBuilder.getMany();
+    const seatSummaryMap = await this.buildSeatSummaryMap(items);
     const grouped: Record<
       string,
-      { name: string; value: Date; times: { id: string; time: string }[] }
+      { name: string; value: Date; times: ShowTimeGroupedResponseDto['times'] }
     > = {};
 
     for (const item of items) {
@@ -155,10 +162,19 @@ export class ShowTimeService {
         };
       }
 
-      if (!grouped[localDayKey].times.some((t) => t.time === timeFormatted)) {
+      if (!grouped[localDayKey].times.some((t) => t.id === item.id)) {
+        const summary = seatSummaryMap.get(item.id) ?? {
+          totalSeats: 0,
+          availableSeats: 0,
+          occupiedSeats: 0
+        };
+
         grouped[localDayKey].times.push({
           id: item.id,
-          time: timeFormatted
+          time: timeFormatted,
+          totalSeats: summary.totalSeats,
+          availableSeats: summary.availableSeats,
+          occupiedSeats: summary.occupiedSeats
         });
       }
     }
@@ -181,6 +197,19 @@ export class ShowTimeService {
         times: group.times
       }))
     });
+  }
+
+  private async buildSeatSummaryMap(
+    showTimes: ShowTime[]
+  ): Promise<Map<string, { totalSeats: number; availableSeats: number; occupiedSeats: number }>> {
+    const summaries = await Promise.all(
+      showTimes.map(async (item) => ({
+        showTimeId: item.id,
+        ...(await this.seatService.getSeatSummaryByShowTime(item.id, item.room?.id ?? item.roomId))
+      }))
+    );
+
+    return new Map(summaries.map((summary) => [summary.showTimeId, summary]));
   }
 
   async getShowTimeByShowDateAndBranchId(showDate: Date, branchId: string): Promise<ShowTime[]> {

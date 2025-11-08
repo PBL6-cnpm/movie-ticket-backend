@@ -293,4 +293,31 @@ export class SeatService extends BaseService<Seat> {
 
     return this.getSeatsByRoom(showTime.roomId, showTime);
   }
+
+  async getSeatSummaryByShowTime(
+    showTimeId: string,
+    roomId?: string
+  ): Promise<{ totalSeats: number; availableSeats: number; occupiedSeats: number }> {
+    let targetRoomId = roomId;
+
+    if (!targetRoomId) {
+      const showTime = await this.showTimeRepository.findOne({ where: { id: showTimeId } });
+
+      if (!showTime) {
+        throw new NotFoundException('ShowTime not found');
+      }
+
+      targetRoomId = showTime.roomId;
+    }
+
+    const totalSeats = await this.seatRepository.count({ where: { roomId: targetRoomId } });
+    const occupiedSeatCount = (await this.getOccupiedSeats(showTimeId)).length;
+    const availableSeats = Math.max(totalSeats - occupiedSeatCount, 0);
+
+    return {
+      totalSeats,
+      availableSeats,
+      occupiedSeats: occupiedSeatCount
+    };
+  }
 }
