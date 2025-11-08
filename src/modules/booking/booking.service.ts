@@ -66,6 +66,9 @@ export class BookingService {
         'bookRefreshmentss',
         'bookRefreshmentss.refreshments'
       ],
+      order: {
+        dateTimeBooking: 'DESC'
+      },
       skip: offset,
       take: limit
     });
