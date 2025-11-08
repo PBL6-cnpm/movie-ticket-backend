@@ -4,11 +4,11 @@ import { Process, Processor } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Booking } from '@shared/db/entities/booking.entity';
+import { Voucher } from '@shared/db/entities/voucher.entity';
 import { StripeService } from '@shared/modules/stripe/stripe.service';
 import { Job } from 'bull';
 import { Repository } from 'typeorm';
 import { CancelExpiredPaymentJobData } from './payment-job.interface';
-import { Voucher } from '@shared/db/entities/voucher.entity';
 
 @Injectable()
 @Processor(QUEUE_KEY.cancelExpiredPayment)
@@ -29,7 +29,7 @@ export class PaymentProcessor {
         select: ['id', 'paymentIntentId', 'status', 'voucherId']
       });
 
-      if (!booking || booking.status !== BookingStatus.PENDING_PAYMENT) {
+      if (!booking || booking.status === BookingStatus.CONFIRMED) {
         return;
       }
 
