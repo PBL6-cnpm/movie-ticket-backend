@@ -1,5 +1,4 @@
 <html>
-
   <head>
     <meta name='viewport' content='width=device-width, initial-scale=1.0' />
     <meta http-equiv='Content-Type' content='text/html; charset=UTF-8' />
@@ -7,18 +6,18 @@
     <style>
       /* Base styles */
       body {
-        line-height: 1.5;
-        background-color: #f6f6f6;
-        font-family: sans-serif;
+        line-height: 1.6;
+        background-color: #f4f4f4;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
-        font-size: 14px;
+        font-size: 15px;
         margin: 0;
         padding: 0;
         -ms-text-size-adjust: 100%;
         -webkit-text-size-adjust: 100%;
       }
 
-      /* Table styles */
       table {
         border-collapse: separate;
         mso-table-lspace: 0pt;
@@ -27,16 +26,16 @@
       }
 
       td {
-        font-family: sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         vertical-align: top;
       }
 
       /* Container styles */
       .container {
         display: block;
-        max-width: 580px;
-        padding: 10px;
-        width: 580px;
+        max-width: 600px;
+        padding: 20px;
+        width: 600px;
         margin: 0 auto;
       }
 
@@ -44,13 +43,21 @@
         box-sizing: border-box;
         display: block;
         margin: 0 auto;
-        max-width: 580px;
-        padding: 10px;
+        max-width: 600px;
+        padding: 0;
       }
 
       .main {
         background: #ffffff;
-        border-radius: 3px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        overflow: hidden;
+      }
+
+      .header-section {
+        background: linear-gradient(135deg, #fe7e32 0%, #ff9a56 100%);
+        padding: 40px 40px 30px 40px;
+        text-align: center;
       }
 
       .wrapper {
@@ -58,27 +65,165 @@
         padding: 40px;
       }
 
-      /* Text styles */
-      h5 {
-        font-family: sans-serif;
-        font-size: 18px !important;
-        font-weight: normal;
-        margin: 0 0 15px 0;
-        text-align: center;
+      /* Typography */
+      h1 {
+        color: #ffffff;
+        font-size: 28px;
+        font-weight: 700;
+        margin: 15px 0 10px 0;
+        letter-spacing: -0.5px;
+      }
+
+      h2 {
+        color: #333333;
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0 0 20px 0;
       }
 
       p {
         font-family: sans-serif;
-        font-weight: normal;
+        font-weight: 400;
+        margin: 0 0 15px 0;
+        color: #555555;
+        line-height: 1.6;
+      }
+
+      .greeting {
+        font-size: 16px;
+        color: #333333;
+        margin-bottom: 10px;
+      }
+
+      .subtitle {
+        color: rgba(255, 255, 255, 0.95);
+        font-size: 15px;
+        margin: 0;
+      }
+
+      /* Movie details card */
+      .movie-card {
+        background: #f9f9f9;
+        border-radius: 12px;
+        padding: 25px;
+        margin: 30px 0;
+        border: 1px solid #eeeeee;
+      }
+
+      .movie-details-container {
+        display: table;
+        width: 100%;
+      }
+
+      .movie-poster {
+        display: table-cell;
+        width: 140px;
+        padding-right: 25px;
+        vertical-align: top;
+      }
+
+      .movie-poster img {
+        width: 140px;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .movie-info {
+        display: table-cell;
+        vertical-align: top;
+      }
+
+      .movie-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: #222222;
+        margin: 0 0 20px 0;
+        line-height: 1.3;
+      }
+
+      .detail-row {
+        margin-bottom: 12px;
+        font-size: 15px;
+        color: #444444;
+      }
+
+      .detail-label {
+        display: inline-block;
+        width: 80px;
+        font-weight: 600;
+        color: #666666;
+      }
+
+      .detail-value {
+        color: #222222;
+        font-weight: 500;
+      }
+
+      /* QR Code section */
+      .qr-section {
+        background: #ffffff;
+        border: 2px dashed #fe7e32;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        margin: 30px 0;
+      }
+
+      .qr-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #fe7e32;
         margin: 0 0 15px 0;
       }
 
-      /* Utility classes */
+      .qr-code-img {
+        border: 3px solid #fe7e32;
+        border-radius: 8px;
+        padding: 10px;
+        background: #ffffff;
+        display: inline-block;
+      }
+
+      .qr-instruction {
+        font-size: 14px;
+        color: #666666;
+        margin: 15px 0 0 0;
+        font-style: italic;
+      }
+
+      /* Divider */
       .divider {
-        border: 0.5px solid #fe7e32;
-        margin-bottom: 25px;
-        margin-top: 25px;
-        height: 0;
+        border: 0;
+        border-top: 1px solid #e0e0e0;
+        margin: 30px 0;
+      }
+
+      /* Footer */
+      .footer {
+        background: #f9f9f9;
+        padding: 30px 40px;
+        text-align: center;
+        border-top: 1px solid #eeeeee;
+      }
+
+      .footer-text {
+        font-size: 13px;
+        color: #888888;
+        margin: 0 0 10px 0;
+        line-height: 1.5;
+      }
+
+      .footer-address {
+        font-size: 13px;
+        color: #999999;
+        margin: 10px 0;
+      }
+
+      .footer-copyright {
+        font-size: 12px;
+        color: #aaaaaa;
+        margin: 15px 0 0 0;
       }
 
       .preheader {
@@ -94,95 +239,83 @@
         width: 0;
       }
 
-      /* Footer styles */
-      .footer {
-        clear: both;
-        margin-top: 10px;
-        text-align: center;
-        width: 100%;
-      }
-
-      .footer-text {
-        padding: 20px 10px 10px 10px;
-        font-size: 12px;
-        line-height: 18px;
-        color: #666666;
-        text-align: center;
-        font-weight: normal;
-      }
-
-      .footer-address {
-        padding: 10px;
-        color: #999999;
-        font-size: 12px;
-        text-align: center;
-      }
-
-      .footer-copyright {
-        padding: 0px 40px 40px 40px;
-        font-size: 12px;
-        line-height: 18px;
-        color: #666666;
-        text-align: center;
-        font-weight: normal;
+      /* Buttons/Links */
+      .button {
+        display: inline-block;
+        padding: 12px 30px;
+        background: #fe7e32;
+        color: #ffffff;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 600;
+        margin: 10px 0;
       }
 
       /* Mobile responsive */
       @media only screen and (max-width: 620px) {
-        .body h1 {
-          font-size: 28px !important;
-          margin-bottom: 10px !important;
-        }
-
-        .body p,
-        .body ul,
-        .body ol,
-        .body td,
-        .body span,
-        .body a {
-          font-size: 16px !important;
-        }
-
-        .wrapper,
-        .article {
-          padding: 20px !important; /* Adjusted padding for mobile */
-        }
-
-        .content {
-          padding: 0 !important;
-        }
-
         .container {
-          padding: 0 !important;
+          padding: 10px !important;
           width: 100% !important;
         }
 
         .main {
-          border-left-width: 0 !important;
-          border-radius: 0 !important;
-          border-right-width: 0 !important;
+          border-radius: 8px !important;
         }
 
-        .img-responsive {
-          height: auto !important;
-          max-width: 100% !important;
-          width: auto !important;
+        .header-section {
+          padding: 30px 20px !important;
         }
 
-        .ticket-details-container {
+        .wrapper {
+          padding: 25px !important;
+        }
+
+        h1 {
+          font-size: 24px !important;
+        }
+
+        .movie-card {
+          padding: 20px !important;
+        }
+
+        .movie-details-container {
+          display: block !important;
+        }
+
+        .movie-poster {
           display: block !important;
           width: 100% !important;
+          padding-right: 0 !important;
+          margin-bottom: 20px !important;
+          text-align: center;
         }
-        .ticket-poster {
-          width: 120px !important; /* Smaller poster on mobile */
-          padding-right: 15px !important;
+
+        .movie-poster img {
+          width: 120px !important;
         }
-        .ticket-info {
-          padding-left: 0px !important;
+
+        .movie-info {
+          display: block !important;
+        }
+
+        .movie-title {
+          font-size: 20px !important;
+        }
+
+        .qr-section {
+          padding: 20px !important;
+        }
+
+        .qr-code-img img {
+          width: 180px !important;
+          height: 180px !important;
+        }
+
+        .footer {
+          padding: 25px 20px !important;
         }
       }
 
-      /* Email client compatibility */
       @media all {
         .ExternalClass {
           width: 100%;
@@ -219,124 +352,102 @@
   </head>
 
   <body>
-    <span class='preheader'>Your tickets for {{movie_title}} are here!</span>
-    <table role='presentation' class='body' bgcolor='#f6f6f6'>
+    <span class='preheader'>Your tickets for
+      {{movie_title}}
+      are confirmed! See you at the cinema.</span>
+    <table role='presentation' class='body' bgcolor='#f4f4f4'>
       <tr>
         <td>&nbsp;</td>
-        <td class='container' width='580' valign='top'>
+        <td class='container' width='600' valign='top'>
           <div class='content'>
             <table role='presentation' class='main'>
+              <!-- Header Section -->
+              <tr>
+                <td class='header-section'>
+                  <img
+                    src='https://res.cloudinary.com/dqpp3ntfd/image/upload/v1762561678/576314537_1915387215859582_1634399142376269830_n_pqzms3.png'
+                    alt='CinesTech Logo'
+                    style='max-width: 130px; display: block; margin: 0 auto; border: 0;'
+                  />
+                  <h1>Booking Confirmed! </h1>
+                  <p class='subtitle'>Your cinema experience awaits</p>
+                </td>
+              </tr>
+
+              <!-- Main Content -->
               <tr>
                 <td class='wrapper' valign='top'>
-                  <table role='presentation'>
-                    <tr>
-                      <td valign='top'>
+                  <p class='greeting'><strong>Hi {{name}},</strong></p>
+                  <p>Thank you for choosing CinesTech! Your booking has been confirmed and we can't
+                    wait to see you at the cinema.</p>
 
-                        <img
-                          src='https://via.placeholder.com/150x40.png?text=CinesTech+Logo'
-                          alt='CinesTech Logo'
-                          style='max-width: 150px; margin: 0 auto 20px auto; display: block; border: 0;'
-                        />
+                  <!-- Movie Details Card -->
+                  <div class='movie-card'>
+                    <h2>🎬 Your Movie Details</h2>
+                    <div class='movie-details-container'>
+                      <div class='movie-poster'>
+                        <img src='{{movie_poster_url}}' alt='{{movie_title}} Poster' />
+                      </div>
+                      <div class='movie-info'>
+                        <div class='movie-title'>{{movie_title}}</div>
+                        <div class='detail-row'>
+                          <span class='detail-label'>Date:</span>
+                          <span class='detail-value'>{{show_date}}</span>
+                        </div>
+                        <div class='detail-row'>
+                          <span class='detail-label'>Time:</span>
+                          <span class='detail-value'>{{show_time}}</span>
+                        </div>
+                        <div class='detail-row'>
+                          <span class='detail-label'>Cinema:</span>
+                          <span class='detail-value'>{{cinema_name}}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
 
-                        <h5
-                          style='color: #FE7E32; font-size: 24px !important; font-weight: bold; margin-bottom: 20px;'
-                        >Your Booking is Confirmed!</h5>
+                  <!-- QR Code Section -->
+                  <div class='qr-section'>
+                    <p class='qr-title'>📱 Your E-Ticket</p>
+                    <div class='qr-code-img'>
+                      <img
+                        src='{{qr_code_url}}'
+                        alt='Your E-Ticket QR Code'
+                        width='200'
+                        height='200'
+                      />
+                    </div>
+                    <p class='qr-instruction'>Present this QR code at the cinema entrance for quick
+                      check-in</p>
+                  </div>
 
-                        <p>Hi {{name}},</p>
-                        <p>Thank you for booking with CinesTech! We're excited to see you at the
-                          movies. Please find your e-ticket and booking details below.</p>
+                  <hr class='divider' />
 
-                        <table role='presentation' style='margin-top: 30px; margin-bottom: 30px;'>
-                          <tbody>
-                            <tr>
-                              <td align='center' valign='top'>
-                                <img
-                                  src='{{qr_code_url}}'
-                                  alt='Your E-Ticket QR Code'
-                                  width='200'
-                                  height='200'
-                                  style='border: 1px solid #dddddd;'
-                                />
-                                <p
-                                  style='font-weight: normal; margin-top: 10px; color: #666666; font-size: 14px;'
-                                >
-                                  Scan this code at the cinema for entry.
-                                </p>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                        <div class='divider'></div>
+                  <p style='font-size: 14px; color: #666666; text-align: center; margin-bottom: 0;'>
+                    <strong>Enjoy your movie! 🍿</strong><br />
+                    <em>The CinesTech Team</em>
+                  </p>
+                </td>
+              </tr>
 
-                        <p
-                          style='font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center;'
-                        >Booking Details</p>
-
-                        <table role='presentation' class='ticket-details-container'>
-                          <tbody>
-                            <tr>
-                              <td
-                                class='ticket-poster'
-                                width='30%'
-                                valign='top'
-                                style='padding-right: 20px;'
-                              >
-                                <img
-                                  src='{{movie_poster_url}}'
-                                  alt='{{movie_title}} Poster'
-                                  style='width: 100%; max-width: 150px; border-radius: 8px; border: 1px solid #eee;'
-                                />
-                              </td>
-
-                              <td class='ticket-info' width='70%' valign='top'>
-                                <h3
-                                  style='margin-top: 0; margin-bottom: 15px; font-size: 22px; font-weight: bold; color: #333;'
-                                >{{movie_title}}</h3>
-                                <p style='margin-bottom: 10px; font-size: 16px;'><strong
-                                  >Date:</strong>
-                                  {{show_date}}</p>
-                                <p style='margin-bottom: 10px; font-size: 16px;'><strong
-                                  >Time:</strong>
-                                  {{show_time}}</p>
-                                <p style='margin-bottom: 10px; font-size: 16px;'><strong
-                                  >Cinema:</strong>
-                                  {{cinema_name}}</p>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                        <p style='font-size: 14px; margin-top: 30px; margin-bottom: 0;'>
-                          Enjoy the movie!
-                          <br />
-                          The CinesTech Team
-                        </p>
-                      </td>
-                    </tr>
-                  </table>
+              <!-- Footer -->
+              <tr>
+                <td class='footer'>
+                  <p class='footer-text'>
+                    This confirmation was sent to you by
+                    <strong>CinesTech</strong><br />
+                    Email: no-reply@cinestech.com
+                  </p>
+                  <p class='footer-address'>
+                    54 Nguyen Luong Bang, Da Nang, Viet Nam
+                  </p>
+                  <p class='footer-copyright'>
+                    Copyright © 2025
+                    <strong>CinesTech</strong>. All Rights Reserved.
+                  </p>
                 </td>
               </tr>
             </table>
-            <div class='footer'>
-              <table role='presentation'>
-                <tr>
-                  <td class='footer-text'>
-                    <p style='margin: 0;'>This email was sent to you from
-                      <strong>no-reply@cinestech.com</strong></p>
-                  </td>
-                </tr>
-                <tr>
-                  <td class='footer-address' valign='top' align='center'>
-                    <span class='apple-link'>54 Nguyen Luong Bang, Da Nang, Viet Nam</span>
-                  </td>
-                </tr>
-                <tr>
-                  <td class='footer-copyright'>
-                    <p style='margin: 0;'>Copyright &copy; 2025
-                      <b>Movie Ticket</b>, All Rights Reserved.</p>
-                  </td>
-                </tr>
-              </table>
-            </div>
           </div>
         </td>
         <td valign='top'>&nbsp;</td>
