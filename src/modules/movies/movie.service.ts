@@ -12,7 +12,7 @@ import { Genre } from '@shared/db/entities/genre.entity';
 import { MovieActor } from '@shared/db/entities/movie-actor.entity';
 import { MovieGenre } from '@shared/db/entities/movie-genre.entity';
 import { Movie } from '@shared/db/entities/movie.entity';
-import { Brackets, MoreThan, Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { CloudinaryService } from '../../shared/modules/cloudinary/cloudinary.service';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { MovieResponseDto } from './dto/movie-response.dto';
@@ -343,16 +343,22 @@ export class MovieService {
   ): Promise<{ items: MovieResponseDto[]; total: number }> {
     const { limit, offset } = dto;
     const now = new Date();
+    const eightDaysLater = new Date(now.getTime() + 8 * 24 * 60 * 60 * 1000);
 
-    const [movies, total] = await this.movieRepo.findAndCount({
-      where: {
-        screeningStart: MoreThan(now) // > now
-      },
-      relations: ['movieGenres.genre', 'movieActors.actor'],
-      order: { screeningStart: 'ASC' },
-      skip: offset,
-      take: limit
-    });
+    const queryBuilder = this.movieRepo
+      .createQueryBuilder('movie')
+      .leftJoinAndSelect('movie.movieGenres', 'movieGenre')
+      .leftJoinAndSelect('movieGenre.genre', 'genre')
+      .leftJoinAndSelect('movie.movieActors', 'movieActor')
+      .leftJoinAndSelect('movieActor.actor', 'actor')
+      .leftJoin('movie.showTimes', 'showTime')
+      .where('movie.screeningStart > :threshold', { threshold: eightDaysLater })
+      .andWhere('showTime.id IS NULL')
+      .orderBy('movie.screeningStart', 'ASC')
+      .skip(offset)
+      .take(limit);
+
+    const [movies, total] = await queryBuilder.getManyAndCount();
 
     return { items: movies.map((m) => new MovieResponseDto(m)), total };
   }

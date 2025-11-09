@@ -1,6 +1,7 @@
 import { BaseController } from '@bases/base-controller';
 import { Public } from '@common/decorators/public.decorator';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
+import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 import {
   Body,
   Controller,
@@ -11,11 +12,13 @@ import {
   Logger,
   Param,
   Post,
-  Put
+  Put,
+  Query
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Branch } from '@shared/db/entities/branch.entity';
 import { BranchService } from './branch.service';
+import { BranchMovieShowTimeResponseDto } from './dto/branch-movie-showtime-response.dto';
 import { BranchResponseDto } from './dto/branch-response.dto';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
@@ -75,6 +78,53 @@ export class BranchController extends BaseController {
     const response = branches.map((branch: Branch) => new BranchResponseDto(branch));
 
     return this.success(response);
+  }
+
+  @Get('movies/:movieId')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get all branches with movie',
+    description: 'Retrieves all cinema branches with their associated accounts and rooms count'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'List of branches with movie retrieved successfully',
+    type: [BranchResponseDto]
+  })
+  async getAllBranchesWithMovies(
+    @Param('movieId') movieId: string
+  ): Promise<SuccessResponse<BranchResponseDto[]>> {
+    const branches = await this.branchService.getAllBranchesWithMovies(movieId);
+    const response = branches.map((branch: Branch) => new BranchResponseDto(branch));
+
+    return this.success(response);
+  }
+
+  @Get(':branchId/show-times')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get movies with showtimes for a branch',
+    description: 'Returns all movies playing at the specified branch along with grouped showtimes.'
+  })
+  @ApiParam({
+    name: 'branchId',
+    description: 'The UUID of the branch',
+    example: '123e4567-e89b-12d3-a456-426614174000'
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Movies and showtimes retrieved successfully',
+    type: BranchMovieShowTimeResponseDto,
+    isArray: true
+  })
+  async getBranchMoviesWithShowTimes(
+    @Param('branchId') branchId: string,
+    @Query() dto: PaginationDto
+  ): Promise<SuccessResponse<IPaginatedResponse<BranchMovieShowTimeResponseDto>>> {
+    const result = await this.branchService.getMoviesWithShowTimes(branchId, dto);
+    return this.success(result);
   }
 
   @Get(':id')

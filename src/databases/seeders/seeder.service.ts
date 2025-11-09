@@ -94,9 +94,9 @@ export class SeederService {
     // await this.seedSeats();
     try {
       // await this.seedRooms();
-      await this.seedSeats();
+      // await this.seedSeats();
       // await this.seedTypeSeats();
-      // await this.seedShowTimes();
+      await this.seedShowTimes();
     } catch (error) {
       console.log(error);
     }
@@ -437,18 +437,55 @@ export class SeederService {
   //   this.logger.log(`✅ Seeding completed. Total show_times inserted: ${showTimes.length}`);
   // }
   private async seedShowTimes() {
-    this.logger.log('🎬 Seeding realistic and unique show times by room...');
+    this.logger.log('🎬 Seeding show times aligned with now-showing/upcoming logic...');
 
-    const movies = await this.movieRepo.find();
-    const branches = await this.branchRepo.find({ relations: ['rooms'] });
+    const now = new Date();
+    const eightDaysLater = new Date(now.getTime() + 8 * 24 * 60 * 60 * 1000);
 
-    if (movies.length === 0 || branches.length === 0) {
+    const [movies, branches] = await Promise.all([
+      this.movieRepo.find(),
+      this.branchRepo.find({ relations: ['rooms'] })
+    ]);
+
+    if (!movies.length || !branches.length) {
       this.logger.warn('No movies or branches found, skipping show time seeding.');
       return;
     }
 
-    // Clear old data first
-    this.logger.log('Clearing old data...');
+    const isWithinScreeningWindow = (movie: Movie, timeStart: Date): boolean => {
+      if (movie.screeningStart && timeStart < movie.screeningStart) {
+        return false;
+      }
+      if (movie.screeningEnd && timeStart > movie.screeningEnd) {
+        return false;
+      }
+      return true;
+    };
+
+    const nowShowingMovies = movies.filter((movie) => {
+      if (movie.screeningStart && movie.screeningStart > now) {
+        return false;
+      }
+      if (movie.screeningEnd && movie.screeningEnd < now) {
+        return false;
+      }
+      return true;
+    });
+
+    const upcomingMovies = movies.filter(
+      (movie) => movie.screeningStart && movie.screeningStart > eightDaysLater
+    );
+
+    this.logger.log(
+      `Found ${nowShowingMovies.length} now-showing movies and ${upcomingMovies.length} upcoming movies.`
+    );
+
+    if (!nowShowingMovies.length && !upcomingMovies.length) {
+      this.logger.warn('No eligible movies found, skipping show time seeding.');
+      return;
+    }
+
+    this.logger.log('Clearing existing show times and related booking data...');
     await this.showTimeRepo.query('SET FOREIGN_KEY_CHECKS = 0');
     await this.showTimeRepo.query('TRUNCATE TABLE book_seat');
     await this.showTimeRepo.query('TRUNCATE TABLE book_refreshments');
@@ -456,53 +493,103 @@ export class SeederService {
     await this.showTimeRepo.query('TRUNCATE TABLE show_time');
     await this.showTimeRepo.query('SET FOREIGN_KEY_CHECKS = 1');
 
-    // Generate và insert bằng raw SQL
-    const startDate = new Date('2025-10-20T00:00:00.000Z');
-    const endDate = new Date('2025-11-10T23:59:59.000Z');
-
     const timeSlots = [
       { hour: 9, minute: 0 },
-      { hour: 10, minute: 30 },
-      { hour: 12, minute: 0 },
+      { hour: 11, minute: 0 },
       { hour: 13, minute: 30 },
-      { hour: 15, minute: 0 },
-      { hour: 16, minute: 30 },
+      { hour: 15, minute: 30 },
       { hour: 18, minute: 0 },
-      { hour: 19, minute: 30 },
-      { hour: 21, minute: 0 },
-      { hour: 22, minute: 30 }
+      { hour: 20, minute: 30 }
     ];
 
-    const values: string[] = [];
+    const dayOffsets = [-1, 0, 1, 2, 3, 4, 5, 8, 9, 10];
 
-    for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
-      for (const branch of branches) {
-        if (!branch.rooms || branch.rooms.length === 0) continue;
+    const showTimes: Array<Partial<ShowTime>> = [];
+    const usedSlots = new Set<string>();
 
-        for (const room of branch.rooms) {
-          const numShowtimes = Math.floor(Math.random() * 4) + 5;
-          const shuffled = [...timeSlots].sort(() => 0.5 - Math.random());
+    const getRandomInt = (min: number, max: number) => {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    };
 
-          for (let i = 0; i < numShowtimes; i++) {
-            const slot = shuffled[i];
-            const movie = movies[Math.floor(Math.random() * movies.length)];
+    for (const branch of branches) {
+      if (!branch.rooms || !branch.rooms.length) {
+        continue;
+      }
 
-            const timeStart = new Date(day);
-            timeStart.setUTCHours(slot.hour, slot.minute, 0, 0);
+      for (const room of branch.rooms) {
+        if (!room) {
+          continue;
+        }
 
-            values.push(
-              `(UUID(), '${movie.id}', '${room.id}', '${timeStart.toISOString().slice(0, 19).replace('T', ' ')}', '${timeStart.toISOString().slice(0, 19).replace('T', ' ')}', NOW(), NOW())`
-            );
+        for (const offset of dayOffsets) {
+          const baseDate = new Date(now);
+          baseDate.setHours(0, 0, 0, 0);
+          baseDate.setDate(baseDate.getDate() + offset);
+
+          const slotsForDay = timeSlots.slice(0, offset % 3 === 0 ? 5 : 4);
+          const shuffledSlots = [...slotsForDay].sort(() => 0.5 - Math.random());
+
+          const moviePool =
+            offset < 8 ? nowShowingMovies : [...nowShowingMovies, ...upcomingMovies];
+
+          // *** LOGIC THAY ĐỔI Ở ĐÂY ***
+          // Xáo trộn danh sách phim cho MỖI PHÒNG để lịch chiếu khác nhau
+          const shuffledMoviePool = [...moviePool].sort(() => 0.5 - Math.random());
+
+          for (const movie of shuffledMoviePool) {
+            let numScreenings = 1;
+            if (nowShowingMovies.some((m) => m.id === movie.id)) {
+              numScreenings = getRandomInt(1, 4);
+            } else if (upcomingMovies.some((m) => m.id === movie.id)) {
+              numScreenings = getRandomInt(1, 2);
+            }
+
+            let screeningsAdded = 0;
+            for (const slot of shuffledSlots) {
+              if (screeningsAdded >= numScreenings) {
+                break;
+              }
+
+              const timeStart = new Date(baseDate);
+              timeStart.setHours(slot.hour, slot.minute, 0, 0);
+
+              if (timeStart < new Date(now.getTime() - 12 * 60 * 60 * 1000)) {
+                continue;
+              }
+
+              const slotKey = `${room.id}-${timeStart.getTime()}`;
+              if (usedSlots.has(slotKey)) {
+                continue;
+              }
+
+              if (isWithinScreeningWindow(movie, timeStart)) {
+                usedSlots.add(slotKey);
+                showTimes.push({
+                  movieId: movie.id,
+                  roomId: room.id,
+                  timeStart,
+                  showDate: new Date(timeStart)
+                });
+                screeningsAdded++;
+              }
+            }
           }
         }
       }
     }
 
-    // SỬA: Sử dụng show_time_id thay vì id
-    const sql = `INSERT INTO show_time (show_time_id, movie_id, room_id, time_start, show_date, created_at, updated_at) VALUES ${values.join(', ')}`;
-    await this.showTimeRepo.query(sql);
+    if (!showTimes.length) {
+      this.logger.warn('No show times generated after filtering.');
+      return;
+    }
 
-    this.logger.log(`✅ Seeding completed. Total showtimes inserted: ${values.length}`);
+    const chunkSize = 500;
+    for (let i = 0; i < showTimes.length; i += chunkSize) {
+      const chunk = showTimes.slice(i, i + chunkSize);
+      await this.showTimeRepo.insert(chunk);
+    }
+
+    this.logger.log(`✅ Seeding completed. Total show_times inserted: ${showTimes.length}`);
   }
 
   private async seedTypeDays() {

@@ -138,4 +138,28 @@ export class ReviewService {
 
     return new ReviewResponseDto(updatedReview);
   }
+  async deleteReview(accountId: string, movieId: string): Promise<void> {
+    const existingReview = await this.reviewRepo.findOne({
+      where: { movieId, accountId }
+    });
+
+    if (!existingReview) {
+      throw new BadRequest(RESPONSE_MESSAGES.REVIEW_NOT_FOUND);
+    }
+
+    await this.reviewRepo.delete({ movieId, accountId });
+  }
+  async getMyReview(accountId: string): Promise<ReviewResponseDto[]> {
+    const reviews = await this.reviewRepo.find({
+      where: { accountId },
+      relations: ['account'],
+      order: { createdAt: 'DESC' }
+    });
+
+    if (!reviews.length) {
+      return [];
+    }
+
+    return reviews.map((review) => new ReviewResponseDto(review));
+  }
 }
