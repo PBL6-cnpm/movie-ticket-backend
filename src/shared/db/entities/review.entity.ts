@@ -16,11 +16,11 @@ export class Review extends BaseEntityTime {
   @Column({
     name: 'rating',
     type: 'int',
-    default: 5,
+    default: 10,
     nullable: false
   })
   @Min(1)
-  @Max(5)
+  @Max(10)
   rating: number;
 
   @Column({

@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Max, Min } from 'class-validator';
 
 export class BaseReviewDto {
-  @ApiProperty({ description: 'Rating of the review' })
-  @Max(5)
+  @ApiProperty({ description: 'Rating of the review (1-10)' })
+  @Max(10)
   @Min(1)
   @IsNotEmpty()
   rating: number;

@@ -1,11 +1,13 @@
 import { BaseController } from '@bases/base-controller';
 import { CurrentAccount } from '@common/decorators/current-account.decorator';
+import { Public } from '@common/decorators/public.decorator';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 import { ContextUser } from '@common/types/user.type';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -20,7 +22,6 @@ import { GetReviewDto } from './dto/get-review.dto';
 import { ReviewResponseDto } from './dto/review-response.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
 import { ReviewService } from './review.service';
-import { Public } from '@common/decorators/public.decorator';
 
 @Controller('reviews')
 @ApiBearerAuth()
@@ -60,6 +61,15 @@ export class ReviewController extends BaseController {
     const result = await this.reviewService.getLatestReviews();
     return this.success(result);
   }
+  @Get('me')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get my review for a movie' })
+  async getMyReview(
+    @CurrentAccount() account: ContextUser
+  ): Promise<SuccessResponse<ReviewResponseDto[]>> {
+    const result = await this.reviewService.getMyReview(account.id);
+    return this.success(result);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -81,5 +91,16 @@ export class ReviewController extends BaseController {
   ): Promise<SuccessResponse<ReviewResponseDto>> {
     const result = await this.reviewService.updateReview(account.id, updateReviewDto);
     return this.success(result);
+  }
+
+  @Delete('/movies/:movieId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Delete a review' })
+  async deleteReview(
+    @CurrentAccount() account: ContextUser,
+    @Param('movieId') movieId: string
+  ): Promise<SuccessResponse<null>> {
+    await this.reviewService.deleteReview(account.id, movieId);
+    return this.deleted();
   }
 }

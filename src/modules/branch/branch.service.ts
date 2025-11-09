@@ -1,10 +1,16 @@
 import { BaseService } from '@bases/base-service';
 import { RESPONSE_MESSAGES } from '@common/constants';
 import { NotFound } from '@common/exceptions';
+import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
+import PaginationHelper from '@common/utils/pagination.util';
+import { BranchMovieShowTimeResponseDto } from '@modules/branch/dto/branch-movie-showtime-response.dto';
+import { SeatService } from '@modules/seat/seat.service';
 import { ConflictException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Branch } from '@shared/db/entities/branch.entity';
-import { Repository } from 'typeorm';
+import { Movie } from '@shared/db/entities/movie.entity';
+import { ShowTime } from '@shared/db/entities/show-time.entity';
+import { In, Repository } from 'typeorm';
 import { CreateBranchDto } from './dto/create-branch.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 
@@ -14,11 +20,212 @@ export class BranchService extends BaseService<Branch> {
 
   constructor(
     @InjectRepository(Branch)
-    private readonly branchRepo: Repository<Branch>
+    private readonly branchRepo: Repository<Branch>,
+    @InjectRepository(ShowTime)
+    private readonly showTimeRepo: Repository<ShowTime>,
+    @InjectRepository(Movie)
+    private readonly movieRepo: Repository<Movie>,
+    private readonly seatService: SeatService
   ) {
     super(branchRepo);
   }
+  async getAllBranchesWithMovies(movieId: string): Promise<Branch[]> {
+    const now = new Date();
+    const bufferMinutes = 15;
+    const bufferTime = new Date(now.getTime() + bufferMinutes * 60 * 1000);
 
+    return this.branchRepo
+      .createQueryBuilder('branch')
+      .leftJoinAndSelect('branch.rooms', 'room')
+      .innerJoinAndSelect(
+        'room.showTimes',
+        'showTime',
+        'showTime.movieId = :movieId AND showTime.timeStart >= :bufferTime',
+        {
+          movieId,
+          bufferTime
+        }
+      )
+      .distinct(true)
+      .getMany();
+  }
+
+  async getMoviesWithShowTimes(
+    branchId: string,
+    paginationDto?: PaginationDto
+  ): Promise<IPaginatedResponse<BranchMovieShowTimeResponseDto>> {
+    const limit = paginationDto?.limit ?? 10;
+    const offset = paginationDto?.offset ?? 0;
+
+    const branch = await this.branchRepo.findOne({ where: { id: branchId } });
+
+    if (!branch) {
+      throw new NotFound(RESPONSE_MESSAGES.BRANCH_NOT_FOUND);
+    }
+
+    const now = new Date();
+    const bufferMinutes = 15;
+    const bufferTime = new Date(now.getTime() + bufferMinutes * 60 * 1000);
+
+    const showTimes = await this.showTimeRepo
+      .createQueryBuilder('showTime')
+      .leftJoinAndSelect('showTime.movie', 'movie')
+      .leftJoinAndSelect('showTime.room', 'room')
+      .leftJoin('room.branch', 'branch')
+      .where('branch.id = :branchId', { branchId })
+      .andWhere('showTime.timeStart >= :bufferTime', { bufferTime })
+      .orderBy('movie.id', 'ASC')
+      .addOrderBy('showTime.timeStart', 'ASC')
+      .getMany();
+
+    if (!showTimes.length) {
+      return PaginationHelper.pagination({
+        limit,
+        offset,
+        totalItems: 0,
+        items: []
+      });
+    }
+
+    const movieIds = Array.from(new Set(showTimes.map((showTime) => showTime.movieId)));
+
+    const movies = await this.movieRepo.find({
+      where: { id: In(movieIds) },
+      relations: ['movieGenres', 'movieGenres.genre', 'movieActors', 'movieActors.actor']
+    });
+
+    const movieMap = new Map(movies.map((movie) => [movie.id, movie]));
+
+    const seatSummaries = await Promise.all(
+      showTimes.map(async (showTime) => ({
+        showTimeId: showTime.id,
+        summary: await this.seatService.getSeatSummaryByShowTime(showTime.id, showTime.roomId)
+      }))
+    );
+
+    const seatSummaryMap = new Map(
+      seatSummaries.map(({ showTimeId, summary }) => [showTimeId, summary])
+    );
+
+    type DayEntry = {
+      name: string;
+      value: Date;
+      times: Array<{
+        id: string;
+        time: string;
+        totalSeats: number;
+        availableSeats: number;
+        occupiedSeats: number;
+        sortValue: number;
+      }>;
+    };
+
+    const groupedByMovie = new Map<string, { movie: Movie; days: Map<string, DayEntry> }>();
+
+    for (const showTime of showTimes) {
+      const movie = movieMap.get(showTime.movieId) ?? showTime.movie;
+
+      if (!movie) {
+        continue;
+      }
+
+      let movieEntry = groupedByMovie.get(movie.id);
+
+      if (!movieEntry) {
+        movieEntry = {
+          movie,
+          days: new Map()
+        };
+        groupedByMovie.set(movie.id, movieEntry);
+      }
+
+      const showDate = new Date(showTime.showDate ?? showTime.timeStart);
+
+      const year = showDate.getFullYear();
+      const month = String(showDate.getMonth() + 1).padStart(2, '0');
+      const day = String(showDate.getDate()).padStart(2, '0');
+      const dayKey = `${year}-${month}-${day}`;
+
+      const weekdayName = showDate.toLocaleDateString('en-US', { weekday: 'long' });
+
+      let dayEntry = movieEntry.days.get(dayKey);
+
+      if (!dayEntry) {
+        dayEntry = {
+          name: weekdayName,
+          value: showDate,
+          times: []
+        };
+        movieEntry.days.set(dayKey, dayEntry);
+      }
+
+      if (dayEntry.times.some((time) => time.id === showTime.id)) {
+        continue;
+      }
+
+      const timeFormatted = new Date(showTime.timeStart).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+
+      const seatSummary =
+        seatSummaryMap.get(showTime.id) ??
+        ({ totalSeats: 0, availableSeats: 0, occupiedSeats: 0 } as const);
+
+      dayEntry.times.push({
+        id: showTime.id,
+        time: timeFormatted,
+        totalSeats: seatSummary.totalSeats,
+        availableSeats: seatSummary.availableSeats,
+        occupiedSeats: seatSummary.occupiedSeats,
+        sortValue: new Date(showTime.timeStart).getTime()
+      });
+    }
+
+    const responses = Array.from(groupedByMovie.values())
+      .map(({ movie, days }) => {
+        const groupedDays = Array.from(days.values())
+          .sort((a, b) => a.value.getTime() - b.value.getTime())
+          .map((day) => ({
+            dayOfWeek: {
+              name: day.name,
+              value: day.value
+            },
+            times: day.times
+              .sort((a, b) => a.sortValue - b.sortValue)
+              .map((time) => ({
+                id: time.id,
+                time: time.time,
+                totalSeats: time.totalSeats,
+                availableSeats: time.availableSeats,
+                occupiedSeats: time.occupiedSeats
+              }))
+          }));
+
+        return new BranchMovieShowTimeResponseDto(movie, groupedDays);
+      })
+      .sort((a, b) => {
+        const aStart = a.movie.screeningStart?.getTime() ?? 0;
+        const bStart = b.movie.screeningStart?.getTime() ?? 0;
+
+        if (aStart !== bStart) {
+          return aStart - bStart;
+        }
+
+        return a.movie.name.localeCompare(b.movie.name);
+      });
+
+    const totalItems = responses.length;
+    const paginatedItems = responses.slice(offset, offset + limit);
+
+    return PaginationHelper.pagination({
+      limit,
+      offset,
+      totalItems,
+      items: paginatedItems
+    });
+  }
   async createNewBranch(createBranchDto: CreateBranchDto): Promise<Branch> {
     // Check if branch with same name and address already exists
     const exists = await this.branchRepo.findOne({
