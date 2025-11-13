@@ -259,6 +259,11 @@ export const RESPONSE_MESSAGES = {
     message: 'Booking not found',
     code: 'BOOKING_NOT_FOUND'
   },
+
+  BOOKING_CHECKIN_ERROR: {
+    message: 'Booking not found or not paid yet',
+    code: 'BOOKING_CHECKIN_ERROR'
+  },
   BOOKING_CANNOT_CANCEL: {
     message: 'Booking cannot be canceled',
     code: 'BOOKING_CANNOT_CANCEL'

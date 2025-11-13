@@ -9,6 +9,7 @@ export class BookingResponseDto {
   status: BookingStatus;
   totalBookingPrice: number;
   dateTimeBooking: Date;
+  checkInStatus?: boolean;
   qrUrl?: string;
   showTime: ShowTimeResponseDto;
   seats: SeatResponseDto[];
@@ -19,6 +20,7 @@ export class BookingResponseDto {
     this.status = booking.status;
     this.totalBookingPrice = booking.totalBookingPrice;
     this.dateTimeBooking = booking.dateTimeBooking;
+    this.checkInStatus = booking.checkInStatus;
     this.qrUrl = booking.qrUrl;
     this.showTime = new ShowTimeResponseDto(booking.showTime, false);
     this.seats = booking.bookSeats.map((bookSeat) => new SeatResponseDto(bookSeat.seat));

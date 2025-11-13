@@ -10,7 +10,9 @@ import {
   Headers,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
+  Put,
   Query,
   RawBodyRequest,
   Req,
@@ -154,6 +156,20 @@ export class BookingController extends BaseController {
   })
   async getTicketQrCode(): Promise<SuccessResponse<string>> {
     const result = await this.bookingService.getTicketQrCode();
+    return this.success(result);
+  }
+
+  @Put('check-in/:bookingId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Check-in for a booking' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Check-in completed successfully'
+  })
+  async checkInBooking(
+    @Param('bookingId') bookingId: string
+  ): Promise<SuccessResponse<BookingResponseDto>> {
+    const result = await this.bookingService.checkInBooking(bookingId);
     return this.success(result);
   }
 }

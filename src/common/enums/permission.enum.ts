@@ -91,6 +91,7 @@ export enum PermissionName {
   //BOOKING
   BOOKING_BY_CUSTOMER = 'booking_by_customer',
   BOOKING_BY_STAFF = 'booking_by_staff',
+  BOOKING_CHECKIN = 'booking_checkin',
 
   //BOOK_REFRESHMENTS
   BOOK_REFRESHMENTS_AT_COUNTER = 'book_refreshments_at_counter',
