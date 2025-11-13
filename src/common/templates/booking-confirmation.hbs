@@ -57,7 +57,16 @@
       .header-section {
         background: linear-gradient(135deg, #fe7e32 0%, #ff9a56 100%);
         padding: 40px 40px 30px 40px;
-        text-align: center;
+        text-align: left;
+        position: relative;
+      }
+
+      .header-logo {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        max-width: 50px;
+        border: 0;
       }
 
       .wrapper {
@@ -266,6 +275,12 @@
           padding: 30px 20px !important;
         }
 
+        .header-logo {
+          max-width: 40px !important;
+          top: 12px !important;
+          right: 15px !important;
+        }
+
         .wrapper {
           padding: 25px !important;
         }
@@ -367,7 +382,7 @@
                   <img
                     src='https://res.cloudinary.com/dqpp3ntfd/image/upload/v1762561678/576314537_1915387215859582_1634399142376269830_n_pqzms3.png'
                     alt='CinesTech Logo'
-                    style='max-width: 130px; display: block; margin: 0 auto; border: 0;'
+                    class='header-logo'
                   />
                   <h1>Booking Confirmed! </h1>
                   <p class='subtitle'>Your cinema experience awaits</p>
@@ -383,7 +398,7 @@
 
                   <!-- Movie Details Card -->
                   <div class='movie-card'>
-                    <h2>🎬 Your Movie Details</h2>
+                    <h2> Your Movie Details</h2>
                     <div class='movie-details-container'>
                       <div class='movie-poster'>
                         <img src='{{movie_poster_url}}' alt='{{movie_title}} Poster' />
@@ -401,6 +416,10 @@
                         <div class='detail-row'>
                           <span class='detail-label'>Cinema:</span>
                           <span class='detail-value'>{{cinema_name}}</span>
+                        </div>
+                        <div class='detail-row'>
+                          <span class='detail-label'>Room:</span>
+                          <span class='detail-value'>{{room}}</span>
                         </div>
                       </div>
                     </div>
@@ -424,7 +443,7 @@
                   <hr class='divider' />
 
                   <p style='font-size: 14px; color: #666666; text-align: center; margin-bottom: 0;'>
-                    <strong>Enjoy your movie! 🍿</strong><br />
+                    <strong>Enjoy your movie! </strong><br />
                     <em>The CinesTech Team</em>
                   </p>
                 </td>

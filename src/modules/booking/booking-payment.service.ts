@@ -103,6 +103,9 @@ export class BookingPaymentService {
     }
 
     const account = booking.account;
+    const bookingVoucherId = booking.voucherId;
+
+    await this.voucherRepo.decrement({ id: bookingVoucherId }, 'number', 1);
 
     await this.bookingRepo.update(bookingId, { status: BookingStatus.CONFIRMED });
     const qrBuffer = await generateQRCodeAsMulterFile({ bookingId });
@@ -143,7 +146,8 @@ export class BookingPaymentService {
             movie_poster_url: movie.poster,
             show_date: showDate,
             show_time: showTimeStr,
-            cinema_name: cinema.name
+            cinema_name: cinema.name,
+            room: showTime.room.name
           }
         }
       }
