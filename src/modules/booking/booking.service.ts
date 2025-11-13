@@ -34,6 +34,8 @@ import {
 import { BookingResponseDto } from './dto/booking-response.dto';
 import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 import PaginationHelper from '@common/utils/pagination.util';
+import { NotFound } from '@common/exceptions';
+import { RESPONSE_MESSAGES } from '@common/constants';
 
 @Injectable()
 export class BookingService {
@@ -480,6 +482,7 @@ export class BookingService {
     }
     return { totalRefreshmentPrice, bookRefreshmentsToCreate };
   }
+
   async addRefreshmentsToBooking(dto: ApplyRefreshmentsDto, accountId: string) {
     return this.entityManager.transaction(async (transactionalEntityManager) => {
       const booking = await transactionalEntityManager.findOne(Booking, {
@@ -548,5 +551,33 @@ export class BookingService {
 
       return booking;
     });
+  }
+
+  async checkInBooking(bookingId: string): Promise<BookingResponseDto> {
+    console.log('Checking in booking with ID:', bookingId);
+    const booking = await this.entityManager.getRepository(Booking).findOne({
+      where: {
+        id: bookingId,
+        status: BookingStatus.CONFIRMED
+      },
+      relations: [
+        'showTime',
+        'showTime.movie',
+        'showTime.room',
+        'bookSeats',
+        'bookSeats.seat',
+        'bookSeats.seat.typeSeat',
+        'bookSeats.seat.room',
+        'bookRefreshmentss',
+        'bookRefreshmentss.refreshments'
+      ]
+    });
+    if (!booking) {
+      throw new NotFound(RESPONSE_MESSAGES.BOOKING_CHECKIN_ERROR);
+    }
+    booking.checkInStatus = true;
+    await this.entityManager.getRepository(Booking).save(booking);
+
+    return new BookingResponseDto(booking);
   }
 }

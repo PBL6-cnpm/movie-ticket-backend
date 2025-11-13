@@ -93,10 +93,11 @@ export class SeederService {
     // await this.seedShowTimes();
     // await this.seedSeats();
     try {
+      await this.seedOnePermssion();
       // await this.seedRooms();
       // await this.seedSeats();
       // await this.seedTypeSeats();
-      await this.seedShowTimes();
+      // await this.seedShowTimes();
     } catch (error) {
       console.log(error);
     }
@@ -824,6 +825,25 @@ export class SeederService {
       this.logger.log('Seeding role_permission completed.');
     } catch (error) {
       this.logger.error('Error seeding role_permission: ', error);
+    }
+  }
+
+  private async seedOnePermssion() {
+    this.logger.log('Seeding permission and role_permissions...');
+    try {
+      await this.permissionRepo.insert({ name: PermissionName.BOOKING_CHECKIN });
+      const permission = await this.permissionRepo.findOneBy({
+        name: PermissionName.BOOKING_CHECKIN
+      });
+      const role = await this.roleRepo.findOneBy({ name: RoleName.STAFF });
+      await this.rolePermissionRepo.insert({
+        permissionId: permission.id,
+        roleId: role.id
+      });
+
+      this.logger.log('Seeding permission and role_permission completed.');
+    } catch (error) {
+      this.logger.error('Error seeding permisison and role_permission: ', error);
     }
   }
 }

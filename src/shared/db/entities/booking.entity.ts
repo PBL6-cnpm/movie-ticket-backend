@@ -36,6 +36,9 @@ export class Booking extends BaseEntityTime {
   })
   status: BookingStatus;
 
+  @Column({ name: 'check_in_status', default: false })
+  checkInStatus: boolean;
+
   @Column({
     name: 'total_booking_price',
     type: 'int',
