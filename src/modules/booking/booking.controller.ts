@@ -2,6 +2,7 @@ import { BaseController } from '@bases/base-controller';
 import { CurrentAccount } from '@common/decorators/current-account.decorator';
 import { Public } from '@common/decorators/public.decorator';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
+import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 import { ContextUser } from '@common/types/user.type';
 import {
   Body,
@@ -29,10 +30,11 @@ import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import {
   ApplyRefreshmentsDto,
   ApplyVoucherDto,
+  CalculateRefreshmentsPriceResponseDto,
+  PaymentConfirmationAndroidDto,
   QueryHoldBookingAndroidPlatformDto,
   QueryHoldBookingDto
 } from './dto/query-hold-booking.dto';
-import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 
 @Controller('bookings')
 @ApiBearerAuth()
@@ -119,6 +121,25 @@ export class BookingController extends BaseController {
     @CurrentAccount() user: ContextUser
   ) {
     const result = await this.bookingService.holdBookingForAndroid(body, user.id);
+    return this.success(result);
+  }
+
+  @Post('/refreshments')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Calculate and return refreshments price for a booking' })
+  async calculateRefreshmentsPrice(
+    @Body() body: ApplyRefreshmentsDto
+  ): Promise<SuccessResponse<CalculateRefreshmentsPriceResponseDto>> {
+    const result = await this.bookingService.calculateRefreshmentsPrice(body);
+    return this.success(result);
+  }
+
+  @Post('/payment-confirmation-android')
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @ApiOperation({ summary: 'Handle payment confirmation from Android platform' })
+  async handlePaymentConfirmationAndroid(@Body() body: PaymentConfirmationAndroidDto) {
+    const result = await this.bookingService.handlePaymentConfirmationFromAndroid(body);
     return this.success(result);
   }
 

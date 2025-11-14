@@ -135,3 +135,59 @@ export class ApplyVoucherDto {
   @IsNotEmpty()
   voucherCode: string;
 }
+
+export class CalculateRefreshmentsPriceResponseDto {
+  @ApiProperty({
+    type: Number,
+    description: 'Total price of the selected refreshments',
+    minimum: 0
+  })
+  totalRefreshmentsPrice: number;
+
+  @ApiProperty({
+    type: [RefreshmentItemDto],
+    description: 'List of refreshments items added'
+  })
+  refreshmentsOption: RefreshmentItemDto[];
+
+  @ApiProperty({
+    type: Number,
+    description: 'Updated total booking price including refreshments',
+    minimum: 0
+  })
+  updatedBookingTotal: number;
+
+  @ApiProperty({
+    type: Number,
+    description: 'Original booking total price before adding refreshments',
+    minimum: 0
+  })
+  originalBookingTotal: number;
+
+  @ApiProperty({ type: String })
+  bookingId: string;
+}
+
+export class PaymentConfirmationAndroidDto {
+  @ApiProperty({
+    type: String,
+    description: 'ID of the booking'
+  })
+  @IsUUID()
+  bookingId: string;
+
+  @ApiProperty({
+    type: [RefreshmentItemDto],
+    description: 'List of refreshments items added'
+  })
+  @ValidateNested({ each: true })
+  refreshmentsOption: RefreshmentItemDto[];
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Optional voucher code for discounts'
+  })
+  @IsString()
+  @IsOptional()
+  voucherCode?: string;
+}
