@@ -1,8 +1,12 @@
+import { RESPONSE_MESSAGES } from '@common/constants';
 import { HOLD_DURATION_SECONDS } from '@common/constants/booking.constant';
 import { DayOfWeek } from '@common/enums';
 import { BookingStatus } from '@common/enums/booking.enum';
+import { NotFound } from '@common/exceptions';
+import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 import { dayjsObjectWithTimezone, getStartAndEndOfDay } from '@common/utils/date.util';
 import { generateQRCodeAsMulterFile } from '@common/utils/generate-qr-code';
+import PaginationHelper from '@common/utils/pagination.util';
 import { generateSeatLockKey } from '@common/utils/redis.util';
 import {
   ConflictException,
@@ -23,19 +27,17 @@ import { Voucher } from '@shared/db/entities/voucher.entity';
 import { CloudinaryService } from '@shared/modules/cloudinary/cloudinary.service';
 import { RedisService } from '@shared/modules/redis/redis.service';
 import { Between, EntityManager, In } from 'typeorm';
+import { BookingResponseDto } from './dto/booking-response.dto';
 import {
   AdditionalPriceDto,
   ApplyRefreshmentsDto,
   ApplyVoucherDto,
+  CalculateRefreshmentsPriceResponseDto,
+  PaymentConfirmationAndroidDto,
   QueryHoldBookingAndroidPlatformDto,
   QueryHoldBookingDto,
   RefreshmentItemDto
 } from './dto/query-hold-booking.dto';
-import { BookingResponseDto } from './dto/booking-response.dto';
-import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
-import PaginationHelper from '@common/utils/pagination.util';
-import { NotFound } from '@common/exceptions';
-import { RESPONSE_MESSAGES } from '@common/constants';
 
 @Injectable()
 export class BookingService {
@@ -46,6 +48,109 @@ export class BookingService {
 
     private readonly cloudinaryService: CloudinaryService
   ) {}
+
+  async handlePaymentConfirmationFromAndroid(body: PaymentConfirmationAndroidDto) {
+    const { bookingId, refreshmentsOption, voucherCode } = body;
+
+    try {
+      const dbResult = await this.entityManager.transaction(async (tx) => {
+        const booking = await tx.findOne(Booking, {
+          where: { id: bookingId, status: BookingStatus.PENDING },
+          relations: ['bookSeats'],
+          lock: { mode: 'pessimistic_write' }
+        });
+
+        if (!booking) {
+          throw new ConflictException('Booking not found, already processed, or expired.');
+        }
+
+        const { totalRefreshmentPrice, bookRefreshmentsToCreate } =
+          await this._calculateRefreshments(tx, refreshmentsOption);
+
+        if (bookRefreshmentsToCreate.length > 0) {
+          await tx.save(BookRefreshments, bookRefreshmentsToCreate);
+        }
+        const totalSeatPrice = booking.totalBookingPrice;
+
+        const grossTotalPrice = totalSeatPrice + totalRefreshmentPrice;
+
+        let finalPrice = grossTotalPrice;
+        let voucherId: string | null = null;
+
+        if (voucherCode) {
+          const voucherResult = await this._processVoucher(tx, voucherCode, grossTotalPrice);
+          finalPrice = voucherResult.finalPrice;
+          voucherId = voucherResult.voucherId;
+        }
+
+        booking.totalBookingPrice = finalPrice;
+        booking.voucherId = voucherId;
+        booking.dateTimeBooking = new Date();
+
+        await tx.save(Booking, booking);
+
+        await tx.update(BookSeat, { bookingId: booking.id }, { status: true });
+
+        return {
+          finalPrice: booking.totalBookingPrice
+        };
+      });
+
+      return {
+        bookingId: bookingId,
+        totalPrice: dbResult.finalPrice,
+        status: BookingStatus.CONFIRMED,
+        message: 'Booking confirmed successfully.'
+      };
+    } catch (error) {
+      console.error('Payment confirmation transaction failed:', error);
+      throw error;
+    }
+  }
+
+  async calculateRefreshmentsPrice(
+    body: ApplyRefreshmentsDto
+  ): Promise<CalculateRefreshmentsPriceResponseDto> {
+    const { bookingId, refreshmentsOption } = body;
+    const booking = await this.entityManager.getRepository(Booking).findOne({
+      where: { id: bookingId, status: BookingStatus.PENDING }
+    });
+    if (!booking) {
+      throw new NotFoundException('Pending booking not found.');
+    }
+    let totalRefreshmentsPrice = 0;
+    if (refreshmentsOption && refreshmentsOption.length > 0) {
+      const uniqueIds = refreshmentsOption.map((item) => item.refreshmentId);
+      const refreshmentList = await this.entityManager.getRepository(Refreshments).find({
+        where: {
+          id: In(uniqueIds),
+          isCurrent: true
+        }
+      });
+      const priceMap = new Map<string, number>();
+      refreshmentList.forEach((item) => priceMap.set(item.id, item.price));
+      for (const item of refreshmentsOption) {
+        const price = priceMap.get(item.refreshmentId);
+        if (price === undefined) {
+          throw new ConflictException(
+            `Refreshment with ID ${item.refreshmentId} not found or is not available.`
+          );
+        }
+        totalRefreshmentsPrice += price * item.quantity;
+      }
+    }
+
+    const originalBookingTotal = booking.totalBookingPrice;
+    const updatedBookingTotal = originalBookingTotal + totalRefreshmentsPrice;
+
+    return {
+      totalRefreshmentsPrice,
+      refreshmentsOption,
+      updatedBookingTotal,
+      originalBookingTotal,
+      bookingId
+    };
+  }
 
   async getBookingsByAccountId(
     accountId: string,
