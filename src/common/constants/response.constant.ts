@@ -275,6 +275,14 @@ export const RESPONSE_MESSAGES = {
   STRIPE_WEBHOOK_INVALID: {
     message: 'Invalid Stripe webhook signature',
     code: 'STRIPE_WEBHOOK_INVALID'
+  },
+  INVALID_START_DATE: {
+    message: 'Invalid startDate format',
+    code: 'INVALID_START_DATE'
+  },
+  INVALID_END_DATE_FORMAT: {
+    message: 'Invalid endDate format',
+    code: 'INVALID_END_DATE_FORMAT'
   }
 };
 
