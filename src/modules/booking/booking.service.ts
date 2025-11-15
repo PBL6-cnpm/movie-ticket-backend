@@ -68,6 +68,7 @@ export class BookingService {
           await this._calculateRefreshments(tx, refreshmentsOption);
 
         if (bookRefreshmentsToCreate.length > 0) {
+          bookRefreshmentsToCreate.forEach((br) => (br.booking = booking));
           await tx.save(BookRefreshments, bookRefreshmentsToCreate);
         }
         const totalSeatPrice = booking.totalBookingPrice;
