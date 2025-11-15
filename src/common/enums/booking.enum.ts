@@ -6,3 +6,10 @@ export enum BookingStatus {
   // CANCELLED = 'CANCELLED',
   // EXPIRED = 'EXPIRED'
 }
+
+export enum TimeGroupBy {
+  DAY = 'day',
+  MONTH = 'month',
+  QUARTER = 'quarter',
+  YEAR = 'year'
+}
