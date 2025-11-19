@@ -1,5 +1,5 @@
 import { Entities } from '@common/enums';
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntityTime } from '../base-entities/base.entity';
 import { MovieActor } from './movie-actor.entity';
 import { MovieGenre } from './movie-genre.entity';
@@ -7,6 +7,7 @@ import { Review } from './review.entity';
 import { ShowTime } from './show-time.entity';
 
 @Entity(Entities.MOVIE)
+@Index('idx_movie_screening_start', ['screeningStart'])
 export class Movie extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'movie_id' })
   id: string;

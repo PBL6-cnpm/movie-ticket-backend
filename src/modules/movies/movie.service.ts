@@ -12,7 +12,7 @@ import { Genre } from '@shared/db/entities/genre.entity';
 import { MovieActor } from '@shared/db/entities/movie-actor.entity';
 import { MovieGenre } from '@shared/db/entities/movie-genre.entity';
 import { Movie } from '@shared/db/entities/movie.entity';
-import { Brackets, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CloudinaryService } from '../../shared/modules/cloudinary/cloudinary.service';
 import { CreateMovieDto } from './dto/create-movie.dto';
 import { MovieResponseDto } from './dto/movie-response.dto';
@@ -351,9 +351,9 @@ export class MovieService {
       .leftJoinAndSelect('movieGenre.genre', 'genre')
       .leftJoinAndSelect('movie.movieActors', 'movieActor')
       .leftJoinAndSelect('movieActor.actor', 'actor')
-      .leftJoin('movie.showTimes', 'showTime')
+      // Removed leftJoin('movie.showTimes') and where showTime.id IS NULL
+      // to allow upcoming movies that already have showtimes seeded.
       .where('movie.screeningStart > :threshold', { threshold: eightDaysLater })
-      .andWhere('showTime.id IS NULL')
       .orderBy('movie.screeningStart', 'ASC')
       .skip(offset)
       .take(limit);
@@ -375,13 +375,12 @@ export class MovieService {
       .leftJoinAndSelect('movieGenre.genre', 'genre')
       .leftJoinAndSelect('movie.movieActors', 'movieActor')
       .leftJoinAndSelect('movieActor.actor', 'actor')
-      .where('movie.screeningStart <= :now', { now })
-      .andWhere(
-        new Brackets((qb) =>
-          qb.where('movie.screeningEnd IS NULL').orWhere('movie.screeningEnd >= :now', { now })
-        )
-      )
+      // INNER JOIN ensures we only get movies that have at least one showtime
+      .innerJoin('movie.showTimes', 'showTime')
+      // Only check if showtime is in the future - ignore movie metadata dates
+      .where('showTime.timeStart >= :now', { now })
       .orderBy('movie.screeningStart', 'DESC')
+      .distinct(true)
       .skip(offset)
       .take(limit)
       .getManyAndCount();
