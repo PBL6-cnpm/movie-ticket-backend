@@ -77,6 +77,19 @@ export class ShowTimeController extends BaseController {
     return this.success(response);
   }
 
+  @Public()
+  @Get('date/:date/room/:roomId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get showtimes by date and room ID' })
+  async getShowTimeByDateAndRoomId(
+    @Param('date') date: string,
+    @Param('roomId') roomId: string
+  ): Promise<SuccessResponse<ShowTimeResponseDto[]>> {
+    const showTimes = await this.showTimeService.getShowTimeByDateAndRoomId(date, roomId);
+    const response = showTimes.map((showTime) => new ShowTimeResponseDto(showTime));
+    return this.success(response);
+  }
+
   @Get('show-date/:date')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get show time by date' })

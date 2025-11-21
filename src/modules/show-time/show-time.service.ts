@@ -242,6 +242,40 @@ export class ShowTimeService {
     return showTimes;
   }
 
+  async getShowTimeByDateAndRoomId(date: string, roomId: string): Promise<ShowTime[]> {
+    // Validate room exists
+    const room = await this.roomRepository.findOne({
+      where: { id: roomId },
+      relations: ['branch']
+    });
+
+    if (!room) {
+      throw new ConflictException(RESPONSE_MESSAGES.ROOM_NOT_FOUND);
+    }
+
+    // Parse date string (YYYY-MM-DD) and create date range
+    const targetDate = new Date(date);
+    const startOfDay = new Date(targetDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(targetDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Query showtimes for the room on the specific date
+    const showTimes = await this.showTimeRepository
+      .createQueryBuilder('showTime')
+      .leftJoinAndSelect('showTime.movie', 'movie')
+      .leftJoinAndSelect('showTime.room', 'room')
+      .leftJoinAndSelect('room.branch', 'branch')
+      .where('room.id = :roomId', { roomId })
+      .andWhere('showTime.showDate >= :startOfDay', { startOfDay })
+      .andWhere('showTime.showDate <= :endOfDay', { endOfDay })
+      .orderBy('showTime.timeStart', 'ASC')
+      .getMany();
+
+    return showTimes;
+  }
+
   async getShowTimeByDateAndMovieId(
     date: string,
     movieId: string,
