@@ -1,5 +1,6 @@
 import { RolePermissionSeed } from '@common/constants';
 import { AccountStatus, DayOfWeek, PermissionName, RoleName } from '@common/enums';
+import { BookingStatus } from '@common/enums/booking.enum';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AccountRole } from '@shared/db/entities/account-role.entity';
@@ -10,6 +11,7 @@ import { Booking } from '@shared/db/entities/booking.entity';
 import { Branch } from '@shared/db/entities/branch.entity';
 import { Movie } from '@shared/db/entities/movie.entity';
 import { Permission } from '@shared/db/entities/permission.entity';
+import { Refreshments } from '@shared/db/entities/refreshments.entity';
 import { RolePermission } from '@shared/db/entities/role-permission.entity';
 import { Role } from '@shared/db/entities/role.entity';
 import { Room } from '@shared/db/entities/room.entity';
@@ -21,6 +23,7 @@ import { TypeSeat } from '@shared/db/entities/type-seat.entity';
 import { Voucher } from '@shared/db/entities/voucher.entity';
 import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
+
 @Injectable()
 export class SeederService {
   private readonly logger = new Logger(SeederService.name);
@@ -75,7 +78,10 @@ export class SeederService {
     private typeDayRepo: Repository<TypeDay>,
 
     @InjectRepository(SpecialDate)
-    private specialDateRepo: Repository<SpecialDate>
+    private specialDateRepo: Repository<SpecialDate>,
+
+    @InjectRepository(Refreshments)
+    private refreshmentsRepo: Repository<Refreshments>
   ) {}
 
   async seed() {
@@ -93,13 +99,175 @@ export class SeederService {
     // await this.seedShowTimes();
     // await this.seedSeats();
     try {
-      await this.seedOnePermssion();
+      // await this.seedOnePermssion();
       // await this.seedRooms();
       // await this.seedSeats();
       // await this.seedTypeSeats();
-      await this.seedShowTimes();
+      // await this.seedShowTimes();
+      await this.seedBookings();
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  // ... existing methods ...
+
+  private async seedBookings() {
+    this.logger.log('🎫 Seeding bookings...');
+    try {
+      // Generate booking dates with required month distribution
+      const currentYear = new Date().getFullYear();
+      const bookingDates: Date[] = [];
+      const randomInt = (min: number, max: number) =>
+        Math.floor(Math.random() * (max - min + 1)) + min;
+      const daysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
+      // Current year: each month gets 50-100 bookings
+      for (let month = 0; month < 12; month++) {
+        const count = randomInt(50, 100);
+        const maxDay = daysInMonth(currentYear, month);
+        for (let i = 0; i < count; i++) {
+          const day = randomInt(1, maxDay);
+          bookingDates.push(new Date(currentYear, month, day));
+        }
+      }
+      // Previous year: months August (7) to December (11) get 50-100 bookings each
+      const prevYear = currentYear - 1;
+      for (let month = 7; month < 12; month++) {
+        const count = randomInt(50, 100);
+        const maxDay = daysInMonth(prevYear, month);
+        for (let i = 0; i < count; i++) {
+          const day = randomInt(1, maxDay);
+          bookingDates.push(new Date(prevYear, month, day));
+        }
+      }
+      // Shuffle and limit total bookings to 800-1000
+      const shuffled = bookingDates.sort(() => 0.5 - Math.random());
+      const totalTarget = randomInt(800, 1000);
+      const finalDates = shuffled.slice(0, totalTarget);
+      const bookingsCount = finalDates.length;
+
+      // Fetch showtimes with necessary relations (enough for bookings)
+      const showTimes = await this.showTimeRepo.find({
+        take: bookingsCount,
+        relations: ['room', 'room.seats', 'room.seats.typeSeat']
+      });
+
+      if (showTimes.length === 0) {
+        this.logger.warn('No showtimes found. Skipping booking seeding.');
+        return;
+      }
+
+      // Fetch only CUSTOMER accounts
+      // We need to join with roles. Assuming Account has 'accountRoles' relation or similar.
+      // Let's check Account entity. If not easy, we can fetch all and filter, or just fetch AccountRoles with role CUSTOMER.
+      // Let's try to fetch accounts that have the CUSTOMER role.
+      // Since I don't have the full Account entity visible, I'll assume I can query AccountRole to get accountIds.
+
+      const customerRole = await this.roleRepo.findOne({ where: { name: RoleName.CUSTOMER } });
+      if (!customerRole) {
+        this.logger.warn('Customer role not found. Skipping booking seeding.');
+        return;
+      }
+
+      const customerAccountRoles = await this.accountRoleRepo.find({
+        where: { roleId: customerRole.id },
+        relations: ['account']
+      });
+
+      const customerAccounts = customerAccountRoles.map((ar) => ar.account).filter((a) => a);
+
+      if (customerAccounts.length === 0) {
+        this.logger.warn('No customer accounts found. Skipping booking seeding.');
+        return;
+      }
+
+      const refreshments = await this.refreshmentsRepo.find();
+
+      let bookingsCreated = 0;
+
+      for (let i = 0; i < bookingsCount; i++) {
+        const showTime = showTimes[i % showTimes.length];
+        const account = customerAccounts[Math.floor(Math.random() * customerAccounts.length)];
+
+        // Random seats (1-4)
+        const seats = showTime.room?.seats;
+        if (!seats || seats.length === 0) continue;
+
+        const numSeats = Math.floor(Math.random() * 4) + 1;
+        const shuffledSeats = [...seats].sort(() => 0.5 - Math.random());
+        const selectedSeats = shuffledSeats.slice(0, numSeats);
+
+        let totalBookingPrice = 0;
+
+        // Calculate seat price
+        for (const seat of selectedSeats) {
+          const price = seat.typeSeat?.price || 50000;
+          totalBookingPrice += price;
+        }
+
+        // Prepare refreshments data (to calculate price)
+        const selectedRefreshmentsData = [];
+        if (Math.random() > 0.5 && refreshments.length > 0) {
+          const numRefreshments = Math.floor(Math.random() * 2) + 1;
+          const shuffledRefreshments = [...refreshments].sort(() => 0.5 - Math.random());
+          const selectedRefreshments = shuffledRefreshments.slice(0, numRefreshments);
+
+          for (const ref of selectedRefreshments) {
+            const qty = Math.floor(Math.random() * 2) + 1;
+            const refPrice = ref.price * qty;
+            totalBookingPrice += refPrice;
+            selectedRefreshmentsData.push({
+              refreshmentsId: ref.id,
+              quantity: qty,
+              totalPrice: refPrice
+            });
+          }
+        }
+
+        // 1. Create and Save Booking FIRST
+        const bookingDate = finalDates[i];
+        const booking = this.bookingRepo.create({
+          accountId: account.id,
+          showTimeId: showTime.id,
+          totalBookingPrice,
+          dateTimeBooking: bookingDate,
+          status: BookingStatus.CONFIRMED,
+          checkInStatus: false
+        });
+
+        const savedBooking = await this.bookingRepo.save(booking);
+
+        // 2. Create and Save BookSeats
+        const bookSeats = selectedSeats.map((seat) => {
+          const price = seat.typeSeat?.price || 50000;
+          return this.bookSeatRepo.create({
+            bookingId: savedBooking.id,
+            seatId: seat.id,
+            totalSeatPrice: price,
+            status: true
+          });
+        });
+        await this.bookSeatRepo.save(bookSeats);
+
+        // 3. Create and Save BookRefreshments
+        if (selectedRefreshmentsData.length > 0) {
+          const bookRefreshments = selectedRefreshmentsData.map((data) => {
+            return this.bookRefreshmentsRepo.create({
+              bookingId: savedBooking.id,
+              refreshmentsId: data.refreshmentsId,
+              quantity: data.quantity,
+              totalPrice: data.totalPrice
+            });
+          });
+          await this.bookRefreshmentsRepo.save(bookRefreshments);
+        }
+
+        bookingsCreated++;
+      }
+
+      this.logger.log(`✅ Seeding bookings completed. Total bookings: ${bookingsCreated}`);
+    } catch (error) {
+      this.logger.error('Error seeding bookings:', error);
     }
   }
 

@@ -39,3 +39,17 @@ export class CheckedVoucherDto {
     this.minimumOrderValue = voucher.minimumOrderValue;
   }
 }
+
+export class CheckedVoucherWithFinalPriceDto {
+  @ApiProperty({ description: 'Final price after applying the voucher' })
+  finalPrice: number;
+
+  @ApiProperty({ description: 'Voucher code' })
+  code: string;
+
+  @ApiProperty({ description: 'Total amount ' })
+  price: number;
+
+  @ApiProperty({ description: 'Amount of voucher' })
+  voucherAmount: number;
+}
