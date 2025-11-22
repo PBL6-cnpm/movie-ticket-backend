@@ -1,0 +1,33 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: ['release']
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Log in to DO Registry
+        run: doctl registry login --expiry-seconds 1200
+
+      - name: Build and Push Image
+        run: |
+          # Build image
+          docker build -t registry.digitalocean.com/${{ secrets.REGISTRY_NAME }}/api:latest .
+          # Push lên kho
+          docker push registry.digitalocean.com/${{ secrets.REGISTRY_NAME }}/api:latest
+
+      - name: Deploy to Kubernetes
+        run: |
+          doctl kubernetes cluster kubeconfig save ${{ secrets.CLUSTER_NAME }}
+          kubectl rollout restart deployment/backend

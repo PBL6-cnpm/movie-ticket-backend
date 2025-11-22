@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: internal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: internal
+  template:
+    metadata:
+      labels:
+        app: internal
+    spec:
+      containers:
+        - name: internal
+          image: registry.digitalocean.com/cinestech/internal:latest
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: internal-service
+spec:
+  selector:
+    app: internal
+  ports:
+    - port: 80
+      targetPort: 80

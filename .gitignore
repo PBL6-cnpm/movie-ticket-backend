@@ -48,6 +48,7 @@ tags
 tags.lock
 tags.temp
 
+k8s/01-secrets.yaml
 
 # Demo FE
 /demofe

@@ -1,0 +1,44 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pbl6-ingress
+  annotations:
+    caddy.ingress.kubernetes.io/ssl-redirect: 'true'
+spec:
+  ingressClassName: caddy
+  rules:
+    # 1. API Backend
+    - host: api.cinestech.me
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend-service
+                port:
+                  number: 3000
+
+    # 2. Web User (Root Domain)
+    - host: cinestech.me
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web-service
+                port:
+                  number: 80
+
+    # 3. Web Admin
+    - host: admin.cinestech.me
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: internal-service
+                port:
+                  number: 80

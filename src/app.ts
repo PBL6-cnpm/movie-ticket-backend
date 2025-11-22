@@ -10,7 +10,6 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exception.filter';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { swaggerConfig } from './configs/swagger.config';
-import { URL } from '@configs/env.config';
 
 export async function createApp(): Promise<NestExpressApplication> {
   // Transaction
@@ -22,11 +21,17 @@ export async function createApp(): Promise<NestExpressApplication> {
   });
 
   // Enable CORS
-  app.enableCors({
-    credentials: true,
-    origin: [URL.clientBaseUrlDev, URL.clientBaseUrl, URL.internalClientBaseUrl]
-  });
+  // app.enableCors({
+  //   credentials: true,
+  //   origin: [URL.clientBaseUrlDev, URL.clientBaseUrl, URL.internalClientBaseUrl]
+  // });
 
+  app.enableCors({
+    origin: true, // <--- Tự động chấp nhận Origin hợp lệ
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With',
+    credentials: true
+  });
   app.enableShutdownHooks();
 
   // Static Files
