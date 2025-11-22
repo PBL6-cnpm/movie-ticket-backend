@@ -129,4 +129,13 @@ export class RedisService {
       throw error;
     }
   }
+
+  async tryRefreshTTL(key: string, ttl: number): Promise<boolean> {
+    try {
+      return (await this.redis.expire(key, ttl)) === 1;
+    } catch (error) {
+      this.logger.error('Redis set NX failed', error.stack);
+      throw error;
+    }
+  }
 }
