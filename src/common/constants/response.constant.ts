@@ -283,6 +283,10 @@ export const RESPONSE_MESSAGES = {
   INVALID_END_DATE_FORMAT: {
     message: 'Invalid endDate format',
     code: 'INVALID_END_DATE_FORMAT'
+  },
+  NO_SEATS_HOLD: {
+    message: 'There are no seats currently held',
+    code: 'NO_SEATS_HOLD'
   }
 };
 

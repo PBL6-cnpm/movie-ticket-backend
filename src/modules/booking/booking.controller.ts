@@ -25,7 +25,7 @@ import { Request, Response } from 'express';
 import { BookingPaymentService } from './booking-payment.service';
 import { BookingService } from './booking.service';
 import { BookingResponseDto } from './dto/booking-response.dto';
-import { CancelPaymentDto } from './dto/cancel-payment.dto';
+// import { CancelPaymentDto } from './dto/cancel-payment.dto';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import {
   ApplyRefreshmentsDto,
@@ -99,19 +99,19 @@ export class BookingController extends BaseController {
     res.status(HttpStatus.OK).send();
   }
 
-  @Post('cancel-payment')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Cancel payment for a booking' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Payment intent cancelled successfully'
-  })
-  async cancelPayment(
-    @Body('bookingId') cancelPaymentDto: CancelPaymentDto
-  ): Promise<SuccessResponse<void>> {
-    await this.paymentService.cancelPayment(cancelPaymentDto.bookingId);
-    return this.success(null);
-  }
+  // @Post('cancel-payment')
+  // @HttpCode(HttpStatus.OK)
+  // @ApiOperation({ summary: 'Cancel payment for a booking' })
+  // @ApiResponse({
+  //   status: HttpStatus.OK,
+  //   description: 'Payment intent cancelled successfully'
+  // })
+  // async cancelPayment(
+  //   @Body('bookingId') cancelPaymentDto: CancelPaymentDto
+  // ): Promise<SuccessResponse<void>> {
+  //   await this.paymentService.cancelPayment(cancelPaymentDto.bookingId);
+  //   return this.success(null);
+  // }
 
   @Post('hold/android-platform')
   @HttpCode(HttpStatus.OK)

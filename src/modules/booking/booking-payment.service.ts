@@ -1,14 +1,22 @@
-import { JOB_TYPES, MAIL_TEMPLATE, QUEUE_KEY, RESPONSE_MESSAGES } from '@common/constants';
+import {
+  HOLD_DURATION_SECONDS,
+  JOB_TYPES,
+  MAIL_TEMPLATE,
+  QUEUE_KEY,
+  RESPONSE_MESSAGES
+} from '@common/constants';
 import { PAYMENT_EXPIRATION_MILLISECONDS } from '@common/constants/stripe.constant';
 import { BookingStatus } from '@common/enums/booking.enum';
 import { BadRequest } from '@common/exceptions';
 import { generateQRCodeAsMulterFile } from '@common/utils/generate-qr-code';
+import { generateSeatLockKey } from '@common/utils/redis.util';
 import { InjectQueue } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Booking } from '@shared/db/entities/booking.entity';
 import { Voucher } from '@shared/db/entities/voucher.entity';
 import { CloudinaryService } from '@shared/modules/cloudinary/cloudinary.service';
+import { RedisService } from '@shared/modules/redis/redis.service';
 import { PaymentIntentDto } from '@shared/modules/stripe/dto/payment-intent.dto';
 import { StripeService } from '@shared/modules/stripe/stripe.service';
 import { Queue } from 'bull';
@@ -22,10 +30,11 @@ export class BookingPaymentService {
     @InjectRepository(Booking) private readonly bookingRepo: Repository<Booking>,
     @InjectRepository(Voucher) private readonly voucherRepo: Repository<Voucher>,
 
+    private readonly redisService: RedisService,
+
     private readonly stripeService: StripeService,
     private readonly cloudinaryService: CloudinaryService,
-    @InjectQueue(QUEUE_KEY.sendEmail)
-    private readonly emailQueue: Queue
+    @InjectQueue(QUEUE_KEY.sendEmail) private readonly emailQueue: Queue
   ) {}
 
   async createPaymentIntent(
@@ -35,7 +44,8 @@ export class BookingPaymentService {
     const bookingId = createPaymentIntentDto.bookingId;
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId },
-      select: ['id', 'totalBookingPrice', 'paymentIntentId']
+      select: ['id', 'totalBookingPrice', 'paymentIntentId', 'showTimeId'],
+      relations: ['bookSeats', 'bookSeats.seat']
     });
 
     if (!booking) {
@@ -54,10 +64,37 @@ export class BookingPaymentService {
       paymentIntentId: paymentIntentResult.paymentIntentId
     });
 
+    // Reset the expiration time of hold booking
+    const seatIds = booking.bookSeats.map((seat) => seat.seat.id);
+    await this.setRedisSeatLock(seatIds, booking.showTimeId);
+
     // Add job to check for payment expiration
     await this.addCancelExpiredPaymentJob(bookingId, paymentIntentResult.paymentIntentId);
 
     return paymentIntentResult;
+  }
+
+  private async setRedisSeatLock(seatIds: string[], showTimeId: string): Promise<string[]> {
+    const lockedKeys: string[] = [];
+
+    try {
+      for (const seatId of seatIds) {
+        const key = generateSeatLockKey(showTimeId, seatId);
+        console.log('Redis seat lock key: ', key);
+        const result = await this.redisService.tryRefreshTTL(key, HOLD_DURATION_SECONDS);
+        if (!result) {
+          throw new BadRequest(RESPONSE_MESSAGES.NO_SEATS_HOLD);
+        }
+        lockedKeys.push(key);
+      }
+
+      return lockedKeys;
+    } catch (error) {
+      if (lockedKeys.length > 0) {
+        await this.redisService.del(lockedKeys);
+      }
+      throw error;
+    }
   }
 
   async handleStripeWebhook(signature: string, rawBody: Buffer) {
