@@ -70,10 +70,12 @@ export class BranchController extends BaseController {
     description: 'List of branches retrieved successfully',
     type: [BranchResponseDto]
   })
-  async getAllBranches(): Promise<SuccessResponse<BranchResponseDto[]>> {
+  async getAllBranches(
+    @Query('hasShowtimes') hasShowtimes?: boolean
+  ): Promise<SuccessResponse<BranchResponseDto[]>> {
     this.logger.log('Fetching all branches');
 
-    const branches = await this.branchService.getAllBranches();
+    const branches = await this.branchService.getAllBranches(hasShowtimes);
 
     const response = branches.map((branch: Branch) => new BranchResponseDto(branch));
 

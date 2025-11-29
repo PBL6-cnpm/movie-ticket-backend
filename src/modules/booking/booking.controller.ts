@@ -88,6 +88,18 @@ export class BookingController extends BaseController {
     return this.success(result);
   }
 
+  @Post('confirm-cash-payment')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Confirm cash payment for booking' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Cash payment confirmed successfully'
+  })
+  async confirmCashPayment(@Body() body: { bookingId: string }): Promise<SuccessResponse<any>> {
+    const result = await this.paymentService.confirmCashPayment(body.bookingId);
+    return this.success(result);
+  }
+
   @Post('webhook')
   @Public()
   async handleWebhook(

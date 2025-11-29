@@ -24,6 +24,12 @@ export class ShowTimeSlotResponseDto {
 
   @ApiProperty()
   occupiedSeats: number;
+
+  @ApiProperty()
+  roomId: string;
+
+  @ApiProperty()
+  roomName: string;
 }
 
 export class ShowTimeGroupedResponseDto {

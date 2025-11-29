@@ -36,9 +36,10 @@ export class MovieController extends BaseController {
   @Get('now-showing')
   @ApiOperation({ summary: 'Get movies that are currently showing' })
   async getNowShowingMovies(
-    @Query() dto: PaginationDto
+    @Query() dto: PaginationDto,
+    @Query('branchId') branchId?: string
   ): Promise<SuccessResponse<IPaginatedResponse<MovieResponseDto>>> {
-    const { items, total } = await this.movieService.getNowShowingMovies(dto);
+    const { items, total } = await this.movieService.getNowShowingMovies(dto, branchId);
     const paginated = PaginationHelper.pagination({
       limit: dto.limit,
       offset: dto.offset,

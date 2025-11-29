@@ -79,6 +79,11 @@ export class ShowTimeService {
       }
 
       if (!grouped[localDayKey].times.some((t) => t.id === item.id)) {
+        // Filter duplicates by default (same time, different rooms)
+        if (grouped[localDayKey].times.some((t) => t.time === timeFormatted)) {
+          continue;
+        }
+
         const summary = seatSummaryMap.get(item.id) ?? {
           totalSeats: 0,
           availableSeats: 0,
@@ -90,7 +95,9 @@ export class ShowTimeService {
           time: timeFormatted,
           totalSeats: summary.totalSeats,
           availableSeats: summary.availableSeats,
-          occupiedSeats: summary.occupiedSeats
+          occupiedSeats: summary.occupiedSeats,
+          roomId: item.room?.id,
+          roomName: item.room?.name
         });
       }
     }
@@ -174,7 +181,9 @@ export class ShowTimeService {
           time: timeFormatted,
           totalSeats: summary.totalSeats,
           availableSeats: summary.availableSeats,
-          occupiedSeats: summary.occupiedSeats
+          occupiedSeats: summary.occupiedSeats,
+          roomId: item.room?.id,
+          roomName: item.room?.name
         });
       }
     }

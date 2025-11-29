@@ -139,58 +139,72 @@ export class BookingPaymentService {
       throw new BadRequest(RESPONSE_MESSAGES.BOOKING_NOT_FOUND);
     }
 
-    const account = booking.account;
     const bookingVoucherId = booking.voucherId;
 
-    await this.voucherRepo.decrement({ id: bookingVoucherId }, 'number', 1);
+    if (bookingVoucherId) {
+      await this.voucherRepo.decrement({ id: bookingVoucherId }, 'number', 1);
+    }
 
     await this.bookingRepo.update(bookingId, { status: BookingStatus.CONFIRMED });
-    const qrBuffer = await generateQRCodeAsMulterFile({ bookingId });
-    const qrUrl = await this.cloudinaryService.uploadFileBuffer(qrBuffer);
+    await this.removeCancelExpiredPaymentJob(bookingId);
 
-    await this.bookingRepo.update(bookingId, { qrUrl });
-
-    const showTime = booking.showTime;
-    const movie = showTime.movie;
-    const cinema = showTime.room.branch;
-
-    const showDateTime = new Date(showTime.showDate);
-
-    const showDate = showDateTime.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
+    // Execute post-confirmation actions (QR code, Email) asynchronously
+    this.handlePostConfirmationActions(booking, bookingId).catch((err) => {
+      console.error(`Error in post-confirmation actions for booking ${bookingId}:`, err);
     });
+  }
 
-    const showTimeStr = showDateTime.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+  private async handlePostConfirmationActions(booking: Booking, bookingId: string) {
+    try {
+      const qrBuffer = await generateQRCodeAsMulterFile({ bookingId });
+      const qrUrl = await this.cloudinaryService.uploadFileBuffer(qrBuffer);
 
-    const mailTemplate = MAIL_TEMPLATE.BOOKING_CONFIRMATION;
-    await this.emailQueue.add({
-      data: {
-        toAddress: account.email,
-        template: mailTemplate.template,
-        subject: mailTemplate.subject,
-        options: {
-          context: {
-            name: account.fullName,
-            qr_code_url: qrUrl,
+      await this.bookingRepo.update(bookingId, { qrUrl });
 
-            movie_title: movie.name,
-            movie_poster_url: movie.poster,
-            show_date: showDate,
-            show_time: showTimeStr,
-            cinema_name: cinema.name,
-            room: showTime.room.name
+      const account = booking.account;
+      const showTime = booking.showTime;
+      const movie = showTime.movie;
+      const cinema = showTime.room.branch;
+
+      const showDateTime = new Date(showTime.showDate);
+
+      const showDate = showDateTime.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+      });
+
+      const showTimeStr = showDateTime.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+
+      const mailTemplate = MAIL_TEMPLATE.BOOKING_CONFIRMATION;
+      await this.emailQueue.add({
+        data: {
+          toAddress: account.email,
+          template: mailTemplate.template,
+          subject: mailTemplate.subject,
+          options: {
+            context: {
+              name: account.fullName,
+              qr_code_url: qrUrl,
+
+              movie_title: movie.name,
+              movie_poster_url: movie.poster,
+              show_date: showDate,
+              show_time: showTimeStr,
+              cinema_name: cinema.name,
+              room: showTime.room.name
+            }
           }
         }
-      }
-    });
-
-    await this.removeCancelExpiredPaymentJob(bookingId);
+      });
+    } catch (error) {
+      console.error(`Failed to complete post-confirmation actions for booking ${bookingId}`, error);
+      // Consider adding a retry mechanism or alert here
+    }
   }
 
   private async handlePaymentFailure(bookingId: string) {
@@ -240,5 +254,36 @@ export class BookingPaymentService {
 
     // Delete the booking
     await this.bookingRepo.delete({ id: bookingId });
+  }
+  async confirmCashPayment(bookingId: string) {
+    const booking = await this.bookingRepo.findOne({
+      where: { id: bookingId },
+      select: ['id', 'status', 'totalBookingPrice']
+    });
+
+    if (!booking) {
+      throw new BadRequest(RESPONSE_MESSAGES.BOOKING_NOT_FOUND);
+    }
+
+    if (
+      booking.status !== BookingStatus.PENDING_PAYMENT &&
+      booking.status !== BookingStatus.PENDING
+    ) {
+      // Allow PENDING as well if they skip the hold step or if we treat "hold" as pending payment immediately
+      // Actually, standard flow is PENDING -> PENDING_PAYMENT (after intent) -> CONFIRMED.
+      // If they choose cash, they might be in PENDING or PENDING_PAYMENT state.
+      // Let's check if it's already confirmed.
+      if (booking.status === BookingStatus.CONFIRMED) {
+        throw new BadRequest(RESPONSE_MESSAGES.BOOKING_CANNOT_CANCEL);
+      }
+    }
+
+    // Reuse the success logic
+    await this.handlePaymentSuccess(bookingId);
+
+    return {
+      success: true,
+      message: 'Cash payment confirmed successfully.'
+    };
   }
 }
