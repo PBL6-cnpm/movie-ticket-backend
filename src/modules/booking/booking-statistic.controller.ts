@@ -4,7 +4,6 @@ import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { Controller, Get, HttpCode, HttpStatus, ParseEnumPipe, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BookingStatisticService } from './booking-statistic.service';
-import { RevenueStatsQueryDto, SingleBranchRevenueDto } from './dto/revenue-statistic.dto';
 import { RevenueByMovie } from './interfaces/revenue-by-movie.interface';
 import { RevenueByTimeDto } from './interfaces/revenue-by-time.interface';
 
@@ -50,28 +49,6 @@ export class BookingStatisticController extends BaseController {
     @Query('endDate') endDate?: string
   ): Promise<SuccessResponse<RevenueByTimeDto[]>> {
     const result = await this.bookingStatisticService.getRevenueByTime(groupBy, startDate, endDate);
-
-    return this.success(result);
-  }
-
-  @Get('revenue/branch/time')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get time-based revenue statistics of a branch' })
-  async getBranchRevenueStats(
-    @Query() query: RevenueStatsQueryDto
-  ): Promise<SuccessResponse<SingleBranchRevenueDto>> {
-    const result = await this.bookingStatisticService.getBranchRevenueStatsByTime(query);
-
-    return this.success(result);
-  }
-
-  @Get('revenue/branch/by-movie')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get movie revenue statistics of a branch' })
-  async getBranchRevenueByMovie(
-    @Query() query: RevenueStatsQueryDto
-  ): Promise<SuccessResponse<SingleBranchRevenueDto>> {
-    const result = await this.bookingStatisticService.getBranchRevenueStatsByMovie(query);
 
     return this.success(result);
   }
