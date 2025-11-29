@@ -364,12 +364,13 @@ export class MovieService {
   }
 
   async getNowShowingMovies(
-    dto: PaginationDto
+    dto: PaginationDto,
+    branchId?: string
   ): Promise<{ items: MovieResponseDto[]; total: number }> {
     const { limit, offset } = dto;
     const now = new Date();
 
-    const [movies, total] = await this.movieRepo
+    let query = this.movieRepo
       .createQueryBuilder('movie')
       .leftJoinAndSelect('movie.movieGenres', 'movieGenre')
       .leftJoinAndSelect('movieGenre.genre', 'genre')
@@ -378,7 +379,16 @@ export class MovieService {
       // INNER JOIN ensures we only get movies that have at least one showtime
       .innerJoin('movie.showTimes', 'showTime')
       // Only check if showtime is in the future - ignore movie metadata dates
-      .where('showTime.timeStart >= :now', { now })
+      .where('showTime.timeStart >= :now', { now });
+
+    if (branchId) {
+      query = query
+        .innerJoin('showTime.room', 'room')
+        .innerJoin('room.branch', 'branch')
+        .andWhere('branch.id = :branchId', { branchId });
+    }
+
+    const [movies, total] = await query
       .orderBy('movie.screeningStart', 'DESC')
       .distinct(true)
       .skip(offset)

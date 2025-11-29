@@ -103,8 +103,8 @@ export class SeederService {
       // await this.seedRooms();
       // await this.seedSeats();
       // await this.seedTypeSeats();
-      // await this.seedShowTimes();
-      await this.seedBookings();
+      await this.seedShowTimes();
+      // await this.seedBookings();
     } catch (error) {
       console.log(error);
     }
