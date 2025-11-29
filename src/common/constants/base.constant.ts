@@ -21,3 +21,5 @@ export const QR_COLOR = {
   light: '#ffffff'
 };
 export const QR_SIZE = 500;
+
+export const PERCENT_POINT_PER_VND = 0.00001;

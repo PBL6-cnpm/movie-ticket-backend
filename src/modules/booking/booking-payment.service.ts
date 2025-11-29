@@ -2,6 +2,7 @@ import {
   HOLD_DURATION_SECONDS,
   JOB_TYPES,
   MAIL_TEMPLATE,
+  PERCENT_POINT_PER_VND,
   QUEUE_KEY,
   RESPONSE_MESSAGES
 } from '@common/constants';
@@ -147,6 +148,13 @@ export class BookingPaymentService {
 
     await this.bookingRepo.update(bookingId, { status: BookingStatus.CONFIRMED });
     await this.removeCancelExpiredPaymentJob(bookingId);
+
+    // Add points to user
+    if (booking.account) {
+      const pointsEarned = Math.floor(booking.totalBookingPrice * PERCENT_POINT_PER_VND);
+      booking.account.coin += pointsEarned;
+      await this.bookingRepo.manager.save(booking.account);
+    }
 
     // Execute post-confirmation actions (QR code, Email) asynchronously
     this.handlePostConfirmationActions(booking, bookingId).catch((err) => {

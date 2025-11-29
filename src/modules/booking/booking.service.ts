@@ -15,6 +15,7 @@ import {
   NotFoundException
 } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
+import { Account } from '@shared/db/entities/account.entity';
 import { BookRefreshments } from '@shared/db/entities/book-refreshments.entity';
 import { BookSeat } from '@shared/db/entities/book-seat.entity';
 import { Booking } from '@shared/db/entities/booking.entity';
@@ -206,7 +207,20 @@ export class BookingService {
   }
 
   async holdBooking(dto: QueryHoldBookingDto, accountId: string) {
-    const { seatIds, showTimeId, refreshmentsOption } = dto;
+    const { seatIds, showTimeId, refreshmentsOption, phoneNumber } = dto;
+    let bookingAccountId = accountId;
+
+    if (phoneNumber) {
+      const customerAccount = await this.entityManager.getRepository(Account).findOne({
+        where: { phoneNumber }
+      });
+
+      if (!customerAccount) {
+        throw new NotFoundException(`Customer with phone number ${phoneNumber} not found.`);
+      }
+      bookingAccountId = customerAccount.id;
+    }
+
     const lockedKeys: string[] = [];
     try {
       for (const seatId of seatIds) {
@@ -302,7 +316,7 @@ export class BookingService {
           voucherId = voucherResult.voucherId;
         }
         const newBooking = transactionalEntityManager.create(Booking, {
-          accountId,
+          accountId: bookingAccountId ?? accountId,
           showTimeId,
           status: BookingStatus.PENDING,
           expiresAt: new Date(Date.now() + HOLD_DURATION_SECONDS * 1000),
