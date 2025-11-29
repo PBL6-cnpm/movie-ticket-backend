@@ -42,7 +42,8 @@ env/Makefile.override.dev
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-
+ 
+k8s/01-secrets.yaml
 # Ctags
 tags
 tags.lock
