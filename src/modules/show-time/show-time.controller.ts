@@ -115,7 +115,9 @@ export class ShowTimeController extends BaseController {
       account.branchId
     );
 
-    const response = showTimes.map((showTime) => new ShowTimeResponseDto(showTime));
+    const response = showTimes.map(
+      (item: any) => new ShowTimeResponseDto(item, true, item.seatStats)
+    );
     return this.success(response);
   }
 

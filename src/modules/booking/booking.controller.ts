@@ -62,6 +62,28 @@ export class BookingController extends BaseController {
     return this.success(result);
   }
 
+  @Get('branch')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get bookings for a specific branch' })
+  async getBranchBookings(
+    @Query() dto: PaginationDto,
+    @Query('search') search: string,
+    @Query('date') date: string,
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+
+    @CurrentAccount() account: ContextUser
+  ): Promise<SuccessResponse<IPaginatedResponse<BookingResponseDto>>> {
+    const result = await this.bookingService.getBookingsByBranchId(account, {
+      ...dto,
+      search,
+      date,
+      startDate,
+      endDate
+    });
+    return this.success(result);
+  }
+
   @Post('hold')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Hold booking for selected seats' })

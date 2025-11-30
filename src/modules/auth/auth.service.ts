@@ -216,13 +216,15 @@ export class AuthService {
     accountId: string,
     email: string,
     avatarUrl?: string,
-    roles?: AccountRole[]
+    roles?: AccountRole[],
+    branchId?: string
   ): Promise<string> {
     const payload: JwtPayload = {
       accountId,
       email,
       ...(roles && roles.length > 0 && { roles }),
       ...(avatarUrl && { avatarUrl }),
+      ...(branchId && { branchId }),
       iat: Math.floor(Date.now() / 1000)
     };
 
@@ -237,7 +239,8 @@ export class AuthService {
         account.id,
         account.email,
         account.avatarUrl,
-        account.accountRoles
+        account.accountRoles,
+        account.branchId
       ),
       this.generateToken(
         JWT.secret,
@@ -245,7 +248,8 @@ export class AuthService {
         account.id,
         account.email,
         account.avatarUrl,
-        account.accountRoles
+        account.accountRoles,
+        account.branchId
       )
     ]);
 

@@ -14,6 +14,8 @@ import { ShowTimeGroupedResponseDto } from './dto/show-time-response.dto';
 import { UpdateShowTimeDto } from './dto/update-show-time.dto';
 import { GetShowtimesQueryDto } from './show-time.controller';
 
+import { getStartAndEndOfDay } from '@common/utils/date.util';
+
 @Injectable()
 export class ShowTimeService {
   constructor(
@@ -221,7 +223,7 @@ export class ShowTimeService {
     return new Map(summaries.map((summary) => [summary.showTimeId, summary]));
   }
 
-  async getShowTimeByShowDateAndBranchId(showDate: Date, branchId: string): Promise<ShowTime[]> {
+  async getShowTimeByShowDateAndBranchId(showDate: Date, branchId: string): Promise<any[]> {
     const branch = await this.branchRepository.findOne({
       where: { id: branchId }
     });
@@ -230,12 +232,7 @@ export class ShowTimeService {
       throw new ConflictException(RESPONSE_MESSAGES.BRANCH_NOT_FOUND);
     }
 
-    // Tạo start và end của ngày để tìm kiếm chính xác theo showDate
-    const startOfDay = new Date(showDate);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(showDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    const { startOfDay, endOfDay } = getStartAndEndOfDay(showDate);
 
     const showTimes = await this.showTimeRepository
       .createQueryBuilder('showTime')
@@ -243,12 +240,17 @@ export class ShowTimeService {
       .leftJoinAndSelect('showTime.room', 'room')
       .leftJoinAndSelect('room.branch', 'branch')
       .where('branch.id = :branchId', { branchId })
-      .andWhere('showTime.showDate >= :startOfDay', { startOfDay })
-      .andWhere('showTime.showDate <= :endOfDay', { endOfDay })
+      .andWhere('showTime.timeStart >= :startOfDay', { startOfDay })
+      .andWhere('showTime.timeStart <= :endOfDay', { endOfDay })
       .orderBy('showTime.timeStart', 'ASC')
       .getMany();
 
-    return showTimes;
+    const seatSummaryMap = await this.buildSeatSummaryMap(showTimes);
+
+    return showTimes.map((showTime) => {
+      const stats = seatSummaryMap.get(showTime.id);
+      return { ...showTime, seatStats: stats };
+    });
   }
 
   async getShowTimeByDateAndRoomId(date: string, roomId: string): Promise<ShowTime[]> {
@@ -262,13 +264,7 @@ export class ShowTimeService {
       throw new ConflictException(RESPONSE_MESSAGES.ROOM_NOT_FOUND);
     }
 
-    // Parse date string (YYYY-MM-DD) and create date range
-    const targetDate = new Date(date);
-    const startOfDay = new Date(targetDate);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(targetDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    const { startOfDay, endOfDay } = getStartAndEndOfDay(date);
 
     // Query showtimes for the room on the specific date
     const showTimes = await this.showTimeRepository
@@ -277,8 +273,8 @@ export class ShowTimeService {
       .leftJoinAndSelect('showTime.room', 'room')
       .leftJoinAndSelect('room.branch', 'branch')
       .where('room.id = :roomId', { roomId })
-      .andWhere('showTime.showDate >= :startOfDay', { startOfDay })
-      .andWhere('showTime.showDate <= :endOfDay', { endOfDay })
+      .andWhere('showTime.timeStart >= :startOfDay', { startOfDay })
+      .andWhere('showTime.timeStart <= :endOfDay', { endOfDay })
       .orderBy('showTime.timeStart', 'ASC')
       .getMany();
 
@@ -308,13 +304,7 @@ export class ShowTimeService {
       throw new ConflictException(RESPONSE_MESSAGES.BRANCH_NOT_FOUND);
     }
 
-    // Parse date string (YYYY-MM-DD) and create date range
-    const targetDate = new Date(date);
-    const startOfDay = new Date(targetDate);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(targetDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    const { startOfDay, endOfDay } = getStartAndEndOfDay(date);
 
     // Query showtimes for the movie on the specific date and branch
     const showTimes = await this.showTimeRepository
@@ -324,8 +314,8 @@ export class ShowTimeService {
       .leftJoinAndSelect('room.branch', 'branch')
       .where('movie.id = :movieId', { movieId })
       .andWhere('branch.id = :branchId', { branchId })
-      .andWhere('showTime.showDate >= :startOfDay', { startOfDay })
-      .andWhere('showTime.showDate <= :endOfDay', { endOfDay })
+      .andWhere('showTime.timeStart >= :startOfDay', { startOfDay })
+      .andWhere('showTime.timeStart <= :endOfDay', { endOfDay })
       .orderBy('showTime.timeStart', 'ASC')
       .getMany();
 
