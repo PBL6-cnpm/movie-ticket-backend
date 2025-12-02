@@ -84,6 +84,14 @@ export class QueryHoldBookingDto {
   @Type(() => RefreshmentItemDto)
   @IsOptional()
   refreshmentsOption?: RefreshmentItemDto[];
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Phone number associated with the booking'
+  })
+  @IsString()
+  @IsOptional()
+  phoneNumber?: string;
 }
 
 export class QueryHoldBookingAndroidPlatformDto {

@@ -116,6 +116,8 @@ export class BranchService extends BaseService<Branch> {
         totalSeats: number;
         availableSeats: number;
         occupiedSeats: number;
+        roomId: string;
+        roomName: string;
         sortValue: number;
       }>;
     };
@@ -179,6 +181,8 @@ export class BranchService extends BaseService<Branch> {
         totalSeats: seatSummary.totalSeats,
         availableSeats: seatSummary.availableSeats,
         occupiedSeats: seatSummary.occupiedSeats,
+        roomId: showTime.room?.id,
+        roomName: showTime.room?.name,
         sortValue: new Date(showTime.timeStart).getTime()
       });
     }
@@ -199,7 +203,9 @@ export class BranchService extends BaseService<Branch> {
                 time: time.time,
                 totalSeats: time.totalSeats,
                 availableSeats: time.availableSeats,
-                occupiedSeats: time.occupiedSeats
+                occupiedSeats: time.occupiedSeats,
+                roomId: time.roomId,
+                roomName: time.roomName
               }))
           }));
 
@@ -243,8 +249,19 @@ export class BranchService extends BaseService<Branch> {
     return this.branchRepo.save(branch);
   }
 
-  async getAllBranches(): Promise<Branch[]> {
-    return this.findAll();
+  async getAllBranches(hasShowtimes?: boolean): Promise<Branch[]> {
+    if (!hasShowtimes) {
+      return this.findAll();
+    }
+
+    const now = new Date();
+    return this.branchRepo
+      .createQueryBuilder('branch')
+      .innerJoin('branch.rooms', 'room')
+      .innerJoin('room.showTimes', 'showTime')
+      .where('showTime.timeStart >= :now', { now })
+      .distinct(true)
+      .getMany();
   }
 
   async getBranchById(id: string): Promise<Branch> {

@@ -1,4 +1,5 @@
 import { BookingStatus } from '@common/enums/booking.enum';
+import { AccountResponseDto } from '@modules/accounts/dto/account-response.dto';
 import { RefreshmentResponseDto } from '@modules/refreshments/dto/refreshment-response.dto';
 import { SeatResponseDto } from '@modules/seat/dto/seat-response.dto';
 import { ShowTimeResponseDto } from '@modules/show-time/dto/show-time-response.dto';
@@ -15,6 +16,8 @@ export class BookingResponseDto {
   seats: SeatResponseDto[];
   refreshmentss?: RefreshmentResponseDto[];
 
+  account?: AccountResponseDto;
+
   constructor(booking: Booking) {
     this.id = booking.id;
     this.status = booking.status;
@@ -22,12 +25,16 @@ export class BookingResponseDto {
     this.dateTimeBooking = booking.dateTimeBooking;
     this.checkInStatus = booking.checkInStatus;
     this.qrUrl = booking.qrUrl;
-    this.showTime = new ShowTimeResponseDto(booking.showTime, false);
+    this.showTime = new ShowTimeResponseDto(booking.showTime, true);
     this.seats = booking.bookSeats.map((bookSeat) => new SeatResponseDto(bookSeat.seat));
     this.refreshmentss = booking.bookRefreshmentss
       ? booking.bookRefreshmentss.map(
           (bookRefreshment) => new RefreshmentResponseDto(bookRefreshment.refreshments, false)
         )
       : [];
+
+    if (booking.account) {
+      this.account = new AccountResponseDto(booking.account);
+    }
   }
 }

@@ -24,6 +24,12 @@ export class ShowTimeSlotResponseDto {
 
   @ApiProperty()
   occupiedSeats: number;
+
+  @ApiProperty()
+  roomId: string;
+
+  @ApiProperty()
+  roomName: string;
 }
 
 export class ShowTimeGroupedResponseDto {
@@ -48,7 +54,15 @@ export class ShowTimeResponseDto {
     poster: string;
   };
 
-  constructor(showTime: ShowTime, roomInfo: boolean = true) {
+  totalSeats?: number;
+  availableSeats?: number;
+  occupiedSeats?: number;
+
+  constructor(
+    showTime: ShowTime,
+    roomInfo: boolean = true,
+    seatStats?: { totalSeats: number; availableSeats: number; occupiedSeats: number }
+  ) {
     this.id = showTime.id;
     this.timeStart = showTime.timeStart;
     this.showDate = showTime.showDate;
@@ -66,6 +80,11 @@ export class ShowTimeResponseDto {
             name: showTime.room.name
           }
         : null;
+    }
+    if (seatStats) {
+      this.totalSeats = seatStats.totalSeats;
+      this.availableSeats = seatStats.availableSeats;
+      this.occupiedSeats = seatStats.occupiedSeats;
     }
   }
 }

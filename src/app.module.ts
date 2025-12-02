@@ -10,6 +10,7 @@ import { BranchModule } from '@modules/branch/branch.module';
 import { MovieModule } from '@modules/movies/movie.module';
 import { PermissionModule } from '@modules/permissions/permission.module';
 import { RefreshmentModule } from '@modules/refreshments/refreshment.module';
+import { ReportModule } from '@modules/reports/report.module';
 import { ReviewModule } from '@modules/reviews/review.module';
 import { RolePermissionModule } from '@modules/role-permission/role-permission.module';
 import { RoleModule } from '@modules/roles/role.module';
@@ -64,7 +65,10 @@ import { StripeModule } from '@shared/modules/stripe/stripe.module';
     RefreshmentModule,
     VoucherModule,
     TypeDayModule,
-    SpecialDateModule
+    VoucherModule,
+    TypeDayModule,
+    SpecialDateModule,
+    ReportModule
   ],
 
   controllers: [AppController, HealthController],

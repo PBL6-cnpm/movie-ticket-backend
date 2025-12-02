@@ -4,6 +4,7 @@ import { DayOfWeek } from '@common/enums';
 import { BookingStatus } from '@common/enums/booking.enum';
 import { NotFound } from '@common/exceptions';
 import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
+import { ContextUser } from '@common/types/user.type';
 import { dayjsObjectWithTimezone, getStartAndEndOfDay } from '@common/utils/date.util';
 import { generateQRCodeAsMulterFile } from '@common/utils/generate-qr-code';
 import PaginationHelper from '@common/utils/pagination.util';
@@ -15,6 +16,7 @@ import {
   NotFoundException
 } from '@nestjs/common';
 import { InjectEntityManager } from '@nestjs/typeorm';
+import { Account } from '@shared/db/entities/account.entity';
 import { BookRefreshments } from '@shared/db/entities/book-refreshments.entity';
 import { BookSeat } from '@shared/db/entities/book-seat.entity';
 import { Booking } from '@shared/db/entities/booking.entity';
@@ -193,6 +195,74 @@ export class BookingService {
     return paginated;
   }
 
+  async getBookingsByBranchId(
+    account: ContextUser,
+    dto: PaginationDto & { search?: string; date?: string; startDate?: string; endDate?: string }
+  ): Promise<IPaginatedResponse<BookingResponseDto>> {
+    const { limit, offset, search, date } = dto;
+    const branchId = account.branchId;
+    const queryBuilder = this.entityManager
+      .getRepository(Booking)
+      .createQueryBuilder('booking')
+      .leftJoinAndSelect('booking.showTime', 'showTime')
+      .leftJoinAndSelect('showTime.movie', 'movie')
+      .leftJoinAndSelect('showTime.room', 'room')
+      .leftJoinAndSelect('booking.bookSeats', 'bookSeats')
+      .leftJoinAndSelect('bookSeats.seat', 'seat')
+      .leftJoinAndSelect('seat.typeSeat', 'typeSeat')
+      .leftJoinAndSelect('seat.room', 'seatRoom')
+      .leftJoinAndSelect('booking.bookRefreshmentss', 'bookRefreshmentss')
+      .leftJoinAndSelect('bookRefreshmentss.refreshments', 'refreshments')
+      .leftJoinAndSelect('booking.account', 'account')
+      .leftJoinAndSelect('account.accountRoles', 'accountRoles')
+      .leftJoinAndSelect('accountRoles.role', 'role')
+      .leftJoinAndSelect('room.branch', 'branch')
+      .where('branch.id = :branchId', { branchId })
+      .orderBy('booking.dateTimeBooking', 'DESC')
+      .skip(offset)
+      .take(limit);
+
+    if (search) {
+      queryBuilder.andWhere(
+        '(booking.id LIKE :search OR account.phoneNumber LIKE :search OR account.fullName LIKE :search)',
+        { search: `%${search}%` }
+      );
+    }
+
+    if (date) {
+      const { startOfDay, endOfDay } = getStartAndEndOfDay(date);
+      queryBuilder.andWhere(
+        'booking.dateTimeBooking >= :startOfDay AND booking.dateTimeBooking <= :endOfDay',
+        {
+          startOfDay,
+          endOfDay
+        }
+      );
+    } else if (dto.startDate && dto.endDate) {
+      const { startOfDay } = getStartAndEndOfDay(dto.startDate);
+      const { endOfDay } = getStartAndEndOfDay(dto.endDate);
+
+      queryBuilder.andWhere(
+        'booking.dateTimeBooking >= :startOfDay AND booking.dateTimeBooking <= :endOfDay',
+        {
+          startOfDay,
+          endOfDay
+        }
+      );
+    }
+
+    const [bookings, total] = await queryBuilder.getManyAndCount();
+    console.log('Bookings fetched for branch:', bookings.length);
+    const items = bookings.map((booking) => new BookingResponseDto(booking));
+
+    return PaginationHelper.pagination({
+      limit: dto.limit,
+      offset: dto.offset,
+      totalItems: total,
+      items
+    });
+  }
+
   async getTicketQrCode() {
     try {
       const qrBuffer = await generateQRCodeAsMulterFile('Thanh Thanh Va Va');
@@ -206,7 +276,20 @@ export class BookingService {
   }
 
   async holdBooking(dto: QueryHoldBookingDto, accountId: string) {
-    const { seatIds, showTimeId, refreshmentsOption } = dto;
+    const { seatIds, showTimeId, refreshmentsOption, phoneNumber } = dto;
+    let bookingAccountId = accountId;
+
+    if (phoneNumber) {
+      const customerAccount = await this.entityManager.getRepository(Account).findOne({
+        where: { phoneNumber }
+      });
+
+      if (!customerAccount) {
+        throw new NotFoundException(`Customer with phone number ${phoneNumber} not found.`);
+      }
+      bookingAccountId = customerAccount.id;
+    }
+
     const lockedKeys: string[] = [];
     try {
       for (const seatId of seatIds) {
@@ -302,7 +385,7 @@ export class BookingService {
           voucherId = voucherResult.voucherId;
         }
         const newBooking = transactionalEntityManager.create(Booking, {
-          accountId,
+          accountId: bookingAccountId ?? accountId,
           showTimeId,
           status: BookingStatus.PENDING,
           expiresAt: new Date(Date.now() + HOLD_DURATION_SECONDS * 1000),

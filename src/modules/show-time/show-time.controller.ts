@@ -19,7 +19,8 @@ import {
   Query
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
-import { IsUUID } from 'class-validator';
+import { IsOptional, IsUUID } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { CreateShowTimeDto } from './dto/create-show-time.dto';
 import { ShowTimeGroupedResponseDto, ShowTimeResponseDto } from './dto/show-time-response.dto';
 import { UpdateShowTimeDto } from './dto/update-show-time.dto';
@@ -38,6 +39,14 @@ export class GetShowtimesQueryDto {
   })
   @IsUUID()
   branchId: string;
+
+  @ApiPropertyOptional({
+    description: 'Include duplicate showtimes (same time, different rooms)',
+    default: false
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  includeDuplicates?: boolean;
 }
 @Controller('show-time')
 @ApiBearerAuth()
@@ -106,7 +115,9 @@ export class ShowTimeController extends BaseController {
       account.branchId
     );
 
-    const response = showTimes.map((showTime) => new ShowTimeResponseDto(showTime));
+    const response = showTimes.map(
+      (item: any) => new ShowTimeResponseDto(item, true, item.seatStats)
+    );
     return this.success(response);
   }
 
