@@ -2,18 +2,18 @@ import { QUEUE_KEY } from '@common/constants';
 import { IEmailQueue } from '@common/interfaces/email.interface';
 import { Process, Processor } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
-import { MailService } from '@shared/modules/send-mail/send-mail.service';
+import { AwsSesService } from '@shared/modules/aws-service/aws-service.module';
 import { Job } from 'bull';
 
 @Injectable()
 @Processor(QUEUE_KEY.sendEmail)
 export class EmailProcessor {
-  constructor(private readonly mailerService: MailService) {}
+  constructor(private readonly awsSesService: AwsSesService) {}
   @Process()
   async transcode(job: Job<unknown>) {
     const { data } = job.data as IEmailQueue;
     try {
-      await this.mailerService.sendEmail(data);
+      await this.awsSesService.sendEmail(data);
     } catch (error) {
       console.log(error);
     }

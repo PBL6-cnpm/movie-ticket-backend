@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
-import { MailModuleCustom } from '@shared/modules/send-mail/send-mail.module';
+import { AwsModule } from '@shared/modules/aws-service/aws-ses.service';
 import { EmailProcessor } from './email.processor';
 
 @Module({
   providers: [EmailProcessor],
   exports: [EmailProcessor],
-  imports: [MailModuleCustom]
+  imports: [AwsModule]
 })
 export class EmailModule {}

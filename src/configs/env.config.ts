@@ -57,6 +57,13 @@ export const STRIPE = {
   webhookSecret: process.env.STRIPE_WEBHOOK_SECRET
 };
 
+export const AWS = {
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION || 'ap-southeast-1',
+  sesFrom: process.env.AWS_SES_FROM || 'no-reply@cinestech.me'
+};
+
 export const APP = {
   nodeEnv: process.env.NODE_ENV || 'development'
 };
