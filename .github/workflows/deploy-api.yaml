@@ -34,10 +34,6 @@ jobs:
       - name: Deploy to Kubernetes
         run: |
           doctl kubernetes cluster kubeconfig save ${{ secrets.CLUSTER_NAME }}
-<<<<<<< Updated upstream
-          kubectl set image deployment/backend backend=${{ env.IMAGE_TAG }}
-          kubectl rollout status deployment/backend
-=======
 
           # Scale down to 1 replica before deploy to avoid CPU issues
           echo "Scaling down to 1 replica..."
@@ -53,4 +49,3 @@ jobs:
           echo "Scaling back up to 2 replicas..."
           kubectl scale deployment/backend --replicas=2
           kubectl rollout status deployment/backend --timeout=300s
->>>>>>> Stashed changes
