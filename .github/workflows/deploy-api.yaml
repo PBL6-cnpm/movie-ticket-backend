@@ -22,12 +22,17 @@ jobs:
 
       - name: Build and Push Image
         run: |
-          # Build image
-          docker build -t registry.digitalocean.com/${{ secrets.REGISTRY_NAME }}/api:latest .
-          # Push lên kho
+          # Build image with unique tag
+          IMAGE_TAG=registry.digitalocean.com/${{ secrets.REGISTRY_NAME }}/api:${{ github.sha }}
+          docker build -t $IMAGE_TAG .
+          docker push $IMAGE_TAG
+          # Also tag as latest
+          docker tag $IMAGE_TAG registry.digitalocean.com/${{ secrets.REGISTRY_NAME }}/api:latest
           docker push registry.digitalocean.com/${{ secrets.REGISTRY_NAME }}/api:latest
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
       - name: Deploy to Kubernetes
         run: |
           doctl kubernetes cluster kubeconfig save ${{ secrets.CLUSTER_NAME }}
-          kubectl rollout restart deployment/backend
+          kubectl set image deployment/backend backend=${{ env.IMAGE_TAG }}
+          kubectl rollout status deployment/backend
