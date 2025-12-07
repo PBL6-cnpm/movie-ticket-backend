@@ -263,6 +263,7 @@ export class BookingPaymentService {
     // Delete the booking
     await this.bookingRepo.delete({ id: bookingId });
   }
+
   async confirmCashPayment(bookingId: string) {
     const booking = await this.bookingRepo.findOne({
       where: { id: bookingId },
