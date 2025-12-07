@@ -57,10 +57,21 @@ export class BookingService {
     try {
       const dbResult = await this.entityManager.transaction(async (tx) => {
         const booking = await tx.findOne(Booking, {
-          where: { id: bookingId, status: BookingStatus.PENDING },
+          where: { id: bookingId },
           relations: ['bookSeats'],
           lock: { mode: 'pessimistic_write' }
         });
+
+        if (booking.status === BookingStatus.PENDING_PAYMENT) {
+          console.log('Booking already in pending payment status:', bookingId);
+          await tx.delete(BookRefreshments, { bookingId: booking.id });
+          await tx.update(Booking, { id: booking.id }, { status: BookingStatus.PENDING });
+        }
+
+        if (booking.status === BookingStatus.CONFIRMED) {
+          console.log('Booking already confirmed:', bookingId);
+          return;
+        }
 
         if (!booking) {
           throw new ConflictException('Booking not found, already processed, or expired.');
@@ -101,9 +112,7 @@ export class BookingService {
 
       return {
         bookingId: bookingId,
-        totalPrice: dbResult.finalPrice,
-        status: BookingStatus.PENDING_PAYMENT,
-        message: 'Booking confirmed successfully.'
+        totalPrice: dbResult.finalPrice
       };
     } catch (error) {
       console.error('Payment confirmation transaction failed:', error);
