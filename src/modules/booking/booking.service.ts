@@ -102,7 +102,7 @@ export class BookingService {
       return {
         bookingId: bookingId,
         totalPrice: dbResult.finalPrice,
-        status: BookingStatus.CONFIRMED,
+        status: BookingStatus.PENDING_PAYMENT,
         message: 'Booking confirmed successfully.'
       };
     } catch (error) {
