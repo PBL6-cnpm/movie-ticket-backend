@@ -56,9 +56,13 @@ export class BookingService {
 
     try {
       const dbResult = await this.entityManager.transaction(async (tx) => {
+        // 1. Get booking
         const booking = await tx.findOne(Booking, {
-          where: { id: bookingId, status: BookingStatus.PENDING },
-          relations: ['bookSeats'],
+          where: {
+            id: bookingId,
+            status: In([BookingStatus.PENDING, BookingStatus.PENDING_PAYMENT])
+          },
+          relations: ['bookSeats', 'bookRefreshmentss'],
           lock: { mode: 'pessimistic_write' }
         });
 
@@ -66,15 +70,30 @@ export class BookingService {
           throw new ConflictException('Booking not found, already processed, or expired.');
         }
 
-        const { totalRefreshmentPrice, bookRefreshmentsToCreate } =
-          await this._calculateRefreshments(tx, refreshmentsOption);
+        // 2. Calculate total price (only seats price) (calculate again to make sure no voucher or refreshments included)
+        let totalSeatPrice = 0;
+        totalSeatPrice = booking.bookSeats.reduce(
+          (sum, seat) => sum + Number(seat.totalSeatPrice || 0),
+          0
+        );
 
-        if (bookRefreshmentsToCreate.length > 0) {
-          bookRefreshmentsToCreate.forEach((br) => (br.booking = booking));
-          await tx.save(BookRefreshments, bookRefreshmentsToCreate);
+        // 3. Calculate refreshments price - Parallel tasks (delete old refreshments & calculate new refreshments price)
+        const promiseTasks: Promise<any>[] = [];
+
+        if (booking.bookRefreshmentss?.length > 0) {
+          promiseTasks.push(tx.delete(BookRefreshments, { bookingId: booking.id }));
         }
-        const totalSeatPrice = booking.totalBookingPrice;
 
+        const calcRefreshmentsPromise = this._calculateRefreshments(tx, refreshmentsOption);
+
+        const promiseResults = await Promise.all([
+          Promise.all(promiseTasks),
+          calcRefreshmentsPromise
+        ]);
+
+        const { totalRefreshmentPrice, bookRefreshmentsToCreate } = promiseResults[1];
+
+        // 4. Calculate final price (seat price + refreshments price - voucher)
         const grossTotalPrice = totalSeatPrice + totalRefreshmentPrice;
 
         let finalPrice = grossTotalPrice;
@@ -86,24 +105,40 @@ export class BookingService {
           voucherId = voucherResult.voucherId;
         }
 
-        booking.totalBookingPrice = finalPrice;
-        booking.voucherId = voucherId;
-        booking.dateTimeBooking = new Date();
+        // 5. Update DB - Parallel tasks (insert refreshments & update booking & update seats status)
+        const dbUpdates: Promise<any>[] = [];
 
-        await tx.save(Booking, booking);
+        if (bookRefreshmentsToCreate.length > 0) {
+          bookRefreshmentsToCreate.forEach((br) => (br.bookingId = booking.id));
+          dbUpdates.push(tx.insert(BookRefreshments, bookRefreshmentsToCreate));
+        }
 
-        await tx.update(BookSeat, { bookingId: booking.id }, { status: true });
+        dbUpdates.push(
+          tx.update(
+            Booking,
+            { id: booking.id },
+            {
+              totalBookingPrice: finalPrice,
+              voucherId: voucherId,
+              dateTimeBooking: new Date(),
+              status: BookingStatus.PENDING
+            }
+          )
+        );
+
+        dbUpdates.push(tx.update(BookSeat, { bookingId: booking.id }, { status: true }));
+
+        await Promise.all(dbUpdates);
 
         return {
-          finalPrice: booking.totalBookingPrice
+          bookingId: bookingId,
+          finalPrice: finalPrice
         };
       });
 
       return {
-        bookingId: bookingId,
-        totalPrice: dbResult.finalPrice,
-        status: BookingStatus.CONFIRMED,
-        message: 'Booking confirmed successfully.'
+        bookingId: dbResult.bookingId,
+        totalPrice: dbResult.finalPrice
       };
     } catch (error) {
       console.error('Payment confirmation transaction failed:', error);
@@ -501,8 +536,9 @@ export class BookingService {
     const discountAmount = this._calculateDiscount(voucher, totalAmount);
     const finalPrice = Math.max(0, totalAmount - discountAmount);
 
-    voucher.number -= 1;
-    await tx.save(Voucher, voucher);
+    // Webhook will do that
+    // voucher.number -= 1;
+    // await tx.save(Voucher, voucher);
 
     return { finalPrice, voucherId: voucher.id };
   }
