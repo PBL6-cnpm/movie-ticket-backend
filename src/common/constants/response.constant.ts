@@ -93,6 +93,10 @@ export const RESPONSE_MESSAGES = {
     message: 'Account has been deleted',
     code: 'ACCOUNT_DELETED'
   },
+  ACCOUNT_NOT_CUSTOMER: {
+    message: 'Account is not a customer account',
+    code: 'ACCOUNT_NOT_CUSTOMER'
+  },
   PASSWORD_CONFIRM_NOT_MATCH: {
     message: 'Password confirmation does not match',
     code: 'PASSWORD_CONFIRM_NOT_MATCH'

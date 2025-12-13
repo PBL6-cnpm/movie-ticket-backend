@@ -7,6 +7,8 @@ export class AccountResponseDto {
   fullName: string;
   status: AccountStatus;
   branchId?: string;
+  branchName?: string;
+  branchAddress?: string;
   coin?: number;
   avatarUrl?: string;
   phoneNumber: string;
@@ -19,6 +21,8 @@ export class AccountResponseDto {
     this.fullName = account.fullName;
     this.status = account.status;
     this.branchId = account.branchId;
+    this.branchName = account.branch?.name;
+    this.branchAddress = account.branch?.address;
     this.coin = account.coin;
     this.avatarUrl = account.avatarUrl;
     this.phoneNumber = account.phoneNumber;

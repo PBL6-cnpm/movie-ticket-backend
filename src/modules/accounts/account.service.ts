@@ -182,6 +182,54 @@ export class AccountService extends BaseService<Account> {
     return updatedAccount;
   }
 
+  async updateCustomerAccountStatus(accountId: string, status: AccountStatus): Promise<Account> {
+    const account = await this.findOne({
+      where: { id: accountId },
+      relations: ['accountRoles', 'accountRoles.role']
+    });
+
+    if (!account) {
+      throw new BadRequest(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
+    }
+
+    const isCustomer = account.accountRoles?.some((ar) => ar.role.name === RoleName.CUSTOMER);
+
+    if (!isCustomer) {
+      throw new BadRequest(RESPONSE_MESSAGES.ACCOUNT_NOT_CUSTOMER);
+    }
+
+    await this.accountRepo.update(accountId, { status });
+
+    const updatedAccount = await this.findOneById(accountId, {
+      relations: ['branch', 'accountRoles', 'accountRoles.role']
+    });
+
+    if (!updatedAccount) {
+      throw new BadRequest(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
+    }
+
+    return updatedAccount;
+  }
+
+  async getCustomerAccountDetail(accountId: string): Promise<Account> {
+    const account = await this.findOne({
+      where: { id: accountId },
+      relations: ['branch', 'accountRoles', 'accountRoles.role']
+    });
+
+    if (!account) {
+      throw new BadRequest(RESPONSE_MESSAGES.ACCOUNT_NOT_FOUND);
+    }
+
+    const isCustomer = account.accountRoles?.some((ar) => ar.role.name === RoleName.CUSTOMER);
+
+    if (!isCustomer) {
+      throw new BadRequest(RESPONSE_MESSAGES.ACCOUNT_NOT_CUSTOMER);
+    }
+
+    return account;
+  }
+
   async searchAccounts(searchDto: SearchAccountDto): Promise<IPaginatedResponse<Account>> {
     const { name, email, phoneNumber, limit = 10, offset = 0 } = searchDto;
 

@@ -10,6 +10,7 @@ import { BookingStatisticService } from './booking-statistic.service';
 @Module({
   imports: [StripeModule],
   controllers: [BookingController, BookingStatisticController],
-  providers: [BookingService, BookingPaymentService, BookingStatisticService, CloudinaryService]
+  providers: [BookingService, BookingPaymentService, BookingStatisticService, CloudinaryService],
+  exports: [BookingService]
 })
 export class BookingModule {}
