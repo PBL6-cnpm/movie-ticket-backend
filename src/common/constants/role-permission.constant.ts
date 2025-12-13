@@ -54,6 +54,8 @@ export const RolePermissionSeed: Record<RoleName, PermissionName[]> = {
     PermissionName.ACCOUNT_UPDATE_STAFF,
     PermissionName.ACCOUNT_DELETE_STAFF,
     PermissionName.ACCOUNT_READ_STAFF,
+    PermissionName.ACCOUNT_READ_USER,
+    PermissionName.ACCOUNT_DISABLE_USER,
     PermissionName.ACCOUNT_READ_ME,
     PermissionName.ACCOUNT_UPDATE_ME,
     PermissionName.ACCOUNT_LOG_OUT,
@@ -113,6 +115,8 @@ export const RolePermissionSeed: Record<RoleName, PermissionName[]> = {
     PermissionName.REVIEW_DELETE,
 
     //ACCOUNT
+    PermissionName.ACCOUNT_READ_USER,
+    PermissionName.ACCOUNT_DISABLE_USER,
     PermissionName.ACCOUNT_READ_ME,
     PermissionName.ACCOUNT_UPDATE_ME,
     PermissionName.ACCOUNT_LOG_OUT,

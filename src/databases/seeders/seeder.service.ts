@@ -103,7 +103,8 @@ export class SeederService {
       // await this.seedRooms();
       // await this.seedSeats();
       // await this.seedTypeSeats();
-      await this.seedShowTimes();
+      // await this.seedShowTimes();
+      await this.seedAuthorization();
       // await this.seedBookings();
     } catch (error) {
       console.log(error);
@@ -111,6 +112,14 @@ export class SeederService {
   }
 
   // ... existing methods ...
+
+  private async seedAuthorization() {
+    this.logger.log('🔐 Seeding authorization data (roles, permissions, role permissions)...');
+    await this.seedRoles();
+    await this.seedPermissions();
+    await this.seedRolePermissions();
+    this.logger.log('✅ Authorization data seeding done.');
+  }
 
   private async seedBookings() {
     this.logger.log('🎫 Seeding bookings...');

@@ -24,6 +24,7 @@ import { TypeSeatModule } from '@modules/type-seat/typeSeat.module';
 import { VoucherModule } from '@modules/voucher/voucher.module';
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { PermissionsGuard } from '@common/guards/permissions.guard';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { BullQueueModule } from '@shared/modules/bull-queue/bull-queue.module';
 import { EmailModule } from '@shared/modules/bull-queue/queue-process/email/email.module';
@@ -76,6 +77,10 @@ import { StripeModule } from '@shared/modules/stripe/stripe.module';
     {
       provide: APP_GUARD,
       useClass: JwtGuard
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard
     }
   ]
 })
