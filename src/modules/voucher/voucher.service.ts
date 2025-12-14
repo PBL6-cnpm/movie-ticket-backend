@@ -148,7 +148,7 @@ export class VoucherService {
     });
 
     if (!voucher) {
-      throw new NotFoundException('Không tìm thấy voucher.');
+      throw new NotFoundException('Cannot find voucher.');
     }
 
     if (updateVoucherDto.code && updateVoucherDto.code !== voucher.code) {

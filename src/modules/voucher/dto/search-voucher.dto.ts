@@ -4,7 +4,7 @@ import { IsBoolean, IsDate, IsOptional, IsString } from 'class-validator';
 
 export class SearchVoucherDto {
   @ApiPropertyOptional({
-    description: 'Từ khóa tìm kiếm (tìm trong code hoặc name)',
+    description: 'Search keyword (search in code or name)',
     example: 'SUMMER'
   })
   @IsOptional()
@@ -12,7 +12,7 @@ export class SearchVoucherDto {
   keyword?: string;
 
   @ApiPropertyOptional({
-    description: 'Lọc theo loại voucher: true = private, false = public, không truyền = tất cả',
+    description: 'Filter by voucher type: true = private, false = public, not provided = all',
     example: false,
     type: Boolean
   })
@@ -22,7 +22,7 @@ export class SearchVoucherDto {
   isPrivate?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Ngày bắt đầu của khoảng thời gian hiệu lực',
+    description: 'Start date of validity period',
     example: '2024-06-01T00:00:00Z',
     type: Date
   })
@@ -32,7 +32,7 @@ export class SearchVoucherDto {
   validFromStart?: Date;
 
   @ApiPropertyOptional({
-    description: 'Ngày kết thúc của khoảng thời gian hiệu lực',
+    description: 'End date of validity period',
     example: '2024-12-31T23:59:59Z',
     type: Date
   })
