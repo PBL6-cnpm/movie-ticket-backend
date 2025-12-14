@@ -24,11 +24,11 @@ export class VoucherController extends BaseController {
 
   @Get()
   @ApiOperation({
-    summary: 'Lấy danh sách tất cả vouchers (Super Admin)'
+    summary: 'Get all vouchers'
   })
   @ApiResponse({
     status: 200,
-    description: 'Trả về danh sách tất cả vouchers.',
+    description: 'Returns list of all vouchers.',
     type: [VoucherResponseDto]
   })
   async getAllVouchers(
@@ -45,13 +45,13 @@ export class VoucherController extends BaseController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Tạo voucher mới (Super Admin)' })
+  @ApiOperation({ summary: 'Create new voucher' })
   @ApiResponse({
     status: 201,
-    description: 'Voucher đã được tạo thành công.',
+    description: 'Voucher created successfully.',
     type: VoucherResponseDto
   })
-  @ApiResponse({ status: 400, description: 'Dữ liệu không hợp lệ hoặc mã voucher đã tồn tại.' })
+  @ApiResponse({ status: 400, description: 'Invalid data or voucher code already exists.' })
   async createVoucher(
     @Body() createVoucherDto: CreateVoucherDto
   ): Promise<SuccessResponse<VoucherResponseDto>> {
@@ -61,18 +61,18 @@ export class VoucherController extends BaseController {
 
   @Get('search')
   @ApiOperation({
-    summary: 'Tìm kiếm vouchers (Super Admin)',
-    description: 'Tìm kiếm theo code/name và lọc theo khoảng thời gian hiệu lực, loại voucher'
+    summary: 'Search vouchers',
+    description: 'Search by code/name and filter by validity period, voucher type'
   })
   @ApiQuery({
     name: 'isPrivate',
     required: false,
     type: Boolean,
-    description: 'Lọc theo loại voucher: true = private, false = public, không truyền = tất cả'
+    description: 'Filter by voucher type: true = private, false = public, not provided = all'
   })
   @ApiResponse({
     status: 200,
-    description: 'Trả về danh sách vouchers tìm được.',
+    description: 'Returns list of found vouchers.',
     type: [VoucherResponseDto]
   })
   async searchVouchers(
@@ -143,27 +143,27 @@ export class VoucherController extends BaseController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Lấy thông tin chi tiết voucher theo ID (Super Admin)' })
+  @ApiOperation({ summary: 'Get voucher details by ID' })
   @ApiResponse({
     status: 200,
-    description: 'Trả về thông tin chi tiết voucher.',
+    description: 'Returns voucher details.',
     type: VoucherResponseDto
   })
-  @ApiResponse({ status: 404, description: 'Không tìm thấy voucher.' })
+  @ApiResponse({ status: 404, description: 'Voucher not found.' })
   async getVoucherById(@Param('id') id: string): Promise<SuccessResponse<VoucherResponseDto>> {
     const result = await this.voucherService.getVoucherById(id);
     return this.success(result);
   }
 
   @Put(':id')
-  @ApiOperation({ summary: 'Cập nhật voucher (Super Admin)' })
+  @ApiOperation({ summary: 'Update voucher' })
   @ApiResponse({
     status: 200,
-    description: 'Voucher đã được cập nhật thành công.',
+    description: 'Voucher updated successfully.',
     type: VoucherResponseDto
   })
-  @ApiResponse({ status: 404, description: 'Không tìm thấy voucher.' })
-  @ApiResponse({ status: 400, description: 'Dữ liệu không hợp lệ.' })
+  @ApiResponse({ status: 404, description: 'Voucher not found.' })
+  @ApiResponse({ status: 400, description: 'Invalid data.' })
   async updateVoucher(
     @Param('id') id: string,
     @Body() updateVoucherDto: UpdateVoucherDto
@@ -173,10 +173,10 @@ export class VoucherController extends BaseController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Xóa voucher (Super Admin)' })
+  @ApiOperation({ summary: 'Delete voucher' })
   @ApiResponse({
     status: 200,
-    description: 'Voucher đã được xóa thành công.'
+    description: 'Voucher deleted successfully.'
   })
   async deleteVoucher(@Param('id') id: string): Promise<SuccessResponse<null>> {
     await this.voucherService.deleteVoucher(id);

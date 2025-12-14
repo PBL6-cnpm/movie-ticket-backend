@@ -2,65 +2,65 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Voucher } from '@shared/db/entities/voucher.entity';
 
 export class VoucherResponseDto {
-  @ApiProperty({ description: 'ID của voucher' })
+  @ApiProperty({ description: 'Voucher ID' })
   id: string;
 
-  @ApiProperty({ description: 'Tên voucher' })
+  @ApiProperty({ description: 'Voucher name' })
   name: string;
 
-  @ApiProperty({ description: 'Mã voucher' })
+  @ApiProperty({ description: 'Voucher code' })
   code: string;
 
-  @ApiProperty({ description: 'Số lượng voucher có sẵn' })
+  @ApiProperty({ description: 'Available voucher quantity' })
   number: number;
 
   @ApiProperty({
-    description: 'Phần trăm giảm giá',
+    description: 'Discount percentage',
     nullable: true
   })
   discountPercent: number | null;
 
   @ApiProperty({
-    description: 'Giá trị giảm tối đa cho giảm theo phần trăm',
+    description: 'Maximum discount value for percentage discount',
     nullable: true
   })
   maxDiscountValue: number | null;
 
   @ApiProperty({
-    description: 'Giá trị giảm cố định',
+    description: 'Fixed discount value',
     nullable: true
   })
   discountValue: number | null;
 
   @ApiProperty({
-    description: 'Giá trị đơn hàng tối thiểu',
+    description: 'Minimum order value',
     nullable: true
   })
   minimumOrderValue: number | null;
 
   @ApiProperty({
-    description: 'Ngày bắt đầu hiệu lực',
+    description: 'Valid from date',
     nullable: true
   })
   validFrom: Date | null;
 
   @ApiProperty({
-    description: 'Ngày hết hiệu lực',
+    description: 'Valid to date',
     nullable: true
   })
   validTo: Date | null;
 
-  @ApiProperty({ description: 'Voucher riêng tư hay không' })
+  @ApiProperty({ description: 'Whether voucher is private' })
   isPrivate: boolean;
 
-  @ApiProperty({ description: 'Ngày tạo' })
+  @ApiProperty({ description: 'Created date' })
   createdAt: Date;
 
-  @ApiProperty({ description: 'Ngày cập nhật lần cuối' })
+  @ApiProperty({ description: 'Last updated date' })
   updatedAt: Date;
 
   @ApiProperty({
-    description: 'Số lượng booking đã sử dụng voucher này',
+    description: 'Number of bookings that used this voucher',
     required: false
   })
   usedCount?: number;
