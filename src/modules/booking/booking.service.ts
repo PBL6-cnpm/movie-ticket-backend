@@ -709,9 +709,13 @@ export class BookingService {
   }
 
   async addRefreshmentsToBooking(dto: ApplyRefreshmentsDto, accountId: string) {
-    return this.entityManager.transaction(async (transactionalEntityManager) => {
-      const booking = await transactionalEntityManager.findOne(Booking, {
-        where: { id: dto.bookingId, accountId: accountId, status: BookingStatus.PENDING },
+    return this.entityManager.transaction(async (tx) => {
+      const booking = await tx.findOne(Booking, {
+        where: {
+          id: dto.bookingId,
+          accountId: accountId,
+          status: BookingStatus.PENDING
+        },
         relations: ['bookSeats', 'bookRefreshmentss']
       });
       if (!booking) {
@@ -722,30 +726,40 @@ export class BookingService {
         throw new ConflictException('Cannot add refreshments after a voucher has been applied.');
       }
 
-      const baseSeatTotal = booking.bookSeats?.reduce(
-        (sum, seat) => sum + Number(seat.totalSeatPrice || 0),
-        0
-      );
+      const baseSeatTotal =
+        booking.bookSeats?.reduce((sum, seat) => sum + Number(seat.totalSeatPrice || 0), 0) ?? 0;
 
-      if (booking.bookRefreshmentss?.length) {
-        await transactionalEntityManager.delete(BookRefreshments, { bookingId: booking.id });
+      if (booking.bookRefreshmentss?.length > 0) {
+        await tx.delete(BookRefreshments, { bookingId: booking.id });
       }
 
       const { totalRefreshmentPrice, bookRefreshmentsToCreate } = await this._calculateRefreshments(
-        transactionalEntityManager,
+        tx,
         dto.refreshmentsOption
       );
 
-      booking.totalBookingPrice = Number(baseSeatTotal || 0) + totalRefreshmentPrice;
+      const finalTotalPrice = baseSeatTotal + totalRefreshmentPrice;
 
       if (bookRefreshmentsToCreate.length > 0) {
-        bookRefreshmentsToCreate.forEach((bookRef) => (bookRef.bookingId = booking.id));
-        await transactionalEntityManager.save(BookRefreshments, bookRefreshmentsToCreate);
+        bookRefreshmentsToCreate.forEach((br) => {
+          br.bookingId = booking.id; // ✅ RAW FK
+        });
+
+        await tx.insert(BookRefreshments, bookRefreshmentsToCreate);
       }
 
-      await transactionalEntityManager.save(Booking, booking);
+      await tx.update(
+        Booking,
+        { id: booking.id },
+        {
+          totalBookingPrice: finalTotalPrice
+        }
+      );
 
-      return booking;
+      return {
+        ...booking,
+        totalBookingPrice: finalTotalPrice
+      };
     });
   }
 
