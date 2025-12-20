@@ -2,6 +2,8 @@ export const CURRENCY = {
   USD: 'usd'
 };
 
+export const STRIPE_MIN_USD_CENTS = 50; // Stripe requires >= $0.50 for USD charges
+
 export const PAYMENT_EXPIRATION_MILLISECONDS = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 export const STRIPE_EVENTS = {

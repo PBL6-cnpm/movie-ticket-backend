@@ -1,6 +1,5 @@
 import { RESPONSE_MESSAGES } from '@common/constants';
 import { HOLD_DURATION_SECONDS } from '@common/constants/booking.constant';
-import { DayOfWeek } from '@common/enums';
 import { BookingStatus } from '@common/enums/booking.enum';
 import { NotFound } from '@common/exceptions';
 import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
@@ -28,7 +27,7 @@ import { TypeDay } from '@shared/db/entities/type-day.entity';
 import { Voucher } from '@shared/db/entities/voucher.entity';
 import { CloudinaryService } from '@shared/modules/cloudinary/cloudinary.service';
 import { RedisService } from '@shared/modules/redis/redis.service';
-import { Between, EntityManager, In } from 'typeorm';
+import { Between, EntityManager, In, Not } from 'typeorm';
 import { BookingResponseDto } from './dto/booking-response.dto';
 import {
   AdditionalPriceDto,
@@ -466,42 +465,29 @@ export class BookingService {
     const specialDate = await entityManager.getRepository(SpecialDate).findOne({
       where: { date: Between(new Date(startOfDay), new Date(endOfDay)) }
     });
-
+    let additionalPrice = 0;
+    let additionalTypeDayId: string | null = null;
     if (specialDate) {
-      return {
-        additionalPrice: specialDate.additionalPrice,
-        additionalSpecialDateId: specialDate.id
-      };
+      additionalPrice += specialDate.additionalPrice;
+      additionalTypeDayId = specialDate.id;
     }
 
     const dayOfWeekIndex = dayjsObjectWithTimezone(showTimeStart).day();
-    const dayMap = {
-      [DayOfWeek.MONDAY]: DayOfWeek.MONDAY,
-      [DayOfWeek.TUESDAY]: DayOfWeek.TUESDAY,
-      [DayOfWeek.WEDNESDAY]: DayOfWeek.WEDNESDAY,
-      [DayOfWeek.THURSDAY]: DayOfWeek.THURSDAY,
-      [DayOfWeek.FRIDAY]: DayOfWeek.FRIDAY,
-      [DayOfWeek.SATURDAY]: DayOfWeek.SATURDAY,
-      [DayOfWeek.SUNDAY]: DayOfWeek.SUNDAY
-    };
 
-    const dayOfWeekName = dayMap[dayOfWeekIndex];
-    if (dayOfWeekName) {
+    if (dayOfWeekIndex !== undefined) {
       const typeDay = await entityManager.getRepository(TypeDay).findOne({
-        where: { dayOfWeek: dayOfWeekName }
+        where: { dayOfWeek: dayOfWeekIndex }
       });
 
       if (typeDay) {
-        return {
-          additionalPrice: typeDay.additionalPrice,
-          additionalTypeDayId: typeDay.id
-        };
+        additionalPrice += typeDay.additionalPrice;
+        additionalTypeDayId = typeDay.id;
       }
     }
 
     return {
-      additionalPrice: 0,
-      additionalTypeDayId: null
+      additionalPrice,
+      additionalTypeDayId
     };
   }
 
@@ -714,16 +700,13 @@ export class BookingService {
         where: {
           id: dto.bookingId,
           accountId: accountId,
-          status: BookingStatus.PENDING
+          status: Not(In([BookingStatus.CONFIRMED]))
         },
         relations: ['bookSeats', 'bookRefreshmentss']
       });
+
       if (!booking) {
         throw new NotFoundException('Pending booking not found for this account.');
-      }
-
-      if (booking.voucherId) {
-        throw new ConflictException('Cannot add refreshments after a voucher has been applied.');
       }
 
       const baseSeatTotal =

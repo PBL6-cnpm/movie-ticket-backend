@@ -1,5 +1,5 @@
 import { RESPONSE_MESSAGES } from '@common/constants';
-import { CURRENCY, STRIPE_EVENTS } from '@common/constants/stripe.constant';
+import { CURRENCY, STRIPE_EVENTS, STRIPE_MIN_USD_CENTS } from '@common/constants/stripe.constant';
 import { BadRequest } from '@common/exceptions';
 import { convertVNDToUSD } from '@common/utils/convert.util';
 import { STRIPE } from '@configs/env.config';
@@ -25,8 +25,14 @@ export class StripeService {
   ): Promise<PaymentIntentDto> {
     const stripeCustomerId = await this.getStripeCustomer(accountId);
 
+    const amountInCents = convertVNDToUSD(totalPrice);
+
+    if (amountInCents < STRIPE_MIN_USD_CENTS) {
+      throw new BadRequest(RESPONSE_MESSAGES.STRIPE_MIN_AMOUNT);
+    }
+
     const paymentIntent = await this.stripe.paymentIntents.create({
-      amount: convertVNDToUSD(totalPrice),
+      amount: amountInCents,
       currency: CURRENCY.USD,
       customer: stripeCustomerId,
       setup_future_usage: 'on_session', // Save the payment method for future use

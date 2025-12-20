@@ -291,6 +291,11 @@ export const RESPONSE_MESSAGES = {
   NO_SEATS_HOLD: {
     message: 'There are no seats currently held',
     code: 'NO_SEATS_HOLD'
+  },
+
+  STRIPE_MIN_AMOUNT: {
+    message: 'Total amount is below Stripe minimum charge requirement',
+    code: 'STRIPE_MIN_AMOUNT'
   }
 };
 
