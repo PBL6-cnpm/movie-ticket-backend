@@ -182,7 +182,6 @@ export class SeatService extends BaseService<Seat> {
       const specialDate = await this.specialDateRepository.findOne({
         where: { date: Between(new Date(startOfDay), new Date(endOfDay)) }
       });
-      console.log(specialDate);
       additionalPrice = additionalPrice + (specialDate?.additionalPrice || 0);
       const dayOfWeekIndex = dayjsObjectWithTimezone(showTime.timeStart).day();
 
