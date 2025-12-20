@@ -1,5 +1,7 @@
 import { BaseController } from '@bases/base-controller';
+import { Permissions } from '@common/decorators/permissions.decorator';
 import { Public } from '@common/decorators/public.decorator';
+import { PermissionName } from '@common/enums';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import {
   Body,
@@ -31,6 +33,7 @@ export class SeatController extends BaseController {
   @ApiOperation({
     summary: 'Create new seat'
   })
+  @Permissions(PermissionName.SEAT_CREATE)
   async createSeat(
     @Body() createSeatDto: CreateSeatDto
   ): Promise<SuccessResponse<SeatResponseDto>> {
@@ -45,6 +48,7 @@ export class SeatController extends BaseController {
   @ApiOperation({
     summary: 'Get all seat by roomId'
   })
+  @Permissions(PermissionName.SEAT_READ)
   async getAllSeatByRoomId(
     @Param('roomId') roomId: string
   ): Promise<SuccessResponse<SeatResponseDto[]>> {
@@ -59,6 +63,7 @@ export class SeatController extends BaseController {
   @ApiOperation({
     summary: 'Update seat'
   })
+  @Permissions(PermissionName.SEAT_UPDATE)
   async updateSeat(
     @Param('id') id: string,
     @Body() updateSeatDto: UpdateSeatDto
@@ -73,6 +78,7 @@ export class SeatController extends BaseController {
   @ApiOperation({
     summary: 'Delete seat'
   })
+  @Permissions(PermissionName.SEAT_DELETE)
   async deleteSeat(@Param('id') id: string): Promise<SuccessResponse<null>> {
     await this.seatService.deleteSeat(id);
     return this.success(null);

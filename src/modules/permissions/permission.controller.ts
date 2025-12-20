@@ -1,4 +1,6 @@
 import { BaseController } from '@bases/base-controller';
+import { Permissions } from '@common/decorators/permissions.decorator';
+import { PermissionName } from '@common/enums';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { RolePermissionService } from '@modules/role-permission/role-permission.service';
 import { PermissionInRole } from '@modules/roles/dto/permission-in-role.dto';
@@ -37,6 +39,7 @@ export class PermissionController extends BaseController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all permission' })
+  @Permissions(PermissionName.PERMISSION_READ)
   async getAllPermission(): Promise<SuccessResponse<PermissionResponseDto[]>> {
     const permissionList = await this.permissionService.findAll();
     const response = permissionList.map((p) => new PermissionResponseDto(p));
@@ -47,6 +50,7 @@ export class PermissionController extends BaseController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get permission by role' })
+  @Permissions(PermissionName.PERMISSION_READ)
   async getPermissionByRoleId(
     @Param('id') id: string
   ): Promise<SuccessResponse<PermissionInRole[]>> {
@@ -73,6 +77,7 @@ export class PermissionController extends BaseController {
   }
 
   @Post(':id/save-permission')
+  @Permissions(PermissionName.ROLE_UPDATE)
   async savePermissionByRoleId(
     @Param('id') id: string,
     @Body('detailedPermissions') detailedPermissions: PermissionUpdateResponseDto[]

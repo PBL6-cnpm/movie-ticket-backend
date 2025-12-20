@@ -1,6 +1,8 @@
 import { BaseController } from '@bases/base-controller';
 import { CurrentAccount } from '@common/decorators/current-account.decorator';
+import { Permissions } from '@common/decorators/permissions.decorator';
 import { Public } from '@common/decorators/public.decorator';
+import { PermissionName } from '@common/enums';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 import { ContextUser } from '@common/types/user.type';
@@ -34,6 +36,7 @@ export class ReviewController extends BaseController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get review detail' })
+  @Permissions(PermissionName.REVIEW_READ)
   async getReviewDetail(
     @Body() getReviewDto: GetReviewDto
   ): Promise<SuccessResponse<ReviewResponseDto>> {
@@ -64,6 +67,7 @@ export class ReviewController extends BaseController {
   @Get('me')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get my review for a movie' })
+  @Permissions(PermissionName.REVIEW_READ)
   async getMyReview(
     @CurrentAccount() account: ContextUser
   ): Promise<SuccessResponse<ReviewResponseDto[]>> {
@@ -74,6 +78,7 @@ export class ReviewController extends BaseController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new review' })
+  @Permissions(PermissionName.REVIEW_CREATE_IN_MOVIE)
   async createReview(
     @CurrentAccount() account: ContextUser,
     @Body() createReviewDto: CreateReviewDto
@@ -85,6 +90,7 @@ export class ReviewController extends BaseController {
   @Put()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update a review' })
+  @Permissions(PermissionName.REVIEW_UPDATE_IN_MOVIE)
   async updateReview(
     @CurrentAccount() account: ContextUser,
     @Body() updateReviewDto: UpdateReviewDto
@@ -96,6 +102,7 @@ export class ReviewController extends BaseController {
   @Delete('/movies/:movieId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a review' })
+  @Permissions(PermissionName.REVIEW_DELETE_IN_MOVIE)
   async deleteReview(
     @CurrentAccount() account: ContextUser,
     @Param('movieId') movieId: string

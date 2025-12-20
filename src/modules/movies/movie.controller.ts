@@ -1,5 +1,7 @@
 import { BaseController } from '@bases/base-controller';
+import { Permissions } from '@common/decorators/permissions.decorator';
 import { Public } from '@common/decorators/public.decorator';
+import { PermissionName } from '@common/enums';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 import PaginationHelper from '@common/utils/pagination.util';
@@ -25,7 +27,6 @@ import { MovieResponseDto } from './dto/movie-response.dto';
 import { UpdateMovieDto } from './dto/update-movie.dto';
 import { MovieService } from './movie.service';
 
-@Public()
 @Controller('movies')
 @ApiTags('Movie')
 export class MovieController extends BaseController {
@@ -35,6 +36,7 @@ export class MovieController extends BaseController {
 
   @Get('now-showing')
   @ApiOperation({ summary: 'Get movies that are currently showing' })
+  @Public()
   async getNowShowingMovies(
     @Query() dto: PaginationDto,
     @Query('branchId') branchId?: string
@@ -51,6 +53,7 @@ export class MovieController extends BaseController {
 
   @Get('upcoming')
   @ApiOperation({ summary: 'Get upcoming movies' })
+  @Public()
   async getUpcomingMovies(
     @Query() dto: PaginationDto
   ): Promise<SuccessResponse<IPaginatedResponse<MovieResponseDto>>> {
@@ -66,6 +69,7 @@ export class MovieController extends BaseController {
 
   @Get('top/revenue/month')
   @ApiOperation({ summary: 'Get top 5 movies by revenue in current month' })
+  @Public()
   async getTopRevenueMoviesThisMonth(): Promise<SuccessResponse<MovieResponseDto[]>> {
     const result = await this.movieService.getTopRevenueMoviesThisMonth();
     return this.success(result);
@@ -95,6 +99,7 @@ export class MovieController extends BaseController {
       }
     }
   })
+  @Permissions(PermissionName.MOVIE_CREATE)
   async createMovie(
     @Body() createMovieDto: CreateMovieDto,
     @UploadedFile() poster: Express.Multer.File
@@ -108,6 +113,7 @@ export class MovieController extends BaseController {
   @ApiOperation({ summary: 'Update movie by ID' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ type: UpdateMovieDto })
+  @Permissions(PermissionName.MOVIE_UPDATE)
   async updateMovie(
     @Param('id') id: string,
     @Body() updateDto: UpdateMovieDto,
@@ -119,6 +125,7 @@ export class MovieController extends BaseController {
 
   @Get('search/by-name')
   @ApiOperation({ summary: 'Search movies & actors by name' })
+  @Public()
   async searchByName(
     @Query('name') name: string,
     @Query() dto: PaginationDto
@@ -155,6 +162,7 @@ export class MovieController extends BaseController {
 
   @Get('search/by-name-movie')
   @ApiOperation({ summary: 'Search movies & actors by name' })
+  @Public()
   async searchByNameMovie(
     @Query('name') name: string,
     @Query() dto: PaginationDto
@@ -173,6 +181,7 @@ export class MovieController extends BaseController {
 
   @Get('genres/all')
   @ApiOperation({ summary: 'Get all movie genres' })
+  @Public()
   async getAllGenres(): Promise<SuccessResponse<{ id: string; name: string }[]>> {
     const genres = await this.movieService.getAllGenres();
     return this.success(genres);
@@ -180,6 +189,7 @@ export class MovieController extends BaseController {
 
   @Get('filter/by-genres')
   @ApiOperation({ summary: 'Filter movies by genres (paginated)' })
+  @Public()
   async filterByGenres(
     @Query('genres') genres: string | string[],
     @Query() dto: PaginationDto
@@ -202,6 +212,7 @@ export class MovieController extends BaseController {
 
   @Get()
   @ApiOperation({ summary: 'Get paginated list of movies' })
+  @Permissions(PermissionName.MOVIE_READ)
   async getPaginatedMovies(
     @Query() dto: PaginationDto
   ): Promise<SuccessResponse<IPaginatedResponse<MovieResponseDto>>> {
@@ -219,12 +230,14 @@ export class MovieController extends BaseController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get movie by ID' })
+  @Public()
   async getMovieById(@Param('id') id: string): Promise<SuccessResponse<MovieResponseDto>> {
     const movie = await this.movieService.getMovieById(id);
     return this.success(movie);
   }
 
   @Get('/get-with-branches/:id')
+  @Public()
   async getMovieWithBranches(
     @Param('id') id: string
   ): Promise<SuccessResponse<IPaginatedResponse<MovieResponseDto>>> {
@@ -235,6 +248,7 @@ export class MovieController extends BaseController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete movie by ID' })
+  @Permissions(PermissionName.MOVIE_DELETE)
   async deleteMovie(@Param('id') id: string): Promise<SuccessResponse<null>> {
     await this.movieService.deleteMovie(id);
     return this.deleted();

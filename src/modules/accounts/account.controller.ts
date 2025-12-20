@@ -5,6 +5,8 @@ import { PermissionName, RoleName } from '@common/enums';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 import { ContextUser } from '@common/types/user.type';
+import { BookingService } from '@modules/booking/booking.service';
+import { BookingResponseDto } from '@modules/booking/dto/booking-response.dto';
 import {
   Body,
   Controller,
@@ -20,8 +22,6 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { BookingService } from '@modules/booking/booking.service';
-import { BookingResponseDto } from '@modules/booking/dto/booking-response.dto';
 import { AccountService } from './account.service';
 import { AccountResponseDto } from './dto/account-response.dto';
 import { AdminAccountDto } from './dto/admin-account.dto';
@@ -43,7 +43,6 @@ export class AccountController extends BaseController {
   ) {
     super();
   }
-
 
   @Get('users/:id')
   @HttpCode(HttpStatus.OK)
@@ -78,6 +77,7 @@ export class AccountController extends BaseController {
     status: HttpStatus.OK,
     description: 'Current user profile retrieved successfully'
   })
+  @Permissions(PermissionName.ACCOUNT_READ_ME)
   async getProfile(
     @CurrentAccount() account: ContextUser
   ): Promise<SuccessResponse<AccountResponseDto>> {
@@ -90,6 +90,7 @@ export class AccountController extends BaseController {
   @UseInterceptors(FileInterceptor('avatarUrl'))
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update current user account' })
+  @Permissions(PermissionName.ACCOUNT_UPDATE_ME)
   async updateCurrentUserAccount(
     @CurrentAccount() account: ContextUser,
     @Body() updateCustomerAccountDto: UpdateCustomerAccountDto,
@@ -110,6 +111,7 @@ export class AccountController extends BaseController {
     summary: 'Update account passwords',
     description: 'Update the passwords for an existing account'
   })
+  @Permissions(PermissionName.ACCOUNT_UPDATE_ME)
   async resetPassword(
     @CurrentAccount() account: ContextUser,
     @Body() resetPasswordDto: ResetPasswordDto

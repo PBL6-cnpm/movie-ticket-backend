@@ -1,6 +1,8 @@
 import { BaseController } from '@bases/base-controller';
 import { RESPONSE_MESSAGES } from '@common/constants';
 import { CurrentAccount } from '@common/decorators/current-account.decorator';
+import { Permissions } from '@common/decorators/permissions.decorator';
+import { PermissionName } from '@common/enums';
 import { BadRequest } from '@common/exceptions';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { ContextUser } from '@common/types/user.type';
@@ -33,6 +35,7 @@ export class RoomController extends BaseController {
   @ApiOperation({
     summary: 'Create a new room'
   })
+  @Permissions(PermissionName.ROOM_CREATE)
   async createRoom(
     @CurrentAccount() account: ContextUser,
     @Body() createRoomDto: CreateRoomDto
@@ -61,6 +64,7 @@ export class RoomController extends BaseController {
     description: 'Current user branch rooms retrieved successfully',
     type: [RoomResponseDto]
   })
+  @Permissions(PermissionName.ROOM_READ)
   async getRoomsByCurrentUserBranch(
     @CurrentAccount() account: ContextUser
   ): Promise<SuccessResponse<RoomResponseDto[]>> {
@@ -79,6 +83,7 @@ export class RoomController extends BaseController {
     summary: 'Get rooms by branch ID',
     description: 'Retrieve all rooms belonging to a specific branch'
   })
+  @Permissions(PermissionName.ROOM_READ)
   async getRoomsByBranch(
     @Param('branchId') branchId: string
   ): Promise<SuccessResponse<RoomResponseDto[]>> {
@@ -92,6 +97,7 @@ export class RoomController extends BaseController {
   @ApiOperation({
     summary: 'Get room by ID'
   })
+  @Permissions(PermissionName.ROOM_READ)
   async getRoomById(@Param('id') id: string): Promise<SuccessResponse<RoomResponseDto>> {
     const room = await this.roomService.getRoomById(id);
     const response = new RoomResponseDto(room);
@@ -103,6 +109,7 @@ export class RoomController extends BaseController {
   @ApiOperation({
     summary: 'Update room'
   })
+  @Permissions(PermissionName.ROOM_UPDATE)
   async updateRoom(
     @Param('id') id: string,
     @Body() updateRoomDto: UpdateRoomDto,
@@ -119,6 +126,7 @@ export class RoomController extends BaseController {
     summary: 'Delete room',
     description: 'Delete a room. Cannot delete if the room has any showtimes.'
   })
+  @Permissions(PermissionName.ROOM_DELETE)
   async deleteRoom(
     @Param('id') id: string,
     @CurrentAccount() account: ContextUser

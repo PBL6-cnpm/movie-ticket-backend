@@ -1,4 +1,6 @@
 import { BaseController } from '@bases/base-controller';
+import { Permissions } from '@common/decorators/permissions.decorator';
+import { PermissionName } from '@common/enums';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { Body, Controller, Get, HttpCode, HttpStatus, Logger, Param, Put } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
@@ -27,6 +29,7 @@ export class TypeDayController extends BaseController {
     description: 'List of type day successfully',
     type: [TypeDayResponseDto]
   })
+  @Permissions(PermissionName.TYPE_DAY_READ)
   async getAllTypeDay(): Promise<SuccessResponse<TypeDayResponseDto[]>> {
     this.logger.log('Get All Type Day');
 
@@ -42,6 +45,7 @@ export class TypeDayController extends BaseController {
   @ApiOperation({
     summary: 'Update Type Day'
   })
+  @Permissions(PermissionName.TYPE_DAY_UPDATE)
   async updateTypeDay(
     @Param('id') id: string,
     @Body() updateTypeDayDto: UpdateTypeDayDto

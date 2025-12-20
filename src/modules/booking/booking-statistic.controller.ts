@@ -1,4 +1,6 @@
 import { BaseController } from '@bases/base-controller';
+import { Permissions } from '@common/decorators/permissions.decorator';
+import { PermissionName } from '@common/enums';
 import { TimeGroupBy } from '@common/enums/booking.enum';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { Controller, Get, HttpCode, HttpStatus, ParseEnumPipe, Query } from '@nestjs/common';
@@ -25,6 +27,7 @@ export class BookingStatisticController extends BaseController {
     status: HttpStatus.OK,
     description: 'Statistics of revenue by movie retrieved successfully'
   })
+  @Permissions(PermissionName.BOOKING_BY_STAFF)
   async getRevenueByMovie(
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string
@@ -44,6 +47,7 @@ export class BookingStatisticController extends BaseController {
   })
   @ApiQuery({ name: 'startDate', required: false, type: String })
   @ApiQuery({ name: 'endDate', required: false, type: String })
+  @Permissions(PermissionName.BOOKING_BY_STAFF)
   async getRevenueByTime(
     @Query('groupBy', new ParseEnumPipe(TimeGroupBy)) groupBy: TimeGroupBy,
     @Query('startDate') startDate?: string,
@@ -57,6 +61,7 @@ export class BookingStatisticController extends BaseController {
   @Get('revenue/branch/time')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get time-based revenue statistics of a branch' })
+  @Permissions(PermissionName.BOOKING_BY_STAFF)
   async getBranchRevenueStats(
     @Query() query: RevenueStatsQueryDto
   ): Promise<SuccessResponse<SingleBranchRevenueDto>> {
@@ -68,6 +73,7 @@ export class BookingStatisticController extends BaseController {
   @Get('revenue/branch/by-movie')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get movie revenue statistics of a branch' })
+  @Permissions(PermissionName.BOOKING_BY_STAFF)
   async getBranchRevenueByMovie(
     @Query() query: RevenueStatsQueryDto
   ): Promise<SuccessResponse<SingleBranchRevenueDto>> {
