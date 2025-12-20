@@ -9,6 +9,9 @@ RUN npm config set registry https://registry.npmmirror.com
 
 COPY package.json yarn.lock ./
 
+ENV YARN_CACHE_FOLDER=/tmp/.yarn-cache
+RUN mkdir -p "$YARN_CACHE_FOLDER"
+
 RUN yarn install --network-timeout 600000
 
 COPY . .
