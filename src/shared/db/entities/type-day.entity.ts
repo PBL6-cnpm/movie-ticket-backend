@@ -11,8 +11,7 @@ export class TypeDay extends BaseEntityTime {
 
   @Column({
     name: 'day_of_week',
-    type: 'enum',
-    enum: DayOfWeek
+    type: 'tinyint'
   })
   dayOfWeek: DayOfWeek;
 

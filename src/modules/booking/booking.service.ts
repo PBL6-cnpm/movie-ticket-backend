@@ -711,7 +711,8 @@ export class BookingService {
   async addRefreshmentsToBooking(dto: ApplyRefreshmentsDto, accountId: string) {
     return this.entityManager.transaction(async (transactionalEntityManager) => {
       const booking = await transactionalEntityManager.findOne(Booking, {
-        where: { id: dto.bookingId, accountId: accountId, status: BookingStatus.PENDING }
+        where: { id: dto.bookingId, accountId: accountId, status: BookingStatus.PENDING },
+        relations: ['bookSeats', 'bookRefreshmentss']
       });
       if (!booking) {
         throw new NotFoundException('Pending booking not found for this account.');
@@ -721,19 +722,26 @@ export class BookingService {
         throw new ConflictException('Cannot add refreshments after a voucher has been applied.');
       }
 
+      const baseSeatTotal = booking.bookSeats?.reduce(
+        (sum, seat) => sum + Number(seat.totalSeatPrice || 0),
+        0
+      );
+
+      if (booking.bookRefreshmentss?.length) {
+        await transactionalEntityManager.delete(BookRefreshments, { bookingId: booking.id });
+      }
+
       const { totalRefreshmentPrice, bookRefreshmentsToCreate } = await this._calculateRefreshments(
         transactionalEntityManager,
         dto.refreshmentsOption
       );
 
-      if (totalRefreshmentPrice === 0) {
-        return booking;
+      booking.totalBookingPrice = Number(baseSeatTotal || 0) + totalRefreshmentPrice;
+
+      if (bookRefreshmentsToCreate.length > 0) {
+        bookRefreshmentsToCreate.forEach((bookRef) => (bookRef.bookingId = booking.id));
+        await transactionalEntityManager.save(BookRefreshments, bookRefreshmentsToCreate);
       }
-
-      booking.totalBookingPrice += totalRefreshmentPrice;
-
-      bookRefreshmentsToCreate.forEach((bookRef) => (bookRef.bookingId = booking.id));
-      await transactionalEntityManager.save(BookRefreshments, bookRefreshmentsToCreate);
 
       await transactionalEntityManager.save(Booking, booking);
 

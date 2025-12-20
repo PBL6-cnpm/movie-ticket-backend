@@ -1,7 +1,9 @@
 import { BaseController } from '@bases/base-controller';
 import { RESPONSE_MESSAGES } from '@common/constants';
 import { CurrentAccount } from '@common/decorators/current-account.decorator';
+import { Permissions } from '@common/decorators/permissions.decorator';
 import { Public } from '@common/decorators/public.decorator';
+import { PermissionName } from '@common/enums';
 import { BadRequest } from '@common/exceptions';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { IPaginatedResponse } from '@common/types/pagination-base.type';
@@ -19,8 +21,8 @@ import {
   Query
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
-import { IsOptional, IsUUID } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { IsOptional, IsUUID } from 'class-validator';
 import { CreateShowTimeDto } from './dto/create-show-time.dto';
 import { ShowTimeGroupedResponseDto, ShowTimeResponseDto } from './dto/show-time-response.dto';
 import { UpdateShowTimeDto } from './dto/update-show-time.dto';
@@ -68,6 +70,7 @@ export class ShowTimeController extends BaseController {
   @Get('date/:date/movie/:movieId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get showtimes by date and movie ID for current user branch' })
+  @Permissions(PermissionName.SHOW_TIME_READ)
   async getShowTimeByDateAndMovieId(
     @Param('date') date: string,
     @Param('movieId') movieId: string,
@@ -102,6 +105,7 @@ export class ShowTimeController extends BaseController {
   @Get('show-date/:date')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get show time by date' })
+  @Permissions(PermissionName.SHOW_TIME_READ)
   async getShowTimeByDate(
     @Param('date') date: Date,
     @CurrentAccount() account: ContextUser
@@ -124,6 +128,7 @@ export class ShowTimeController extends BaseController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create new show time' })
+  @Permissions(PermissionName.SHOW_TIME_CREATE)
   async createShowTime(
     @CurrentAccount() account: ContextUser,
     @Body() createShowTimeDto: CreateShowTimeDto
@@ -146,6 +151,7 @@ export class ShowTimeController extends BaseController {
   @ApiOperation({
     summary: 'Update show time'
   })
+  @Permissions(PermissionName.SHOW_TIME_UPDATE)
   async updateShowTime(
     @Param('id') id: string,
     @CurrentAccount() account: ContextUser,
@@ -171,6 +177,7 @@ export class ShowTimeController extends BaseController {
   @ApiOperation({
     summary: 'Delete show time'
   })
+  @Permissions(PermissionName.SHOW_TIME_DELETE)
   async deleteShowTime(
     @Param('id') id: string,
     @CurrentAccount() account: ContextUser
@@ -184,6 +191,7 @@ export class ShowTimeController extends BaseController {
   }
 
   @Get('get-with-branch')
+  @Permissions(PermissionName.SHOW_TIME_READ_BY_MOVIE_AND_DAY)
   async getShowTimesWithBranch(
     @Query() query: GetShowtimesQueryDto
   ): Promise<SuccessResponse<IPaginatedResponse<ShowTimeGroupedResponseDto>>> {

@@ -1,5 +1,7 @@
 import { BaseController } from '@bases/base-controller';
+import { Permissions } from '@common/decorators/permissions.decorator';
 import { Public } from '@common/decorators/public.decorator';
+import { PermissionName } from '@common/enums';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 import PaginationHelper from '@common/utils/pagination.util';
@@ -15,7 +17,6 @@ import { VoucherResponseDto } from './dto/voucher-response.dto';
 import { VoucherService } from './voucher.service';
 
 @Controller('voucher')
-@Public()
 @ApiTags('Voucher')
 export class VoucherController extends BaseController {
   constructor(private readonly voucherService: VoucherService) {
@@ -31,6 +32,7 @@ export class VoucherController extends BaseController {
     description: 'Returns list of all vouchers.',
     type: [VoucherResponseDto]
   })
+  @Permissions(PermissionName.VOUCHER_READ)
   async getAllVouchers(
     @Query() dto: PaginationDto
   ): Promise<SuccessResponse<IPaginatedResponse<VoucherResponseDto>>> {
@@ -52,6 +54,7 @@ export class VoucherController extends BaseController {
     type: VoucherResponseDto
   })
   @ApiResponse({ status: 400, description: 'Invalid data or voucher code already exists.' })
+  @Permissions(PermissionName.VOUCHER_CREATE)
   async createVoucher(
     @Body() createVoucherDto: CreateVoucherDto
   ): Promise<SuccessResponse<VoucherResponseDto>> {
@@ -75,6 +78,7 @@ export class VoucherController extends BaseController {
     description: 'Returns list of found vouchers.',
     type: [VoucherResponseDto]
   })
+  @Permissions(PermissionName.VOUCHER_READ)
   async searchVouchers(
     @Query() paginationDto: PaginationDto,
     @Query() searchDto: SearchVoucherDto,
@@ -103,6 +107,7 @@ export class VoucherController extends BaseController {
     description: 'Returns a list of public vouchers.',
     type: [PublicVoucherDto]
   })
+  @Public()
   async getPublicVouchers(): Promise<SuccessResponse<PublicVoucherDto[]>> {
     const result = await this.voucherService.getPublicVouchers();
     return this.success(result);
@@ -117,6 +122,7 @@ export class VoucherController extends BaseController {
   })
   @ApiResponse({ status: 400, description: 'Voucher is out of stock or code is empty.' })
   @ApiResponse({ status: 404, description: 'Voucher code does not exist.' })
+  @Public()
   async checkVoucher(
     @Body() checkVoucherDto: CheckVoucherDto
   ): Promise<SuccessResponse<CheckedVoucherDto>> {
@@ -131,6 +137,7 @@ export class VoucherController extends BaseController {
     description: 'Returns the final price after applying the voucher.',
     type: CheckedVoucherWithFinalPriceDto
   })
+  @Permissions(PermissionName.VOUCHER_READ)
   async calculateBookingPriceWithVoucher(
     @Body() checkVoucherDto: CheckVoucherDto,
     @Param('bookingId') bookingId: string
@@ -150,6 +157,7 @@ export class VoucherController extends BaseController {
     type: VoucherResponseDto
   })
   @ApiResponse({ status: 404, description: 'Voucher not found.' })
+  @Permissions(PermissionName.VOUCHER_READ)
   async getVoucherById(@Param('id') id: string): Promise<SuccessResponse<VoucherResponseDto>> {
     const result = await this.voucherService.getVoucherById(id);
     return this.success(result);
@@ -164,6 +172,7 @@ export class VoucherController extends BaseController {
   })
   @ApiResponse({ status: 404, description: 'Voucher not found.' })
   @ApiResponse({ status: 400, description: 'Invalid data.' })
+  @Permissions(PermissionName.VOUCHER_UPDATE)
   async updateVoucher(
     @Param('id') id: string,
     @Body() updateVoucherDto: UpdateVoucherDto
@@ -178,6 +187,7 @@ export class VoucherController extends BaseController {
     status: 200,
     description: 'Voucher deleted successfully.'
   })
+  @Permissions(PermissionName.VOUCHER_DELETE)
   async deleteVoucher(@Param('id') id: string): Promise<SuccessResponse<null>> {
     await this.voucherService.deleteVoucher(id);
     return this.deleted();

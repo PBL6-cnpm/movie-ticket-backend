@@ -1,5 +1,7 @@
 import { BaseController } from '@bases/base-controller';
 import { CurrentAccount } from '@common/decorators/current-account.decorator';
+import { Permissions } from '@common/decorators/permissions.decorator';
+import { PermissionName } from '@common/enums';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { ContextUser } from '@common/types/user.type';
 import { Controller, Get, HttpCode, HttpStatus, Query } from '@nestjs/common';
@@ -20,6 +22,7 @@ export class ReportController extends BaseController {
   @Get('revenue')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get revenue statistics' })
+  @Permissions(PermissionName.BOOKING_BY_STAFF)
   async getRevenue(
     @CurrentAccount() account: ContextUser,
     @Query('period') period: 'day' | 'week' | 'month' = 'day'
@@ -31,6 +34,7 @@ export class ReportController extends BaseController {
   @Get('popular-movies')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get popular movies' })
+  @Permissions(PermissionName.BOOKING_BY_STAFF)
   async getPopularMovies(
     @CurrentAccount() account: ContextUser
   ): Promise<SuccessResponse<PopularMovieResponseDto[]>> {

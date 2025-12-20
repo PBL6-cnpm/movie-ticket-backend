@@ -1,6 +1,8 @@
 import { BaseController } from '@bases/base-controller';
 import { CurrentAccount } from '@common/decorators/current-account.decorator';
+import { Permissions } from '@common/decorators/permissions.decorator';
 import { Public } from '@common/decorators/public.decorator';
+import { PermissionName } from '@common/enums';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 import { ContextUser } from '@common/types/user.type';
@@ -54,6 +56,7 @@ export class BookingController extends BaseController {
     status: HttpStatus.OK,
     description: 'List of bookings retrieved successfully'
   })
+  @Permissions(PermissionName.BOOKING_BY_CUSTOMER)
   async getUserBookings(
     @Query() dto: PaginationDto,
     @CurrentAccount() account: ContextUser
@@ -65,6 +68,7 @@ export class BookingController extends BaseController {
   @Get('branch')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get bookings for a specific branch' })
+  @Permissions(PermissionName.BOOKING_BY_STAFF)
   async getBranchBookings(
     @Query() dto: PaginationDto,
     @Query('search') search: string,
@@ -87,6 +91,7 @@ export class BookingController extends BaseController {
   @Post('hold')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Hold booking for selected seats' })
+  @Permissions(PermissionName.BOOKING_BY_CUSTOMER)
   async holdBooking(@Body() body: QueryHoldBookingDto, @CurrentAccount() user: ContextUser) {
     const result = await this.bookingService.holdBooking(body, user.id);
     return this.success(result);
@@ -99,6 +104,7 @@ export class BookingController extends BaseController {
     status: HttpStatus.OK,
     description: 'Payment intent created successfully'
   })
+  @Permissions(PermissionName.BOOKING_BY_CUSTOMER)
   async createPaymentIntent(
     @CurrentAccount() account: ContextUser,
     @Body() createPaymentIntentDto: CreatePaymentIntentDto
@@ -117,6 +123,7 @@ export class BookingController extends BaseController {
     status: HttpStatus.OK,
     description: 'Cash payment confirmed successfully'
   })
+  @Permissions(PermissionName.BOOKING_BY_STAFF)
   async confirmCashPayment(@Body() body: { bookingId: string }): Promise<SuccessResponse<any>> {
     const result = await this.paymentService.confirmCashPayment(body.bookingId);
     return this.success(result);
@@ -150,6 +157,7 @@ export class BookingController extends BaseController {
   @Post('hold/android-platform')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Hold booking for selected seats on Android platform' })
+  @Permissions(PermissionName.BOOKING_BY_CUSTOMER)
   async holdBookingAndroid(
     @Body() body: QueryHoldBookingAndroidPlatformDto,
     @CurrentAccount() user: ContextUser
@@ -161,6 +169,7 @@ export class BookingController extends BaseController {
   @Post('/refreshments')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Calculate and return refreshments price for a booking' })
+  @Permissions(PermissionName.BOOK_REFRESHMENTS_AT_COUNTER)
   async calculateRefreshmentsPrice(
     @Body() body: ApplyRefreshmentsDto
   ): Promise<SuccessResponse<CalculateRefreshmentsPriceResponseDto>> {
@@ -184,6 +193,7 @@ export class BookingController extends BaseController {
     status: HttpStatus.OK,
     description: 'Refreshments added successfully, booking total updated.'
   })
+  @Permissions(PermissionName.BOOK_REFRESHMENTS_AT_COUNTER)
   async applyRefreshments(@Body() body: ApplyRefreshmentsDto, @CurrentAccount() user: ContextUser) {
     const result = await this.bookingService.addRefreshmentsToBooking(body, user.id);
     return this.success(result);
@@ -196,6 +206,7 @@ export class BookingController extends BaseController {
     status: HttpStatus.OK,
     description: 'Voucher applied successfully, booking total updated.'
   })
+  @Permissions(PermissionName.BOOKING_BY_CUSTOMER)
   async applyVoucher(@Body() body: ApplyVoucherDto, @CurrentAccount() user: ContextUser) {
     const result = await this.bookingService.applyVoucherToBooking(body, user.id);
     return this.success(result);
@@ -221,6 +232,7 @@ export class BookingController extends BaseController {
     status: HttpStatus.OK,
     description: 'Check-in completed successfully'
   })
+  @Permissions(PermissionName.BOOKING_CHECKIN)
   async checkInBooking(
     @Param('bookingId') bookingId: string
   ): Promise<SuccessResponse<BookingResponseDto>> {

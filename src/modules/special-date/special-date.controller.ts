@@ -1,4 +1,6 @@
 import { BaseController } from '@bases/base-controller';
+import { Permissions } from '@common/decorators/permissions.decorator';
+import { PermissionName } from '@common/enums';
 import {
   Body,
   Controller,
@@ -32,6 +34,7 @@ export class SpecialDateController extends BaseController {
     description: 'Special date created successfully',
     type: SpecialDateResponseDto
   })
+  @Permissions(PermissionName.SPECIAL_DAY_CREATE)
   async createSpecialDate(@Body() dto: CreateSpecialDateDto) {
     console.log(dto.date);
     const specialDate = await this.specialDateService.createSpecialDate(dto);
@@ -46,6 +49,7 @@ export class SpecialDateController extends BaseController {
     description: 'Special dates retrieved successfully',
     type: [SpecialDateResponseDto]
   })
+  @Permissions(PermissionName.SPECIAL_DAY_READ)
   async getAllSpecialDates() {
     const specialDates = await this.specialDateService.getAllSpecialDay();
     return this.success(specialDates.map((sd) => new SpecialDateResponseDto(sd)));
@@ -63,6 +67,7 @@ export class SpecialDateController extends BaseController {
     status: HttpStatus.NOT_FOUND,
     description: 'Special date not found'
   })
+  @Permissions(PermissionName.SPECIAL_DAY_READ)
   async getSpecialDateById(@Param('id') id: string) {
     const specialDate = await this.specialDateService.getSpecialDateById(id);
     return this.success(new SpecialDateResponseDto(specialDate));
@@ -76,6 +81,7 @@ export class SpecialDateController extends BaseController {
     description: 'Special date updated successfully',
     type: SpecialDateResponseDto
   })
+  @Permissions(PermissionName.SPECIAL_DAY_UPDATE)
   async updateSpecialDate(@Param('id') id: string, @Body() dto: UpdateSpecialDateDto) {
     const specialDate = await this.specialDateService.updateSpecialDate(id, dto);
     return this.updated(new SpecialDateResponseDto(specialDate));
@@ -88,6 +94,7 @@ export class SpecialDateController extends BaseController {
     status: HttpStatus.OK,
     description: 'Special date deleted successfully'
   })
+  @Permissions(PermissionName.SPECIAL_DAY_DELETE)
   async deleteSpecialDate(@Param('id') id: string) {
     await this.specialDateService.deleteSpecialDate(id);
     return this.deleted();

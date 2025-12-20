@@ -1,5 +1,7 @@
 import { BaseController } from '@bases/base-controller';
+import { Permissions } from '@common/decorators/permissions.decorator';
 import { Public } from '@common/decorators/public.decorator';
+import { PermissionName } from '@common/enums';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 import {
@@ -48,6 +50,7 @@ export class BranchController extends BaseController {
     status: HttpStatus.CONFLICT,
     description: 'Branch with this name and address already exists'
   })
+  @Permissions(PermissionName.BRANCH_CREATE)
   async createBranch(
     @Body() createBranchDto: CreateBranchDto
   ): Promise<SuccessResponse<BranchResponseDto>> {
@@ -149,6 +152,7 @@ export class BranchController extends BaseController {
     status: HttpStatus.NOT_FOUND,
     description: 'Branch not found'
   })
+  @Permissions(PermissionName.BRANCH_READ)
   async getBranchById(@Param('id') id: string): Promise<SuccessResponse<BranchResponseDto>> {
     this.logger.log(`Fetching branch with ID: ${id}`);
     const branch = await this.branchService.getBranchById(id);
@@ -181,6 +185,7 @@ export class BranchController extends BaseController {
     status: HttpStatus.CONFLICT,
     description: 'Branch with this name and address already exists'
   })
+  @Permissions(PermissionName.BRANCH_UPDATE)
   async updateBranch(
     @Param('id') id: string,
     @Body() updateBranchDto: UpdateBranchDto
@@ -215,6 +220,7 @@ export class BranchController extends BaseController {
     status: HttpStatus.CONFLICT,
     description: 'Cannot delete branch with associated accounts or rooms'
   })
+  @Permissions(PermissionName.BRANCH_DELETE)
   async deleteBranch(@Param('id') id: string): Promise<SuccessResponse<null>> {
     this.logger.log(`Deleting branch with ID: ${id}`);
     await this.branchService.deleteBranch(id);

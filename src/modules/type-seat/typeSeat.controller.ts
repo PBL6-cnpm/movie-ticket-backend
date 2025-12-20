@@ -1,4 +1,6 @@
 import { BaseController } from '@bases/base-controller';
+import { Permissions } from '@common/decorators/permissions.decorator';
+import { PermissionName } from '@common/enums';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 import {
@@ -29,6 +31,7 @@ export class TypeSeatController extends BaseController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get type seat by ID' })
+  @Permissions(PermissionName.TYPE_SEAT_READ)
   async getTypeSeatById(@Param('id') id: string): Promise<SuccessResponse<TypeSeatResponseDto>> {
     const result = await this.typeSeatService.getTypeSeatById(id);
     return this.success(result);
@@ -37,6 +40,7 @@ export class TypeSeatController extends BaseController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all type seats' })
+  @Permissions(PermissionName.TYPE_SEAT_READ)
   async getAllTypeSeats(
     @Query() dto: PaginationDto
   ): Promise<SuccessResponse<IPaginatedResponse<TypeSeatResponseDto>>> {
@@ -47,6 +51,7 @@ export class TypeSeatController extends BaseController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new type seat' })
+  @Permissions(PermissionName.TYPE_SEAT_CREATE)
   async createTypeSeat(
     @Body() createTypeSeatDto: CreateTypeSeatDto
   ): Promise<SuccessResponse<TypeSeatResponseDto>> {
@@ -57,6 +62,7 @@ export class TypeSeatController extends BaseController {
   @Put(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update current status of type seat by ID' })
+  @Permissions(PermissionName.TYPE_SEAT_UPDATE)
   async updateTypeSeat(
     @Param('id') id: string,
     @Body() updateTypeSeatDto: UpdateTypeSeatDto

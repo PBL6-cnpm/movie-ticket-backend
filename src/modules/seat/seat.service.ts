@@ -1,6 +1,5 @@
 import { BaseService } from '@bases/base-service';
 import { RESPONSE_MESSAGES } from '@common/constants';
-import { DayOfWeek } from '@common/enums';
 import { BookingStatus } from '@common/enums/booking.enum';
 import { BadRequest } from '@common/exceptions';
 import { dayjsObjectWithTimezone, getStartAndEndOfDay } from '@common/utils/date.util';
@@ -183,31 +182,18 @@ export class SeatService extends BaseService<Seat> {
       const specialDate = await this.specialDateRepository.findOne({
         where: { date: Between(new Date(startOfDay), new Date(endOfDay)) }
       });
+      console.log(specialDate);
+      additionalPrice = additionalPrice + (specialDate?.additionalPrice || 0);
+      const dayOfWeekIndex = dayjsObjectWithTimezone(showTime.timeStart).day();
 
-      if (specialDate) {
-        additionalPrice = specialDate.additionalPrice;
-      } else {
-        const dayOfWeekIndex = dayjsObjectWithTimezone(showTime.timeStart).day();
-        const dayMap = {
-          [DayOfWeek.MONDAY]: DayOfWeek.MONDAY,
-          [DayOfWeek.TUESDAY]: DayOfWeek.TUESDAY,
-          [DayOfWeek.WEDNESDAY]: DayOfWeek.WEDNESDAY,
-          [DayOfWeek.THURSDAY]: DayOfWeek.THURSDAY,
-          [DayOfWeek.FRIDAY]: DayOfWeek.FRIDAY,
-          [DayOfWeek.SATURDAY]: DayOfWeek.SATURDAY,
-          [DayOfWeek.SUNDAY]: DayOfWeek.SUNDAY
-        };
+      if (dayOfWeekIndex !== undefined) {
+        const typeDay = await this.typeDayRepository.findOne({
+          where: { dayOfWeek: dayOfWeekIndex, isCurrent: true }
+        });
+        console.log(typeDay);
 
-        const dayOfWeekName = dayMap[dayOfWeekIndex];
-        console.log(dayOfWeekName);
-        if (dayOfWeekName) {
-          const typeDay = await this.typeDayRepository.findOne({
-            where: { dayOfWeek: dayOfWeekName }
-          });
-
-          if (typeDay) {
-            additionalPrice = typeDay.additionalPrice;
-          }
+        if (typeDay) {
+          additionalPrice = additionalPrice + (typeDay.additionalPrice || 0);
         }
       }
     }

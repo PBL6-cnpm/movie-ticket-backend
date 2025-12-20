@@ -1,5 +1,7 @@
 import { BaseController } from '@bases/base-controller';
+import { Permissions } from '@common/decorators/permissions.decorator';
 import { Public } from '@common/decorators/public.decorator';
+import { PermissionName } from '@common/enums';
 import { SuccessResponse } from '@common/interfaces/api-response.interface';
 import { IPaginatedResponse, PaginationDto } from '@common/types/pagination-base.type';
 import PaginationHelper from '@common/utils/pagination.util';
@@ -24,8 +26,6 @@ import { RefreshmentResponseDto } from './dto/refreshment-response.dto';
 import { UpdateRefreshmentDto } from './dto/update-refreshment.dto';
 import { RefreshmentService } from './refreshment.service';
 
-@Public()
-// @ApiBearerAuth()
 @Controller('refreshments')
 @ApiTags('Refreshments')
 export class RefreshmentController extends BaseController {
@@ -49,6 +49,7 @@ export class RefreshmentController extends BaseController {
       }
     }
   })
+  @Permissions(PermissionName.REFRESHMENTS_CREATE)
   async createRefreshment(
     @Body() createReFreshmentDto: CreateRefreshmentDto,
     @UploadedFile() picture: Express.Multer.File
@@ -75,6 +76,7 @@ export class RefreshmentController extends BaseController {
       }
     }
   })
+  @Permissions(PermissionName.REFRESHMENTS_UPDATE)
   async updateRefreshment(
     @Param('id') id: string,
     @Body() updateRefreshmentDto: UpdateRefreshmentDto,
@@ -91,6 +93,7 @@ export class RefreshmentController extends BaseController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all refreshments' })
+  @Public()
   async getAllRefreshments(
     @Query() dto: PaginationDto
   ): Promise<SuccessResponse<IPaginatedResponse<RefreshmentResponseDto>>> {
@@ -108,6 +111,7 @@ export class RefreshmentController extends BaseController {
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get refreshment by ID' })
+  @Public()
   async getRefreshmentById(
     @Param('id') id: string
   ): Promise<SuccessResponse<RefreshmentResponseDto>> {
@@ -118,6 +122,7 @@ export class RefreshmentController extends BaseController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete a refreshment by ID' })
+  @Permissions(PermissionName.REFRESHMENTS_DELETE)
   async deleteRefreshment(@Param('id') id: string): Promise<SuccessResponse<null>> {
     await this.refreshmentService.deleteRefreshment(id);
     return this.deleted();
