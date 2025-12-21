@@ -104,8 +104,8 @@ export class SeederService {
       // await this.seedSeats();
       // await this.seedTypeSeats();
       // await this.seedShowTimes();
-      await this.seedAuthorization();
-      // await this.seedBookings();
+      // await this.seedAuthorization();
+      await this.seedBookings();
     } catch (error) {
       console.log(error);
     }

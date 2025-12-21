@@ -1,4 +1,5 @@
 import {
+  defaultTimezone,
   HOLD_DURATION_SECONDS,
   JOB_TYPES,
   MAIL_TEMPLATE,
@@ -176,16 +177,19 @@ export class BookingPaymentService {
 
       const showDateTime = new Date(showTime.showDate);
 
+      // Convert to Vietnam timezone (UTC+7)
       const showDate = showDateTime.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'long',
-        year: 'numeric'
+        year: 'numeric',
+        timeZone: defaultTimezone
       });
 
       const showTimeStr = showDateTime.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
-        hour12: true
+        hour12: true,
+        timeZone: defaultTimezone
       });
 
       const mailTemplate = MAIL_TEMPLATE.BOOKING_CONFIRMATION;
