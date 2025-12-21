@@ -14,7 +14,7 @@ import { ShowTimeGroupedResponseDto } from './dto/show-time-response.dto';
 import { UpdateShowTimeDto } from './dto/update-show-time.dto';
 import { GetShowtimesQueryDto } from './show-time.controller';
 
-import { getStartAndEndOfDay } from '@common/utils/date.util';
+import { dayjsObjectWithTimezone, getStartAndEndOfDay } from '@common/utils/date.util';
 
 @Injectable()
 export class ShowTimeService {
@@ -37,9 +37,8 @@ export class ShowTimeService {
   async getShowTimesWithMovie(
     movieId: string
   ): Promise<IPaginatedResponse<ShowTimeGroupedResponseDto>> {
-    const now = new Date();
     const bufferMinutes = 15;
-    const bufferTime = new Date(now.getTime() + bufferMinutes * 60 * 1000);
+    const bufferTime = dayjsObjectWithTimezone().add(bufferMinutes, 'minute').toDate();
 
     const queryBuilder = this.showTimeRepository
       .createQueryBuilder('showTime')
@@ -127,9 +126,8 @@ export class ShowTimeService {
   async getShowTimesWithBranch(
     query: GetShowtimesQueryDto
   ): Promise<IPaginatedResponse<ShowTimeGroupedResponseDto>> {
-    const now = new Date();
     const bufferMinutes = 15;
-    const bufferTime = new Date(now.getTime() + bufferMinutes * 60 * 1000);
+    const bufferTime = dayjsObjectWithTimezone().add(bufferMinutes, 'minute').toDate();
 
     const queryBuilder = this.showTimeRepository
       .createQueryBuilder('showTime')
