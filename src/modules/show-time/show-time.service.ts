@@ -37,8 +37,9 @@ export class ShowTimeService {
   async getShowTimesWithMovie(
     movieId: string
   ): Promise<IPaginatedResponse<ShowTimeGroupedResponseDto>> {
+    const now = dayjsObjectWithTimezone();
     const bufferMinutes = 15;
-    const bufferTime = dayjsObjectWithTimezone().add(bufferMinutes, 'minute').toDate();
+    const bufferTime = now.add(bufferMinutes, 'minute').toDate();
 
     const queryBuilder = this.showTimeRepository
       .createQueryBuilder('showTime')
@@ -57,6 +58,10 @@ export class ShowTimeService {
     > = {};
 
     for (const item of items) {
+      const showTimeStart = dayjsObjectWithTimezone(item.timeStart);
+      if (showTimeStart.isBefore(now)) {
+        continue;
+      }
       const showDate = new Date(item.showDate ?? item.timeStart);
 
       const year = showDate.getFullYear();
@@ -126,8 +131,9 @@ export class ShowTimeService {
   async getShowTimesWithBranch(
     query: GetShowtimesQueryDto
   ): Promise<IPaginatedResponse<ShowTimeGroupedResponseDto>> {
+    const now = dayjsObjectWithTimezone();
     const bufferMinutes = 15;
-    const bufferTime = dayjsObjectWithTimezone().add(bufferMinutes, 'minute').toDate();
+    const bufferTime = now.add(bufferMinutes, 'minute').toDate();
 
     const queryBuilder = this.showTimeRepository
       .createQueryBuilder('showTime')
@@ -147,6 +153,10 @@ export class ShowTimeService {
     > = {};
 
     for (const item of items) {
+      const showTimeStart = dayjsObjectWithTimezone(item.timeStart);
+      if (showTimeStart.isBefore(now)) {
+        continue;
+      }
       const showDate = new Date(item.showDate ?? item.timeStart);
 
       const year = showDate.getFullYear();
