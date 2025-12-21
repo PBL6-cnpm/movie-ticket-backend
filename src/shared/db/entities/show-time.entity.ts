@@ -16,8 +16,9 @@ import { Room } from './room.entity';
 
 @Entity(Entities.SHOW_TIME)
 @Unique(['roomId', 'timeStart', 'showDate'])
+// @Index('idx_showtime_covering_filter', ['timeStart', 'movieId', 'roomId'])
 @Index('idx_showtime_movie_time', ['movieId', 'timeStart'])
-@Index('idx_showtime_timestart', ['timeStart'])
+// @Index('idx_showtime_room_time', ['roomId', 'timeStart'])
 export class ShowTime extends BaseEntityTime {
   @PrimaryGeneratedColumn('uuid', { name: 'show_time_id' })
   id: string;
