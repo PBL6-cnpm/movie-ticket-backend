@@ -467,16 +467,17 @@ export class BookingService {
     });
     let additionalPrice = 0;
     let additionalTypeDayId: string | null = null;
+    let additionalSpecialDateId: string | null = null;
     if (specialDate) {
       additionalPrice += specialDate.additionalPrice;
-      additionalTypeDayId = specialDate.id;
+      additionalSpecialDateId = specialDate.id;
     }
 
     const dayOfWeekIndex = dayjsObjectWithTimezone(showTimeStart).day();
 
     if (dayOfWeekIndex !== undefined) {
       const typeDay = await entityManager.getRepository(TypeDay).findOne({
-        where: { dayOfWeek: dayOfWeekIndex }
+        where: { dayOfWeek: dayOfWeekIndex, isCurrent: true }
       });
 
       if (typeDay) {
@@ -487,7 +488,8 @@ export class BookingService {
 
     return {
       additionalPrice,
-      additionalTypeDayId
+      additionalTypeDayId,
+      additionalSpecialDateId
     };
   }
 
