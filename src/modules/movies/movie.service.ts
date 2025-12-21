@@ -362,7 +362,6 @@ export class MovieService {
 
     return { items: movies.map((m) => new MovieResponseDto(m)), total };
   }
-
   async getNowShowingMovies(
     dto: PaginationDto,
     branchId?: string
@@ -370,32 +369,61 @@ export class MovieService {
     const { limit, offset } = dto;
     const now = new Date();
 
-    let query = this.movieRepo
+    const baseQuery = this.movieRepo
+      .createQueryBuilder('movie')
+      .where((qb) => {
+        const sub = qb
+          .subQuery()
+          .select('1')
+          .from('show_time', 'st')
+          .where('st.movie_id = movie.id')
+          .andWhere('st.time_start >= :now');
+
+        if (branchId) {
+          sub
+            .innerJoin('room', 'r', 'r.id = st.room_id')
+            .innerJoin('branch', 'b', 'b.id = r.branch_id')
+            .andWhere('b.id = :branchId');
+        }
+
+        return `EXISTS ${sub.getQuery()}`;
+      })
+      .setParameters({ now, branchId });
+
+    const total = await baseQuery.getCount();
+
+    if (total === 0) {
+      return { items: [], total: 0 };
+    }
+
+    const movieIdsRaw = await baseQuery
+      .select('movie.id', 'id')
+      .orderBy('movie.screeningStart', 'DESC')
+      .skip(offset)
+      .take(limit)
+      .getRawMany();
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    const movieIds = movieIdsRaw.map((r) => r.id);
+
+    if (!movieIds.length) {
+      return { items: [], total };
+    }
+
+    const movies = await this.movieRepo
       .createQueryBuilder('movie')
       .leftJoinAndSelect('movie.movieGenres', 'movieGenre')
       .leftJoinAndSelect('movieGenre.genre', 'genre')
       .leftJoinAndSelect('movie.movieActors', 'movieActor')
       .leftJoinAndSelect('movieActor.actor', 'actor')
-      // INNER JOIN ensures we only get movies that have at least one showtime
-      .innerJoin('movie.showTimes', 'showTime')
-      // Only check if showtime is in the future - ignore movie metadata dates
-      .where('showTime.timeStart >= :now', { now });
-
-    if (branchId) {
-      query = query
-        .innerJoin('showTime.room', 'room')
-        .innerJoin('room.branch', 'branch')
-        .andWhere('branch.id = :branchId', { branchId });
-    }
-
-    const [movies, total] = await query
+      .where('movie.id IN (:...ids)', { ids: movieIds })
       .orderBy('movie.screeningStart', 'DESC')
-      .distinct(true)
-      .skip(offset)
-      .take(limit)
-      .getManyAndCount();
+      .getMany();
 
-    return { items: movies.map((m) => new MovieResponseDto(m)), total };
+    return {
+      items: movies.map((m) => new MovieResponseDto(m)),
+      total
+    };
   }
 
   async getTopRevenueMoviesThisMonth(): Promise<MovieResponseDto[]> {
